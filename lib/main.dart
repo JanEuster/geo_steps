@@ -85,51 +85,207 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    MediaQueryData media = MediaQuery.of(context);
+
     return Column(
-      children: <Widget>[
+      children: [
         Container(
             color: Colors.white,
             height: 45,
-            padding: EdgeInsets.only(left: 10.0, right: 10.0),
+            padding: const EdgeInsets.only(left: 10.0, right: 10.0),
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
                     child: Row(
                       children: [
-                        GestureDetector(onTap: () {}, child: Icon(Icons.menu)),
+                        GestureDetector(
+                            onTap: () {}, child: const Icon(Icons.menu)),
                         Container(
                           padding: const EdgeInsets.all(10.0),
                           child: Text(
                             title,
-                            textScaleFactor: 1.2,
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 16),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  GestureDetector(onTap: () {}, child: Icon(Icons.settings)),
+                  GestureDetector(
+                      onTap: () {}, child: const Icon(Icons.settings)),
                 ])),
-        Container(height: 1, color: Colors.black),
-        const Padding(padding: EdgeInsets.all(10.0)),
-        GestureDetector(
-          onTap: () => Navigator.of(context).pushNamed("/first"),
-          child: Container(
-            padding: EdgeInsets.all(10.0),
-            color: const Color.fromRGBO(0, 0, 255, 1.0),
-            child: const Text("Go to First Page"),
-          ),
-        ),
-        const Padding(padding: EdgeInsets.all(10.0)),
-        GestureDetector(
-          onTap: () => Navigator.of(context).pushNamed("/abcd"),
-          child: Container(
-            padding: const EdgeInsets.all(10.0),
-            color: const Color.fromRGBO(0, 0, 255, 1.0),
-            child: const Text("Unkown Route"),
-          ),
-        )
+        Container(
+            height: 1,
+            color: Colors.black),
+        Padding(padding: const EdgeInsets.all(15.0)),
+        SingleChildScrollView(child: Column(children: [
+          Container(
+              child: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                          child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: const [
+                          Text("3.742",
+                              style: TextStyle(
+                                  fontSize: 75,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black)),
+                          Text("10,2 km",
+                              style: TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black)),
+                        ],
+                      )),
+                      Container(
+                          padding: const EdgeInsets.only(left: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Padding(
+                                  padding: EdgeInsets.only(top: 50),
+                                  child: Text("steps today",
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.black))),
+                              Padding(
+                                  padding: EdgeInsets.only(top: 35),
+                                  child: Text("traveled today",
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.black)))
+                            ],
+                          )),
+                    ],
+                  ))),
+          Container(
+              child: Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Container(
+                      width: media.size.width,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black)),
+                      child: Column(
+                        children: [
+                          Container(
+                              width: media.size.width,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("tracking uptime",
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700)),
+                                  const Padding(
+                                      padding: EdgeInsets.only(top: 12)),
+                                  Row(
+                                    children: const [
+                                      Text("24 ",
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w700)),
+                                      Text("days",
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w500)),
+                                    ],
+                                  ),
+                                  const Padding(
+                                      padding: EdgeInsets.only(top: 6)),
+                                  Row(
+                                    children: const [
+                                      Text("154.00 ",
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w700)),
+                                      Text("steps",
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w500)),
+                                    ],
+                                  ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.arrow_right_alt, size: 40),
+                                      Padding(
+                                          padding: EdgeInsets.only(bottom: 5),
+                                          child: Text("more info",
+                                              textAlign: TextAlign.left,
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 20,
+                                                  fontWeight:
+                                                      FontWeight.w500))),
+                                    ],
+                                  ),
+                                ],
+                              )),
+                          Container(
+                              width: media.size.width,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                      image:
+                                          AssetImage("assets/line_pattern.jpg"),
+                                      repeat: ImageRepeat.repeat))),
+                          Container(
+                            width: media.size.width,
+                            height: 40,
+                            child: GestureDetector(
+                                onTap: () {},
+                                child: const Center(
+                                    child: Text("stop tracking",
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500)))),
+                          )
+                        ],
+                      )))),
+          Container(
+              height: 380,
+              child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Container(
+                      width: media.size.width,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(8),
+                              child: const Text("todays map",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500))),
+                          Container(
+                              color: Colors.black,
+                              width: media.size.width / 5*3,
+                              height: 380)
+                        ],
+                      )))),
+        ]))
       ],
     );
   }
