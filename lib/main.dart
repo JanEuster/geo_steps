@@ -115,11 +115,10 @@ class MyHomePage extends StatelessWidget {
                   GestureDetector(
                       onTap: () {}, child: const Icon(Icons.settings)),
                 ])),
-        Container(
-            height: 1,
-            color: Colors.black),
+        Container(height: 1, color: Colors.black),
         Padding(padding: const EdgeInsets.all(15.0)),
-        SingleChildScrollView(child: Column(children: [
+        SizedBox(height: media.size.height-126, child: ListView(
+            children: [
           Container(
               child: Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20),
@@ -281,7 +280,7 @@ class MyHomePage extends StatelessWidget {
                                       fontWeight: FontWeight.w500))),
                           Container(
                               color: Colors.black,
-                              width: media.size.width / 5*3,
+                              width: media.size.width / 5 * 3,
                               height: 380)
                         ],
                       )))),
