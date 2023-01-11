@@ -16,14 +16,8 @@ class MyWidgetsApp extends StatelessWidget {
           EdgeInsets insets = MediaQuery.of(context).viewInsets;
           EdgeInsets padding = MediaQuery.of(context).viewPadding;
           log("device insets || insets: $insets, padding: $padding");
-          return Container(
-              color: const Color.fromRGBO(255, 255, 255, 1.0),
-              child: Column(children: [
-                Padding(padding: EdgeInsets.only(top: padding.top)),
-                Navbar(title: "geo_steps"),
-                MyHomePage(),
-                Padding(padding: EdgeInsets.only(bottom: padding.bottom)),
-              ]));
+
+          return PageWithNav(title: title, color: const Color(0xFFFFFFFF), child: const MyHomePage());
         }, transitionsBuilder: (_, Animation<double> animation,
             Animation<double> second, Widget child) {
           return FadeTransition(
@@ -46,23 +40,44 @@ class MyWidgetsApp extends StatelessWidget {
   Route unKnownRoute(RouteSettings settings) {
     return PageRouteBuilder(pageBuilder: (BuildContext context,
         Animation<double> animation, Animation<double> secondaryAnimation) {
-      return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              "Error!",
-              textDirection: TextDirection.ltr,
-            ),
-            const Padding(padding: EdgeInsets.all(10.0)),
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                padding: const EdgeInsets.all(10.0),
-                color: const Color.fromRGBO(0, 0, 255, 1.0),
-                child: const Text("Return to Home Page"),
-              ),
-            )
-          ]);
+      return PageWithNav(
+          title: "error",
+          color: const Color(0xFFFFFFFF),
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  "Error!",
+                  textDirection: TextDirection.ltr,
+                ),
+                const Padding(padding: EdgeInsets.all(10.0)),
+                GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10.0),
+                          color: const Color(0xFFAAAAFF),
+                          child: const Text("Return to Home Page"),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10.0),
+                          color: const Color(0xFFBBAAFF),
+                          child: const Text("Return to Home Page"),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10.0),
+                          color: const Color(0xFFCCAAFF),
+                          child: const Text("Return to Home Page"),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(10.0),
+                          color: const Color(0xFFDDAAFF),
+                          child: const Text("Return to Home Page"),
+                        ),
+                      ],
+                    ))
+              ]));
     });
   }
 
@@ -80,23 +95,29 @@ class MyWidgetsApp extends StatelessWidget {
   }
 }
 
-class ScrollablePageWithNav extends StatelessWidget {
-  ScrollablePageWithNav(
-      {super.key, this.title = "", this.children = const <Widget>[]});
+class PageWithNav extends StatelessWidget {
+  PageWithNav({super.key, this.title = "", this.child, this.color});
 
   String title;
-  List<Widget> children;
+  Widget? child;
+  Color? color;
 
+  @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
+    EdgeInsets padding = media.viewPadding;
     return Column(children: [
+      Padding(padding: EdgeInsets.only(top: padding.top)),
       Navbar(title: title),
-      SizedBox(
-          height: media.size.height -
-              46 -
-              media.viewPadding.top -
-              media.viewPadding.bottom,
-          child: ListView(children: children))
+      Container(
+          color: color,
+          child:       SizedBox(
+              height: media.size.height -
+                  46 -
+                  media.viewPadding.top -
+                  media.viewPadding.bottom,
+              child: child),),
+      Padding(padding: EdgeInsets.only(bottom: padding.bottom)),
     ]);
   }
 }
