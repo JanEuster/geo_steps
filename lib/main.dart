@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import "dart:developer";
 
-void main() => runApp(new MyWidgetsApp());
+void main() => runApp(const MyWidgetsApp());
 
 class MyWidgetsApp extends StatelessWidget {
+  const MyWidgetsApp({super.key});
+
   final String title = "geo_steps";
 
   Route generate(RouteSettings settings) {
@@ -127,6 +129,7 @@ class Navbar extends StatelessWidget {
 
   String title;
 
+  @override
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
@@ -134,11 +137,11 @@ class Navbar extends StatelessWidget {
           height: 45,
           padding: const EdgeInsets.only(left: 10.0, right: 10.0),
           child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Container(
-              child: Row(
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Row(
                 children: [
-                  GestureDetector(onTap: () {}, child: const Icon(Icons.menu)),
+                  GestureDetector(
+                      onTap: () {},
+                      child: const Icon(Icons.menu)),
                   Container(
                     padding: const EdgeInsets.all(10.0),
                     child: Text(
@@ -148,7 +151,6 @@ class Navbar extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
             GestureDetector(onTap: () {}, child: const Icon(Icons.settings)),
           ])),
       Container(height: 1, color: Colors.black),
@@ -157,12 +159,12 @@ class Navbar extends StatelessWidget {
 }
 
 class ActivityMap extends StatelessWidget {
-  ActivityMap({super.key});
+  const ActivityMap({super.key});
 
   @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
-    return Container(
+    return SizedBox(
         height: 380,
         child: Padding(
             padding: const EdgeInsets.all(10),
@@ -189,26 +191,17 @@ class ActivityMap extends StatelessWidget {
 }
 
 class MyHomePage extends StatelessWidget {
-  MyHomePage({super.key});
+  const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
 
-    return SizedBox(
-        height: media.size.height -
-            46 -
-            media.viewPadding.top -
-            media.viewPadding.bottom,
-        child: ListView(children: [
-          Container(
-              child: Padding(
+    return ListView(children: [Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                          child: Column(
+                    children: [Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: const [
@@ -219,7 +212,7 @@ class MyHomePage extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: 40, fontWeight: FontWeight.w700)),
                         ],
-                      )),
+                      ),
                       Container(
                           padding: const EdgeInsets.only(left: 10),
                           child: Column(
@@ -236,9 +229,7 @@ class MyHomePage extends StatelessWidget {
                             ],
                           )),
                     ],
-                  ))),
-          Container(
-              child: Padding(
+                  )),Padding(
                   padding: const EdgeInsets.all(30),
                   child: Container(
                       width: media.size.width,
@@ -314,7 +305,7 @@ class MyHomePage extends StatelessWidget {
                                       image:
                                           AssetImage("assets/line_pattern.jpg"),
                                       repeat: ImageRepeat.repeat))),
-                          Container(
+                          SizedBox(
                             width: media.size.width,
                             height: 40,
                             child: GestureDetector(
@@ -326,8 +317,8 @@ class MyHomePage extends StatelessWidget {
                                             fontWeight: FontWeight.w500)))),
                           )
                         ],
-                      )))),
-          ActivityMap()
-        ]));
+                      ))),
+          const ActivityMap()
+        ]);
   }
 }
