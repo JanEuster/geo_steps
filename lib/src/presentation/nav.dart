@@ -33,7 +33,10 @@ class PageWithNav extends StatelessWidget {
       Positioned(
           top: padding.top,
           width: media.size.width,
-          child: Navbar(title: title, navItems: navItems,)),
+          child: Navbar(
+            title: title,
+            navItems: navItems,
+          )),
     ]);
   }
 }
@@ -56,6 +59,12 @@ class _NavbarState extends State<Navbar> {
     menuOpen = false;
   }
 
+  void setMenu(bool state) {
+    setState(() {
+      menuOpen = state;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
@@ -69,9 +78,7 @@ class _NavbarState extends State<Navbar> {
               children: [
                 GestureDetector(
                     onTap: () {
-                      setState(() {
-                        menuOpen = menuOpen ? false : true;
-                      });
+                        setMenu(menuOpen ? false : true);
                     },
                     child: const Icon(Icons.menu)),
                 Container(
@@ -86,44 +93,52 @@ class _NavbarState extends State<Navbar> {
             GestureDetector(onTap: () {}, child: const Icon(Icons.settings)),
           ])),
       Container(height: 1, color: Colors.black),
-      if (menuOpen) NavMenu(navItems: widget.navItems),
+      if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),
     ]);
   }
 }
 
 class NavMenu extends StatelessWidget {
-  NavMenu({super.key, this.navItems = const <AppRoute>[]});
+  NavMenu(this.setMenu, {super.key, this.navItems = const <AppRoute>[]});
 
   List<AppRoute> navItems;
+  Function(bool) setMenu;
 
   @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
-    return Container(
-        width: media.size.width,
-        // color: const Color(0xFFFFFFFF),
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.zero,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(75),
-                spreadRadius: 5,
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              )
-            ]),
+    return SizedBox(
+        height: media.size.height - media.viewPadding.vertical,
         child: Column(
           children: [
-            ...List.generate(navItems.length, (index) {
-              AppRoute item = navItems[index];
-              return NavMenuItem(
-                name: item.title,
-                route: item.route,
-                icon: item.icon,
-              );
-            })
+            Container(
+                width: media.size.width,
+                // color: const Color(0xFFFFFFFF),
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.zero,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(75),
+                        spreadRadius: 5,
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      )
+                    ]),
+                child: Column(
+                  children: [
+                    ...List.generate(navItems.length, (index) {
+                      AppRoute item = navItems[index];
+                      return NavMenuItem(
+                        name: item.title,
+                        route: item.route,
+                        icon: item.icon,
+                      );
+                    })
+                  ],
+                )),
+            Expanded(child: GestureDetector(onTap: () {setMenu(false);},child: Container(color: Colors.white.withAlpha(125))))
           ],
         ));
   }
@@ -143,15 +158,15 @@ class NavMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, route);
-            },
-            child: Container(
-                width: MediaQuery.of(context).size.width,
-                alignment: Alignment.centerLeft,
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                child: Row(children: [
+        onTap: () {
+          Navigator.pushNamed(context, route);
+        },
+        child: Container(
+            width: MediaQuery.of(context).size.width,
+            alignment: Alignment.centerLeft,
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Row(children: [
               Icon(icon, size: 40),
               const Padding(padding: EdgeInsets.only(left: 10)),
               Text(route == "/" ? "home" : name,
