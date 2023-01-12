@@ -26,12 +26,13 @@ class MyWidgetsApp extends StatelessWidget {
     };
   }
 
-  final String title = "geo_steps";
   late Map<String, AppRoute> routes;
+  String title = "geo_steps";
 
   Route generate(RouteSettings settings) {
     Route page;
     if (routes[settings.name] != null) {
+      title = routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
         EdgeInsets insets = MediaQuery.of(context).viewInsets;
@@ -110,7 +111,7 @@ class MyWidgetsApp extends StatelessWidget {
       onUnknownRoute: unKnownRoute,
       textStyle: const TextStyle(
           fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black),
-      initialRoute: "/",
+      initialRoute: "/today",
       color: const Color.fromRGBO(255, 0, 0, 1.0),
       title: title,
     );
