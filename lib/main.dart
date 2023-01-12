@@ -42,9 +42,7 @@ class MyWidgetsApp extends StatelessWidget {
           log("device insets || insets: $insets, padding: $padding");
 
           return PageWithNav(
-              title: title,
-              color: const Color(0xFFFFFFFF),
-              child: Container());
+              title: title, color: const Color(0xFFFFFFFF), child: Container());
         }, transitionsBuilder: (_, Animation<double> animation,
             Animation<double> second, Widget child) {
           return FadeTransition(
@@ -64,9 +62,7 @@ class MyWidgetsApp extends StatelessWidget {
           log("device insets || insets: $insets, padding: $padding");
 
           return PageWithNav(
-              title: title,
-              color: const Color(0xFFFFFFFF),
-              child: Container());
+              title: title, color: const Color(0xFFFFFFFF), child: Container());
         }, transitionsBuilder: (_, Animation<double> animation,
             Animation<double> second, Widget child) {
           return FadeTransition(
@@ -86,9 +82,7 @@ class MyWidgetsApp extends StatelessWidget {
           log("device insets || insets: $insets, padding: $padding");
 
           return PageWithNav(
-              title: title,
-              color: const Color(0xFFFFFFFF),
-              child: Container());
+              title: title, color: const Color(0xFFFFFFFF), child: Container());
         }, transitionsBuilder: (_, Animation<double> animation,
             Animation<double> second, Widget child) {
           return FadeTransition(
@@ -194,10 +188,22 @@ class PageWithNav extends StatelessWidget {
   }
 }
 
-class Navbar extends StatelessWidget {
+class Navbar extends StatefulWidget {
   Navbar({super.key, this.title = ""});
 
   String title;
+
+  @override
+  _NavbarState createState() => _NavbarState();
+}
+
+class _NavbarState extends State<Navbar> {
+  bool menuOpen = false;
+
+  @override
+  void initState() {
+    menuOpen = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -210,11 +216,17 @@ class Navbar extends StatelessWidget {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(
               children: [
-                GestureDetector(onTap: () {}, child: const Icon(Icons.menu)),
+                GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        menuOpen = menuOpen ? false : true;
+                      });
+                    },
+                    child: const Icon(Icons.menu)),
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   child: Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(),
                   ),
                 ),
@@ -223,7 +235,8 @@ class Navbar extends StatelessWidget {
             GestureDetector(onTap: () {}, child: const Icon(Icons.settings)),
           ])),
       Container(height: 1, color: Colors.black),
-      NavMenu(),
+      if (menuOpen)
+        const NavMenu(),
     ]);
   }
 }
@@ -252,16 +265,25 @@ class NavMenu extends StatelessWidget {
         child: Column(
           children: [
             NavMenuItem(),
-            NavMenuItem(name: "todays stats", route: "/today", icon: Icons.bar_chart),
-            NavMenuItem(name: "overviews", route: "/overviews", icon: Icons.leaderboard),
-            NavMenuItem(name: "home⋅points", route: "/places", icon: Icons.push_pin),
+            NavMenuItem(
+                name: "todays stats", route: "/today", icon: Icons.bar_chart),
+            NavMenuItem(
+                name: "overviews",
+                route: "/overviews",
+                icon: Icons.leaderboard),
+            NavMenuItem(
+                name: "home⋅points", route: "/places", icon: Icons.push_pin),
           ],
         ));
   }
 }
 
 class NavMenuItem extends StatelessWidget {
-  NavMenuItem({super.key, this.name = "home", this.route = "/", this.icon = Icons.nordic_walking});
+  NavMenuItem(
+      {super.key,
+      this.name = "home",
+      this.route = "/",
+      this.icon = Icons.nordic_walking});
 
   String name;
   String route;
