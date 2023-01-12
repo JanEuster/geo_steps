@@ -142,17 +142,19 @@ class NavMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-        child: GestureDetector(
+    return GestureDetector(
             onTap: () {
               Navigator.pushNamed(context, route);
             },
-            child: Row(children: [
+            child: Container(
+                width: MediaQuery.of(context).size.width,
+                alignment: Alignment.centerLeft,
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                child: Row(children: [
               Icon(icon, size: 40),
               const Padding(padding: EdgeInsets.only(left: 10)),
-              Text(name,
+              Text(route == "/" ? "home" : name,
                   textAlign: TextAlign.left,
                   style: const TextStyle(
                       fontSize: 24, fontWeight: FontWeight.w500))
