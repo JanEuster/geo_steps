@@ -2,103 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import "dart:developer";
 
-void main() => runApp(const MyWidgetsApp());
+// local imports
+import 'package:geo_steps/src/presentation/home.dart';
+import 'package:geo_steps/src/presentation/nav.dart';
+
+void main() => runApp(MyWidgetsApp());
+
+class AppRoute {
+  String title;
+  String route;
+  IconData icon;
+  StatelessWidget page;
+  AppRoute(this.title, this.route, this.icon, this.page);
+}
 
 class MyWidgetsApp extends StatelessWidget {
-  const MyWidgetsApp({super.key});
+  MyWidgetsApp({super.key}) {
+    routes = {
+      "/": AppRoute("geo_steps", "/", Icons.nordic_walking, const MyHomePage()),
+      "/today": AppRoute("today", "/today", Icons.bar_chart, Container()),
+      "/overviews": AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
+      "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
+    };
+  }
 
   final String title = "geo_steps";
+  late Map<String, AppRoute> routes;
 
   Route generate(RouteSettings settings) {
     Route page;
-    switch (settings.name) {
-      case "/":
-        page = PageRouteBuilder(pageBuilder: (BuildContext context,
-            Animation<double> animation, Animation<double> secondaryAnimation) {
-          EdgeInsets insets = MediaQuery.of(context).viewInsets;
-          EdgeInsets padding = MediaQuery.of(context).viewPadding;
-          log("device insets || insets: $insets, padding: $padding");
-
-          return PageWithNav(
-              title: title,
-              color: const Color(0xFFFFFFFF),
-              child: const MyHomePage());
-        }, transitionsBuilder: (_, Animation<double> animation,
-            Animation<double> second, Widget child) {
-          return FadeTransition(
-            opacity: animation,
-            child: FadeTransition(
-              opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
-              child: child,
-            ),
-          );
-        });
-        break;
-      case "/today":
-        page = PageRouteBuilder(pageBuilder: (BuildContext context,
-            Animation<double> animation, Animation<double> secondaryAnimation) {
-          EdgeInsets insets = MediaQuery.of(context).viewInsets;
-          EdgeInsets padding = MediaQuery.of(context).viewPadding;
-          log("device insets || insets: $insets, padding: $padding");
-
-          return PageWithNav(
-              title: title, color: const Color(0xFFFFFFFF), child: Container());
-        }, transitionsBuilder: (_, Animation<double> animation,
-            Animation<double> second, Widget child) {
-          return FadeTransition(
-            opacity: animation,
-            child: FadeTransition(
-              opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
-              child: child,
-            ),
-          );
-        });
-        break;
-      case "/overviews":
-        page = PageRouteBuilder(pageBuilder: (BuildContext context,
-            Animation<double> animation, Animation<double> secondaryAnimation) {
-          EdgeInsets insets = MediaQuery.of(context).viewInsets;
-          EdgeInsets padding = MediaQuery.of(context).viewPadding;
-          log("device insets || insets: $insets, padding: $padding");
-
-          return PageWithNav(
-              title: title, color: const Color(0xFFFFFFFF), child: Container());
-        }, transitionsBuilder: (_, Animation<double> animation,
-            Animation<double> second, Widget child) {
-          return FadeTransition(
-            opacity: animation,
-            child: FadeTransition(
-              opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
-              child: child,
-            ),
-          );
-        });
-        break;
-      case "/places":
-        page = PageRouteBuilder(pageBuilder: (BuildContext context,
-            Animation<double> animation, Animation<double> secondaryAnimation) {
-          EdgeInsets insets = MediaQuery.of(context).viewInsets;
-          EdgeInsets padding = MediaQuery.of(context).viewPadding;
-          log("device insets || insets: $insets, padding: $padding");
-
-          return PageWithNav(
-              title: title, color: const Color(0xFFFFFFFF), child: Container());
-        }, transitionsBuilder: (_, Animation<double> animation,
-            Animation<double> second, Widget child) {
-          return FadeTransition(
-            opacity: animation,
-            child: FadeTransition(
-              opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
-              child: child,
-            ),
-          );
-        });
-        break;
-      default:
-        {
-          page = unKnownRoute(settings);
-        }
+    if (routes[settings.name] != null) {
+      page = PageRouteBuilder(pageBuilder: (BuildContext context,
+          Animation<double> animation, Animation<double> secondaryAnimation) {
+        EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        EdgeInsets padding = MediaQuery.of(context).viewPadding;
+        log("device insets || insets: $insets, padding: $padding");
+        return PageWithNav(
+            title: title,
+            color: const Color(0xFFFFFFFF),
+            navItems: routes.values.toList(),
+            child: routes[settings.name]?.page);
+      }, transitionsBuilder: (_, Animation<double> animation,
+          Animation<double> second, Widget child) {
+        return FadeTransition(
+          opacity: animation,
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
+            child: child,
+          ),
+        );
+      });
+    } else {
+      page = unKnownRoute(settings);
     }
+
     return page;
   }
 
