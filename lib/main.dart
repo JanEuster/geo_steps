@@ -28,7 +28,13 @@ class MyWidgetsApp extends StatelessWidget {
   MyWidgetsApp({super.key}) {
     routes = {
       "/": AppRoute(title, "/", Icons.nordic_walking, const MyHomePage()),
-      "/today": AppRoute("today", "/today", Icons.bar_chart, Container(child: SimpleMap())),
+      "/today": AppRoute(
+          "today",
+          "/today",
+          Icons.bar_chart,
+          ListView(children: [
+            SimpleMap(),
+          ])),
       "/overviews":
           AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
       "/places":
@@ -39,7 +45,6 @@ class MyWidgetsApp extends StatelessWidget {
   late Map<String, AppRoute> routes;
 
   Route generate(RouteSettings settings) {
-
     Route page;
     if (routes[settings.name] != null) {
       title = routes[settings.name]!.title;

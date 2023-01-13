@@ -7,7 +7,6 @@ import "dart:developer";
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-
 class SimpleMap extends StatefulWidget {
   const SimpleMap({super.key});
 
@@ -41,7 +40,7 @@ class _SimpleMapState extends State<SimpleMap> {
           accuracy: LocationAccuracy.high,
           distanceFilter: 0,
           forceLocationManager: true,
-          intervalDuration: const Duration(seconds: 5),
+          intervalDuration: const Duration(seconds: 1),
           //(Optional) Set foreground notification config to keep the app alive
           //when going to the background
           foregroundNotificationConfig: const ForegroundNotificationConfig(
@@ -92,7 +91,10 @@ class _SimpleMapState extends State<SimpleMap> {
           Text("latitude: ${lastPos.latitude}"),
           Text("min max: ${getCoordRange(positions)}"),
           Text("positions: $positions"),
-          CustomPaint(key: _keyCanvas, foregroundPainter: CustomMapPainter(positions)),
+          Center(child: CustomPaint(
+              size: Size.square(100),
+              foregroundPainter: CustomMapPainter(positions))),
+          Padding(padding: EdgeInsets.only(bottom: 100)),
         ],
       );
     } else {
@@ -104,6 +106,7 @@ class _SimpleMapState extends State<SimpleMap> {
 class MinMax<T> {
   T min;
   T max;
+
   MinMax(this.min, this.max);
 
   @override
@@ -111,9 +114,11 @@ class MinMax<T> {
     return "[min] $min [max] $max";
   }
 }
+
 class LonLat {
   double longitude;
   double latitude;
+
   LonLat(this.longitude, this.latitude);
 
   @override
@@ -121,6 +126,7 @@ class LonLat {
     return "long: $longitude, lat: $latitude";
   }
 }
+
 MinMax<LonLat> getCoordRange(List<Position> positions) {
   double minLon = positions[0].longitude;
   double minLat = positions[0].latitude;
@@ -144,19 +150,43 @@ MinMax<LonLat> getCoordRange(List<Position> positions) {
 
 class CustomMapPainter extends CustomPainter {
   List<Position> positions;
-  CustomMapPainter(this.positions): super();
+
+  CustomMapPainter(this.positions) : super();
 
   @override
   void paint(Canvas canvas, Size size) {
+    log("canvas size || width: ${size.width} height: ${size.height}");
+    final basePaint = Paint()..color = Colors.yellow;
     final paint = Paint()
-      ..strokeWidth = 5
+      ..strokeWidth = 2
       ..color = Colors.black
       ..style = PaintingStyle.stroke;
-    final RenderBox canvasBox = _keyCanvas.currentContext!.findRenderObject() as RenderBox;
-    final Size canvasDims = canvasBox.size;
-    
+
+    canvas.drawRect(
+        Rect.fromLTRB(0, 0, 0 , 0), basePaint);
+    canvas.drawRect(
+        Rect.fromLTRB(0, 0, 0, 0), paint);
+
     final lonlatRange = getCoordRange(positions);
-    log("range: ${lonlatRange}");
+    final xRange = lonlatRange.max.longitude - lonlatRange.min.longitude;
+    final yRange = lonlatRange.max.latitude - lonlatRange.min.latitude;
+    log("range x $xRange y $yRange");
+
+    final path = Path();
+    for (var i = 0; i < positions.length; i++) {
+      var p = positions[i];
+      final dx =
+          (p.longitude - lonlatRange.min.longitude) / xRange * size.width;
+      final dy =
+          (p.latitude - lonlatRange.min.latitude) / yRange * size.height;
+      log("x: $dx y: $dy");
+      if (i == 0) {
+        path.moveTo(dx, dy);
+      } else {
+        path.relativeLineTo(dx, dy);
+      }
+    }
+    canvas.drawPath(path, paint);
   }
 
   @override
@@ -164,5 +194,4 @@ class CustomMapPainter extends CustomPainter {
     // TODO: implement shouldRepaint
     return false;
   }
-
 }
