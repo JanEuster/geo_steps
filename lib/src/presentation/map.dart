@@ -71,7 +71,9 @@ class _SimpleMapState extends State<SimpleMap> {
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) {
       setState(() {
-        positions = [...positions, position!];
+        if (positions.length < 10) {
+          positions = [...positions, position!];
+        }
       });
       log(position == null
           ? 'Unknown'
@@ -87,12 +89,80 @@ class _SimpleMapState extends State<SimpleMap> {
       return Column(
         children: [
           Text("longitude: ${lastPos.longitude}"),
-          Text("longitude: ${lastPos.latitude}"),
-          Text("positions: $positions")
+          Text("latitude: ${lastPos.latitude}"),
+          Text("min max: ${getCoordRange(positions)}"),
+          Text("positions: $positions"),
+          CustomPaint(key: _keyCanvas, foregroundPainter: CustomMapPainter(positions)),
         ],
       );
     } else {
       return const Text("No Data to Display");
     }
   }
+}
+
+class MinMax<T> {
+  T min;
+  T max;
+  MinMax(this.min, this.max);
+
+  @override
+  String toString() {
+    return "[min] $min [max] $max";
+  }
+}
+class LonLat {
+  double longitude;
+  double latitude;
+  LonLat(this.longitude, this.latitude);
+
+  @override
+  String toString() {
+    return "long: $longitude, lat: $latitude";
+  }
+}
+MinMax<LonLat> getCoordRange(List<Position> positions) {
+  double minLon = positions[0].longitude;
+  double minLat = positions[0].latitude;
+  double maxLon = positions[0].longitude;
+  double maxLat = positions[0].latitude;
+  for (var i = 0; i < positions.length; i++) {
+    var p = positions[i];
+    if (p.longitude > maxLon) {
+      maxLon = p.longitude;
+    } else if (p.longitude < minLon) {
+      minLon = p.longitude;
+    }
+    if (p.latitude > maxLat) {
+      maxLat = p.latitude;
+    } else if (p.latitude < minLat) {
+      minLat = p.latitude;
+    }
+  }
+  return MinMax(LonLat(minLon, minLat), LonLat(maxLon, maxLat));
+}
+
+class CustomMapPainter extends CustomPainter {
+  List<Position> positions;
+  CustomMapPainter(this.positions): super();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..strokeWidth = 5
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke;
+    final RenderBox canvasBox = _keyCanvas.currentContext!.findRenderObject() as RenderBox;
+    final Size canvasDims = canvasBox.size;
+    
+    final lonlatRange = getCoordRange(positions);
+    log("range: ${lonlatRange}");
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    // TODO: implement shouldRepaint
+    return false;
+  }
+
 }
