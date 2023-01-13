@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import "dart:developer";
@@ -5,31 +7,39 @@ import "dart:developer";
 // local imports
 import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
+import 'package:geo_steps/src/presentation/map.dart';
 
-void main() => runApp(MyWidgetsApp());
+void main() async {
+  runApp(MyWidgetsApp());
+}
 
 class AppRoute {
   String title;
   String route;
   IconData icon;
   StatelessWidget page;
+
   AppRoute(this.title, this.route, this.icon, this.page);
 }
 
 class MyWidgetsApp extends StatelessWidget {
+  String title = "geo_steps";
+
   MyWidgetsApp({super.key}) {
     routes = {
-      "/": AppRoute("geo_steps", "/", Icons.nordic_walking, const MyHomePage()),
-      "/today": AppRoute("today", "/today", Icons.bar_chart, Container()),
-      "/overviews": AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
-      "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
+      "/": AppRoute(title, "/", Icons.nordic_walking, const MyHomePage()),
+      "/today": AppRoute("today", "/today", Icons.bar_chart, Container(child: SimpleMap())),
+      "/overviews":
+          AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
+      "/places":
+          AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
     };
   }
 
   late Map<String, AppRoute> routes;
-  String title = "geo_steps";
 
   Route generate(RouteSettings settings) {
+
     Route page;
     if (routes[settings.name] != null) {
       title = routes[settings.name]!.title;
@@ -106,6 +116,7 @@ class MyWidgetsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log("target: ${Theme.of(context).platform}");
     return WidgetsApp(
       onGenerateRoute: generate,
       onUnknownRoute: unKnownRoute,
