@@ -1,11 +1,10 @@
-import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:geo_steps/src/utils/location.dart';
 import "dart:developer";
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 
 class SimpleMap extends StatefulWidget {
   const SimpleMap({super.key});
@@ -18,71 +17,33 @@ class _SimpleMapState extends State<SimpleMap> {
   @override
   void initState() {
     checkPosition();
-    streamPosition();
+    streamPosition(defaultTargetPlatform, (Position position) {
+      setState(() {
+        positions = [...positions, position];
+      });
+    });
   }
 
   List<Position> positions = <Position>[];
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
+  MapController mapController = MapController.withPosition(
+    initPosition: GeoPoint(
+      latitude: 47.4358055,
+      longitude: 8.4737324
+      ,),
+    areaLimit: BoundingBox(
+      east: 10.4922941,
+      north: 47.8084648,
+      south: 45.817995,
+      west:  5.9559113,
+    ),
+  );
 
-  Future<void> checkPosition() async {
-    while (true) {
-      if (await Permission.locationAlways.request().isGranted) {
-        break;
-      }
-    }
-  }
-
-  Future<void> streamPosition() async {
-    late LocationSettings locationSettings;
-
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      locationSettings = AndroidSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 0,
-          forceLocationManager: true,
-          intervalDuration: const Duration(seconds: 1),
-          //(Optional) Set foreground notification config to keep the app alive
-          //when going to the background
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationText:
-                "Example app will continue to receive your location even when you aren't using it",
-            notificationTitle: "Running in Background",
-            enableWakeLock: true,
-          ));
-    } else if (defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
-      locationSettings = AppleSettings(
-        accuracy: LocationAccuracy.high,
-        activityType: ActivityType.fitness,
-        distanceFilter: 0,
-        pauseLocationUpdatesAutomatically: true,
-        // Only set to true if our app will be started up in the background.
-        showBackgroundLocationIndicator: false,
-      );
-    } else {
-      locationSettings = const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 0,
-      );
-    }
-
-    StreamSubscription<Position> positionStream =
-        Geolocator.getPositionStream(locationSettings: locationSettings)
-            .listen((Position? position) {
-      setState(() {
-        if (positions.length < 10) {
-          positions = [...positions, position!];
-        }
-      });
-      log(position == null
-          ? 'Unknown'
-          : '${position.latitude.toString()}, ${position.longitude.toString()}');
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     defaultTargetPlatform = Theme.of(context).platform;
+    double width = MediaQuery.of(context).size.width;
     if (positions.isNotEmpty) {
       Position lastPos = positions.last;
       return Column(
@@ -90,11 +51,58 @@ class _SimpleMapState extends State<SimpleMap> {
           Text("longitude: ${lastPos.longitude}"),
           Text("latitude: ${lastPos.latitude}"),
           Text("min max: ${getCoordRange(positions)}"),
-          Text("positions: $positions"),
-          Center(child: CustomPaint(
-              size: Size.square(100),
-              foregroundPainter: CustomMapPainter(positions))),
-          Padding(padding: EdgeInsets.only(bottom: 100)),
+          Text("positions: ${positions.length}"),
+          // Padding(
+          //     padding: EdgeInsets.all(20),
+          //     child: Center(
+          //         child: CustomPaint(
+          //             size: Size.square(MediaQuery.of(context).size.width - 40),
+          //             foregroundPainter: CustomMapPainter(positions)))),
+          Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(
+                  child: SizedBox(width: width, height: width, child: OSMFlutter(
+                    controller: mapController,
+                    trackMyPosition: false,
+                    initZoom: 12,
+                    minZoomLevel: 8,
+                    maxZoomLevel: 14,
+                    stepZoom: 1.0,
+                    userLocationMarker: UserLocationMaker(
+                      personMarker: const MarkerIcon(
+                        icon: Icon(
+                          Icons.location_history_rounded,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                      ),
+                      directionArrowMarker: const MarkerIcon(
+                        icon: Icon(
+                          Icons.double_arrow,
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                    roadConfiguration: RoadConfiguration(
+                      startIcon: const MarkerIcon(
+                        icon: Icon(
+                          Icons.person,
+                          size: 64,
+                          color: Colors.brown,
+                        ),
+                      ),
+                      roadColor: Colors.yellowAccent,
+                    ),
+                    markerOption: MarkerOption(
+                        defaultMarker: const MarkerIcon(
+                          icon: Icon(
+                            Icons.person_pin_circle,
+                            color: Colors.blue,
+                            size: 56,
+                          ),
+                        )
+                    ),
+                  )))),
         ],
       );
     } else {
@@ -148,50 +156,57 @@ MinMax<LonLat> getCoordRange(List<Position> positions) {
   return MinMax(LonLat(minLon, minLat), LonLat(maxLon, maxLat));
 }
 
-class CustomMapPainter extends CustomPainter {
-  List<Position> positions;
-
-  CustomMapPainter(this.positions) : super();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    log("canvas size || width: ${size.width} height: ${size.height}");
-    final basePaint = Paint()..color = Colors.yellow;
-    final paint = Paint()
-      ..strokeWidth = 2
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawRect(
-        Rect.fromLTRB(0, 0, 0 , 0), basePaint);
-    canvas.drawRect(
-        Rect.fromLTRB(0, 0, 0, 0), paint);
-
-    final lonlatRange = getCoordRange(positions);
-    final xRange = lonlatRange.max.longitude - lonlatRange.min.longitude;
-    final yRange = lonlatRange.max.latitude - lonlatRange.min.latitude;
-    log("range x $xRange y $yRange");
-
-    final path = Path();
-    for (var i = 0; i < positions.length; i++) {
-      var p = positions[i];
-      final dx =
-          (p.longitude - lonlatRange.min.longitude) / xRange * size.width;
-      final dy =
-          (p.latitude - lonlatRange.min.latitude) / yRange * size.height;
-      log("x: $dx y: $dy");
-      if (i == 0) {
-        path.moveTo(dx, dy);
-      } else {
-        path.relativeLineTo(dx, dy);
-      }
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    // TODO: implement shouldRepaint
-    return false;
-  }
+LonLat getCoordCenter(MinMax<LonLat> range) {
+  double longitude =
+      (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
+  double latitude =
+      (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
+  return LonLat(longitude, latitude);
 }
+
+// class CustomMapPainter extends CustomPainter {
+//   List<Position> positions;
+//
+//   CustomMapPainter(this.positions) : super();
+//
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final basePaint = Paint()..color = Colors.yellow;
+//     final paint = Paint()
+//       ..strokeWidth = 2
+//       ..color = Colors.black
+//       ..style = PaintingStyle.stroke;
+//
+//     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), basePaint);
+//     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+//
+//     final lonlatRange = getCoordRange(positions);
+//     final xRange = lonlatRange.max.longitude - lonlatRange.min.longitude;
+//     final yRange = lonlatRange.max.latitude - lonlatRange.min.latitude;
+//
+//     final path = Path();
+//
+//     double prevX = 0;
+//     double prevY = 0;
+//     for (var i = 0; i < positions.length; i++) {
+//       var p = positions[i];
+//       final dx =
+//           (p.longitude - lonlatRange.min.longitude) / xRange * size.width;
+//       final dy = (p.latitude - lonlatRange.min.latitude) / yRange * size.height;
+//       if (i == 0) {
+//         path.moveTo(dx, dy);
+//       } else {
+//         path.relativeLineTo(dx - prevX, dy - prevY);
+//       }
+//       prevX = dx;
+//       prevY = dy;
+//     }
+//     canvas.drawPath(path, paint);
+//   }
+//
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) {
+//     // TODO: implement shouldRepaint
+//     return false;
+//   }
+// }
