@@ -31,25 +31,6 @@ class _SimpleMapState extends State<SimpleMap> {
         range = getCoordRange(positions);
       });
     });
-
-    // set initial position on map
-    Geolocator.getLastKnownPosition().then((p) {
-      log("last position: $p");
-      if (p != null) {
-        setState(() {
-          positions.add(p);
-        });
-        mapController.move(LatLng(p.latitude, p.longitude), 12.8);
-      }
-
-      Geolocator.getCurrentPosition().then((p) {
-        log("init position: $p");
-        setState(() {
-          positions.add(p);
-        });
-        mapController.move(LatLng(p.latitude, p.longitude), 12.8);
-      });
-    });
   }
 
   @override
@@ -74,7 +55,24 @@ class _SimpleMapState extends State<SimpleMap> {
             child: FlutterMap(
               mapController: mapController,
               options: MapOptions(onMapReady: () {
-                // Use `MapController` as needed
+                // set initial position on map
+                Geolocator.getLastKnownPosition().then((p) {
+                  log("last position: $p");
+                  if (p != null) {
+                    setState(() {
+                      positions.add(p);
+                    });
+                    mapController.move(LatLng(p.latitude, p.longitude), 12.8);
+                  }
+
+                  Geolocator.getCurrentPosition().then((p) {
+                    log("init position: $p");
+                    setState(() {
+                      positions.add(p);
+                    });
+                    mapController.move(LatLng(p.latitude, p.longitude), 12.8);
+                  });
+                });
               },         zoom: 13.0,
                 maxZoom: 19.0,keepAlive: true, interactiveFlags: InteractiveFlag.all),
               children: [
@@ -82,6 +80,20 @@ class _SimpleMapState extends State<SimpleMap> {
                   urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                   userAgentPackageName: 'dev.janeuster.geo_steps',
                 ),
+                PolylineLayer(
+                  polylineCulling: false,
+                  polylines: [
+                    Polyline(
+                      points: getLatLngList(positions),
+                      color: Colors.blue,
+                      strokeWidth: 4,
+                    ),
+                    Polyline(points: [LatLng(42.4311972, -71.1088649)])
+                  ],
+                ),
+                if (positions.isNotEmpty) MarkerLayer(markers: [
+                  Marker(point: LatLng(lastPos!.latitude, lastPos!.longitude), builder: (context) => FlutterLogo())
+                ],)
               ],
               nonRotatedChildren: [
                 CustomAttributionWidget.defaultWidget(
@@ -184,6 +196,10 @@ LatLng getCoordCenter(MinMax<LatLng> range) {
   double latitude =
       (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
   return LatLng(latitude, longitude);
+}
+
+List<LatLng> getLatLngList(List<Position> positions) {
+  return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
 }
 
 // class CustomMapPainter extends CustomPainter {
