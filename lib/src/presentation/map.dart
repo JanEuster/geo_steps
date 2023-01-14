@@ -1,10 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geo_steps/src/utils/location.dart';
 import "dart:developer";
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:flutter_map/flutter_map.dart'; // Suitable for most situations
+import 'package:flutter_map/plugin_api.dart';
+import 'package:latlong2/latlong.dart';
 
 class SimpleMap extends StatefulWidget {
   const SimpleMap({super.key});
@@ -14,101 +15,122 @@ class SimpleMap extends StatefulWidget {
 }
 
 class _SimpleMapState extends State<SimpleMap> {
+  List<Position> positions = <Position>[];
+  late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
+  final mapController = MapController();
+  MinMax<LatLng>? range;
+
   @override
   void initState() {
+    super.initState();
+
     checkPosition();
     streamPosition(defaultTargetPlatform, (Position position) {
       setState(() {
-        positions = [...positions, position];
+        positions.add(position);
+        range = getCoordRange(positions);
+      });
+    });
+
+    // set initial position on map
+    Geolocator.getLastKnownPosition().then((p) {
+      log("last position: $p");
+      if (p != null) {
+        setState(() {
+          positions.add(p);
+        });
+        mapController.move(LatLng(p.latitude, p.longitude), 12.8);
+      }
+
+      Geolocator.getCurrentPosition().then((p) {
+        log("init position: $p");
+        setState(() {
+          positions.add(p);
+        });
+        mapController.move(LatLng(p.latitude, p.longitude), 12.8);
       });
     });
   }
-
-  List<Position> positions = <Position>[];
-  late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
-  MapController mapController = MapController.withPosition(
-    initPosition: GeoPoint(
-      latitude: 47.4358055,
-      longitude: 8.4737324
-      ,),
-    areaLimit: BoundingBox(
-      east: 10.4922941,
-      north: 47.8084648,
-      south: 45.817995,
-      west:  5.9559113,
-    ),
-  );
-
 
   @override
   Widget build(BuildContext context) {
     defaultTargetPlatform = Theme.of(context).platform;
     double width = MediaQuery.of(context).size.width;
+    Position? lastPos;
     if (positions.isNotEmpty) {
-      Position lastPos = positions.last;
-      return Column(
-        children: [
-          Text("longitude: ${lastPos.longitude}"),
-          Text("latitude: ${lastPos.latitude}"),
+      lastPos = positions.last;
+    }
+    return Column(
+      children: [
+        if (positions.isNotEmpty) ...[
+          Text("longitude: ${lastPos!.longitude}"),
+          Text("latitude: ${lastPos!.latitude}"),
           Text("min max: ${getCoordRange(positions)}"),
           Text("positions: ${positions.length}"),
-          // Padding(
-          //     padding: EdgeInsets.all(20),
-          //     child: Center(
-          //         child: CustomPaint(
-          //             size: Size.square(MediaQuery.of(context).size.width - 40),
-          //             foregroundPainter: CustomMapPainter(positions)))),
-          Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                  child: SizedBox(width: width, height: width, child: OSMFlutter(
-                    controller: mapController,
-                    trackMyPosition: false,
-                    initZoom: 12,
-                    minZoomLevel: 8,
-                    maxZoomLevel: 14,
-                    stepZoom: 1.0,
-                    userLocationMarker: UserLocationMaker(
-                      personMarker: const MarkerIcon(
-                        icon: Icon(
-                          Icons.location_history_rounded,
-                          color: Colors.red,
-                          size: 48,
-                        ),
-                      ),
-                      directionArrowMarker: const MarkerIcon(
-                        icon: Icon(
-                          Icons.double_arrow,
-                          size: 48,
-                        ),
-                      ),
-                    ),
-                    roadConfiguration: RoadConfiguration(
-                      startIcon: const MarkerIcon(
-                        icon: Icon(
-                          Icons.person,
-                          size: 64,
-                          color: Colors.brown,
-                        ),
-                      ),
-                      roadColor: Colors.yellowAccent,
-                    ),
-                    markerOption: MarkerOption(
-                        defaultMarker: const MarkerIcon(
-                          icon: Icon(
-                            Icons.person_pin_circle,
-                            color: Colors.blue,
-                            size: 56,
-                          ),
-                        )
-                    ),
-                  )))),
         ],
-      );
-    } else {
-      return const Text("No Data to Display");
-    }
+        SizedBox(
+            width: width,
+            height: width,
+            child: FlutterMap(
+              mapController: mapController,
+              options: MapOptions(onMapReady: () {
+                // Use `MapController` as needed
+              },         zoom: 13.0,
+                maxZoom: 19.0,keepAlive: true, interactiveFlags: InteractiveFlag.all),
+              children: [
+                TileLayer(
+                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  userAgentPackageName: 'dev.janeuster.geo_steps',
+                ),
+              ],
+              nonRotatedChildren: [
+                CustomAttributionWidget.defaultWidget(
+                  source: '© OpenStreetMap contributors',
+                  sourceTextStyle: TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+
+                  onSourceTapped: () {},
+                ),
+              ],
+            )),
+      ],
+    );
   }
+}
+
+class CustomAttributionWidget extends AttributionWidget {
+  CustomAttributionWidget({required super.attributionBuilder});
+
+  static Widget defaultWidget({
+    required String source,
+    void Function()? onSourceTapped,
+    TextStyle sourceTextStyle = const TextStyle(color: Color(0xFF0078a8)),
+    Alignment alignment = Alignment.bottomRight,
+  }) =>       Align(
+    alignment: alignment,
+    child: ColoredBox(
+      color: const Color(0xCCFFFFFF),
+      child: GestureDetector(
+        onTap: onSourceTapped,
+        child: Padding(
+          padding: const EdgeInsets.all(3),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MouseRegion(
+                cursor: onSourceTapped == null
+                    ? MouseCursor.defer
+                    : SystemMouseCursors.click,
+                child: Text(
+                  source,
+                  style: onSourceTapped == null ? null : sourceTextStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class MinMax<T> {
@@ -135,7 +157,7 @@ class LonLat {
   }
 }
 
-MinMax<LonLat> getCoordRange(List<Position> positions) {
+MinMax<LatLng> getCoordRange(List<Position> positions) {
   double minLon = positions[0].longitude;
   double minLat = positions[0].latitude;
   double maxLon = positions[0].longitude;
@@ -153,15 +175,15 @@ MinMax<LonLat> getCoordRange(List<Position> positions) {
       minLat = p.latitude;
     }
   }
-  return MinMax(LonLat(minLon, minLat), LonLat(maxLon, maxLat));
+  return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
 }
 
-LonLat getCoordCenter(MinMax<LonLat> range) {
+LatLng getCoordCenter(MinMax<LatLng> range) {
   double longitude =
       (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
   double latitude =
       (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
-  return LonLat(longitude, latitude);
+  return LatLng(latitude, longitude);
 }
 
 // class CustomMapPainter extends CustomPainter {

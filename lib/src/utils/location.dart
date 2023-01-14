@@ -50,8 +50,9 @@ Future<void> streamPosition(TargetPlatform defaultTargetPlatform, Function(Posit
   Geolocator.getPositionStream(locationSettings: locationSettings)
       .listen((Position? position) {
         addPosition(position!);
-    log(position == null
-        ? 'Unknown'
-        : '${position.latitude.toString()}, ${position.longitude.toString()}');
+        // log location
+        // log(position == null
+        //     ? 'Unknown'
+        //     : '${position.latitude.toString()}, ${position.longitude.toString()}');
   });
 }
