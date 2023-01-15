@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.geo_steps">
+    package="janeuster.geo_steps">
 
 <!--    android:name="androidx.multidex.MultiDexApplication"-->
     <application

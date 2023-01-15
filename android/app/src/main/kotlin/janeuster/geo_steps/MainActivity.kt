@@ -1,4 +1,4 @@
-package com.example.geo_steps
+package janeuster.geo_steps
 
 import io.flutter.embedding.android.FlutterActivity
 
