@@ -1,11 +1,16 @@
+// dart imports
+import "dart:developer";
+
+// flutter imports
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:geo_steps/src/utils/location.dart';
-import "dart:developer";
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_map/flutter_map.dart'; // Suitable for most situations
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
+
+// local imports
+import 'package:geo_steps/src/utils/location.dart';
 
 class SimpleMap extends StatefulWidget {
   const SimpleMap({super.key});
@@ -145,62 +150,6 @@ class CustomAttributionWidget extends AttributionWidget {
   );
 }
 
-class MinMax<T> {
-  T min;
-  T max;
-
-  MinMax(this.min, this.max);
-
-  @override
-  String toString() {
-    return "[min] $min [max] $max";
-  }
-}
-
-class LonLat {
-  double longitude;
-  double latitude;
-
-  LonLat(this.longitude, this.latitude);
-
-  @override
-  String toString() {
-    return "long: $longitude, lat: $latitude";
-  }
-}
-
-MinMax<LatLng> getCoordRange(List<Position> positions) {
-  double minLon = positions[0].longitude;
-  double minLat = positions[0].latitude;
-  double maxLon = positions[0].longitude;
-  double maxLat = positions[0].latitude;
-  for (var i = 0; i < positions.length; i++) {
-    var p = positions[i];
-    if (p.longitude > maxLon) {
-      maxLon = p.longitude;
-    } else if (p.longitude < minLon) {
-      minLon = p.longitude;
-    }
-    if (p.latitude > maxLat) {
-      maxLat = p.latitude;
-    } else if (p.latitude < minLat) {
-      minLat = p.latitude;
-    }
-  }
-  return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
-}
-
-LatLng getCoordCenter(MinMax<LatLng> range) {
-  double longitude =
-      (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
-  double latitude =
-      (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
-  return LatLng(latitude, longitude);
-}
-
-List<LatLng> getLatLngList(List<Position> positions) {
-  return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
-}
 
 // class CustomMapPainter extends CustomPainter {
 //   List<Position> positions;
