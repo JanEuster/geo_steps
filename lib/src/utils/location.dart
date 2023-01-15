@@ -84,6 +84,23 @@ class LocationService {
     log("gpx file saved to $gpxFilePath");
   }
 
+  Future<void> exportGpx() async {
+    String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(ExternalPath.DIRECTORY_DOWNLOADS);
+    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+
+    var gpxDir = Directory(downloadsPath);
+    if (!(await gpxDir.exists())) {
+      await gpxDir.create(recursive: true);
+    }
+
+    var gpxFilePath = "$downloadsPath/${date}.gpx";
+    var gpxFile = File(gpxFilePath);
+
+    await gpxFile.writeAsString(gpxRepresentation, flush: true);
+
+    log("gpx file exported to $gpxFilePath");
+  }
+
 }
 
 
