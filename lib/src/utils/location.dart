@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:geolocator/geolocator.dart';
+import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/widgets.dart';
 import 'dart:async';
@@ -8,28 +12,74 @@ import "dart:developer";
 
 class LocationService {
   List<Position> positions = [];
+
   LocationService() {
-
-  }
-
-  void addPosition(Position position) {
-    positions.add(position);
   }
 
   bool get hasPositions {
     return positions.isNotEmpty;
   }
+
   Position get lastPos {
     return positions.last;
   }
+
   int get posCount {
     return positions.length;
   }
+
   MinMax<LatLng> get range {
     return getCoordRange(positions);
   }
+
   List<LatLng> get latLngList {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
+
+  String get gpxRepresentation {
+    var gpx = Gpx();
+    gpx.creator = "app.janeuster.geo_steps";
+    gpx.trks = [
+      Trk(trksegs: [
+        Trkseg(trkpts: positions.map((p) =>
+            Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude)).toList())
+      ])
+    ];
+    String gpxString = GpxWriter().asString(gpx, pretty: false);
+    log("gpx string: $gpxString");
+    return gpxString;
+  }
+
+  void addPosition(Position position) {
+    positions.add(position);
+    if (positions.length == 20) {
+      saveToday();
+    }
+  }
+
+  Future<void> loadToday() async {
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String appDocPath = appDocDir.path;
+  }
+
+  Future<void> saveToday() async {
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String appDocPath = appDocDir.path;
+
+    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+
+    var gpxDirPath = "$appDocPath/gpxData";
+    var gpxDir = Directory(gpxDirPath);
+    if (!(await gpxDir.exists())) {
+      await gpxDir.create(recursive: true);
+    }
+
+    var gpxFilePath = "$gpxDirPath/${date}.gpx";
+    var gpxFile = File(gpxFilePath);
+
+    gpxFile.writeAsString(gpxRepresentation);
+
+    log("gpx file saved to $gpxFilePath");
   }
 
 }
@@ -37,13 +87,16 @@ class LocationService {
 
 Future<void> checkPosition() async {
   while (true) {
-    if (await Permission.locationAlways.request().isGranted) {
+    if (await Permission.locationAlways
+        .request()
+        .isGranted) {
       break;
     }
   }
 }
 
-Future<void> streamPosition(TargetPlatform defaultTargetPlatform, Function(Position) addPosition) async {
+Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
+    Function(Position) addPosition) async {
   late LocationSettings locationSettings;
 
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -80,11 +133,11 @@ Future<void> streamPosition(TargetPlatform defaultTargetPlatform, Function(Posit
   StreamSubscription<Position> positionStream =
   Geolocator.getPositionStream(locationSettings: locationSettings)
       .listen((Position? position) {
-        addPosition(position!);
-        // log location
-        // log(position == null
-        //     ? 'Unknown'
-        //     : '${position.latitude.toString()}, ${position.longitude.toString()}');
+    addPosition(position!);
+    // log location
+    // log(position == null
+    //     ? 'Unknown'
+    //     : '${position.latitude.toString()}, ${position.longitude.toString()}');
   });
 }
 
