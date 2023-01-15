@@ -104,16 +104,6 @@ class LocationService {
 }
 
 
-Future<void> checkPosition() async {
-  while (true) {
-    if (await Permission.locationAlways
-        .request()
-        .isGranted) {
-      break;
-    }
-  }
-}
-
 Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
     Function(Position) addPosition) async {
   late LocationSettings locationSettings;

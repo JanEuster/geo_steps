@@ -9,6 +9,7 @@ import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
 import 'package:geo_steps/src/utils/notification.dart';
+import 'package:geo_steps/src/utils/permissions.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -104,7 +105,7 @@ class MyWidgetsApp extends StatefulWidget {
 class _MyWidgetsAppState extends State<MyWidgetsApp> {
   @override
   void initState() {
-    requestNotificationAccess();
+    requestAllNecessaryPermissions();
 
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(

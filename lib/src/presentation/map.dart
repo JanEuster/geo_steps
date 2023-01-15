@@ -29,7 +29,6 @@ class _SimpleMapState extends State<SimpleMap> {
   void initState() {
     super.initState();
 
-    checkPosition();
     streamPosition(defaultTargetPlatform, (Position position) {
       setState(() {
         locationService.addPosition(position);
