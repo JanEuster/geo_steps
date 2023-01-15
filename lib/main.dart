@@ -9,25 +9,26 @@ import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
 import 'package:geo_steps/src/utils/notification.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 
+@pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    int? totalExecutions;
-    final prefs = await SharedPreferences.getInstance(); //Initialize dependency
 
-    try {
-      //add code execution
-      totalExecutions = prefs.getInt("totalExecutions");
-      prefs.setInt(
-          "totalExecutions", totalExecutions == null ? 1 : totalExecutions + 1);
-    } catch (err) {
-      log(err
-          .toString()); // Logger flutter package, prints error on the debug console
-      throw Exception(err);
-    }
+    // test notifcation on today route load
+    Position? p = await Geolocator.getLastKnownPosition();
+    log("pos: $p");
+    AwesomeNotifications().createNotification(
+        content: NotificationContent(
+      id: 10,
+      channelKey: 'basic_channel',
+      title: 'background notification',
+      body: "now longitude: ${p!.longitude} latitude: ${p!.latitude}",
+      actionType: ActionType.Default,
+    ));
 
     return Future.value(true);
   });
@@ -54,7 +55,15 @@ void main() async {
             channelGroupName: 'Basic group')
       ],
       debug: true);
-  // Workmanager().registerOneOffTask("dev.janeuster.geo_steps.test", "test", tag: "testing");
+
+  Workmanager().initialize(
+      callbackDispatcher, // The top level function, aka callbackDispatcher
+      isInDebugMode:
+          true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+      );
+
+  Workmanager().registerOneOffTask("dev.janeuster.geo_steps.test", "test",
+      tag: "testing", initialDelay: const Duration(seconds: 30));
 
   runApp(MyWidgetsApp());
 }

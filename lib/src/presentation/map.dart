@@ -38,16 +38,6 @@ class _SimpleMapState extends State<SimpleMap> {
       });
     });
 
-    // test notifcation on today route load
-    // AwesomeNotifications().createNotification(
-    //     content: NotificationContent(
-    //         id: 10,
-    //         channelKey: 'basic_channel',
-    //         title: 'viewing map',
-    //         body: 'map men',
-    //         actionType: ActionType.Default,
-    //     )
-    // );
   }
 
   @override
@@ -101,7 +91,7 @@ class _SimpleMapState extends State<SimpleMap> {
                       InteractiveFlag.all & ~InteractiveFlag.rotate),
               nonRotatedChildren: [
                 CustomAttributionWidget.defaultWidget(
-                  source: '© OpenStreetMap contributors',
+                  source: '© OpenStreetMap contributors; United States Geological Survey',
                   sourceTextStyle:
                       TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
                   onSourceTapped: () {},
@@ -112,6 +102,10 @@ class _SimpleMapState extends State<SimpleMap> {
                   urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                   userAgentPackageName: 'dev.janeuster.geo_steps',
                 ),
+                // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
+                // TileLayer(urlTemplate: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/4/5/5?blankTile=false",
+                //   userAgentPackageName: 'dev.janeuster.geo_steps'),
+                // ),
                 PolylineLayer(
                   polylineCulling: false,
                   polylines: [
