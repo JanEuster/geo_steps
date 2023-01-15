@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:external_path/external_path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/widgets.dart';
 import 'dart:async';
@@ -12,8 +12,13 @@ import "dart:developer";
 
 class LocationService {
   List<Position> positions = [];
+  late Directory appDir;
 
   LocationService() {
+    ExternalPath.getExternalStorageDirectories().then((dirs) {
+      appDir = Directory("${dirs[0]}/geo_steps");
+      appDir.create();
+    });
   }
 
   bool get hasPositions {
@@ -52,23 +57,20 @@ class LocationService {
 
   void addPosition(Position position) {
     positions.add(position);
-    if (positions.length == 20) {
+    if (positions.length == 10) {
       saveToday();
+      exportGpx();
     }
   }
 
   Future<void> loadToday() async {
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String appDocPath = appDocDir.path;
   }
 
   Future<void> saveToday() async {
-    Directory appDocDir = await getApplicationDocumentsDirectory();
-    String appDocPath = appDocDir.path;
 
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
 
-    var gpxDirPath = "$appDocPath/gpxData";
+    var gpxDirPath = "${appDir.path}/gpxData";
     var gpxDir = Directory(gpxDirPath);
     if (!(await gpxDir.exists())) {
       await gpxDir.create(recursive: true);
@@ -77,7 +79,7 @@ class LocationService {
     var gpxFilePath = "$gpxDirPath/${date}.gpx";
     var gpxFile = File(gpxFilePath);
 
-    gpxFile.writeAsString(gpxRepresentation);
+    await gpxFile.writeAsString(gpxRepresentation, flush: true);
 
     log("gpx file saved to $gpxFilePath");
   }
