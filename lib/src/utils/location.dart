@@ -9,7 +9,6 @@ import 'package:flutter/widgets.dart';
 import 'dart:async';
 import "dart:developer";
 
-
 class LocationService {
   List<Position> positions = [];
   late Directory appDir;
@@ -41,33 +40,29 @@ class LocationService {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
   }
 
-  String get gpxRepresentation {
+  String gpxRepresentation({bool pretty = false}) {
     var gpx = Gpx();
     gpx.creator = "app.janeuster.geo_steps";
     gpx.trks = [
       Trk(trksegs: [
-        Trkseg(trkpts: positions.map((p) =>
-            Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude)).toList())
+        Trkseg(
+            trkpts: positions
+                .map((p) =>
+                    Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude))
+                .toList())
       ])
     ];
-    String gpxString = GpxWriter().asString(gpx, pretty: false);
-    log("gpx string: $gpxString");
+    String gpxString = GpxWriter().asString(gpx, pretty: pretty);
     return gpxString;
   }
 
   void addPosition(Position position) {
     positions.add(position);
-    if (positions.length == 10) {
-      saveToday();
-      exportGpx();
-    }
   }
 
-  Future<void> loadToday() async {
-  }
+  Future<void> loadToday() async {}
 
   Future<void> saveToday() async {
-
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
 
     var gpxDirPath = "${appDir.path}/gpxData";
@@ -79,13 +74,14 @@ class LocationService {
     var gpxFilePath = "$gpxDirPath/${date}.gpx";
     var gpxFile = File(gpxFilePath);
 
-    await gpxFile.writeAsString(gpxRepresentation, flush: true);
+    await gpxFile.writeAsString(gpxRepresentation(), flush: true);
 
     log("gpx file saved to $gpxFilePath");
   }
 
   Future<void> exportGpx() async {
-    String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(ExternalPath.DIRECTORY_DOWNLOADS);
+    String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
+        ExternalPath.DIRECTORY_DOWNLOADS);
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
 
     var gpxDir = Directory(downloadsPath);
@@ -96,13 +92,40 @@ class LocationService {
     var gpxFilePath = "$downloadsPath/${date}.gpx";
     var gpxFile = File(gpxFilePath);
 
-    await gpxFile.writeAsString(gpxRepresentation, flush: true);
+    await gpxFile.writeAsString(gpxRepresentation(pretty: true), flush: true);
 
     log("gpx file exported to $gpxFilePath");
   }
 
-}
+  MinMax<LatLng> getCoordRange(List<Position> positions) {
+    double minLon = positions[0].longitude;
+    double minLat = positions[0].latitude;
+    double maxLon = positions[0].longitude;
+    double maxLat = positions[0].latitude;
+    for (var i = 0; i < positions.length; i++) {
+      var p = positions[i];
+      if (p.longitude > maxLon) {
+        maxLon = p.longitude;
+      } else if (p.longitude < minLon) {
+        minLon = p.longitude;
+      }
+      if (p.latitude > maxLat) {
+        maxLat = p.latitude;
+      } else if (p.latitude < minLat) {
+        minLat = p.latitude;
+      }
+    }
+    return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
+  }
 
+  LatLng getCoordCenter(MinMax<LatLng> range) {
+    double longitude =
+        (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
+    double latitude =
+        (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
+    return LatLng(latitude, longitude);
+  }
+}
 
 Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
     Function(Position) addPosition) async {
@@ -118,7 +141,7 @@ Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
         //when going to the background
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationText:
-          "Example app will continue to receive your location even when you aren't using it",
+              "Example app will continue to receive your location even when you aren't using it",
           notificationTitle: "Running in Background",
           enableWakeLock: true,
         ));
@@ -140,13 +163,9 @@ Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
   }
 
   StreamSubscription<Position> positionStream =
-  Geolocator.getPositionStream(locationSettings: locationSettings)
-      .listen((Position? position) {
+      Geolocator.getPositionStream(locationSettings: locationSettings)
+          .listen((Position? position) {
     addPosition(position!);
-    // log location
-    // log(position == null
-    //     ? 'Unknown'
-    //     : '${position.latitude.toString()}, ${position.longitude.toString()}');
   });
 }
 
@@ -172,33 +191,4 @@ class LonLat {
   String toString() {
     return "long: $longitude, lat: $latitude";
   }
-}
-
-MinMax<LatLng> getCoordRange(List<Position> positions) {
-  double minLon = positions[0].longitude;
-  double minLat = positions[0].latitude;
-  double maxLon = positions[0].longitude;
-  double maxLat = positions[0].latitude;
-  for (var i = 0; i < positions.length; i++) {
-    var p = positions[i];
-    if (p.longitude > maxLon) {
-      maxLon = p.longitude;
-    } else if (p.longitude < minLon) {
-      minLon = p.longitude;
-    }
-    if (p.latitude > maxLat) {
-      maxLat = p.latitude;
-    } else if (p.latitude < minLat) {
-      minLat = p.latitude;
-    }
-  }
-  return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
-}
-
-LatLng getCoordCenter(MinMax<LatLng> range) {
-  double longitude =
-      (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
-  double latitude =
-      (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
-  return LatLng(latitude, longitude);
 }
