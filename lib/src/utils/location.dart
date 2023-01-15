@@ -5,6 +5,36 @@ import 'package:flutter/widgets.dart';
 import 'dart:async';
 import "dart:developer";
 
+
+class LocationService {
+  List<Position> positions = [];
+  LocationService() {
+
+  }
+
+  void addPosition(Position position) {
+    positions.add(position);
+  }
+
+  bool get hasPositions {
+    return positions.isNotEmpty;
+  }
+  Position get lastPos {
+    return positions.last;
+  }
+  int get posCount {
+    return positions.length;
+  }
+  MinMax<LatLng> get range {
+    return getCoordRange(positions);
+  }
+  List<LatLng> get latLngList {
+    return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
+
+}
+
+
 Future<void> checkPosition() async {
   while (true) {
     if (await Permission.locationAlways.request().isGranted) {
@@ -109,8 +139,4 @@ LatLng getCoordCenter(MinMax<LatLng> range) {
   double latitude =
       (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
   return LatLng(latitude, longitude);
-}
-
-List<LatLng> getLatLngList(List<Position> positions) {
-  return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
 }

@@ -21,10 +21,9 @@ class SimpleMap extends StatefulWidget {
 }
 
 class _SimpleMapState extends State<SimpleMap> {
-  List<Position> positions = <Position>[];
+  LocationService locationService = LocationService();
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
   final mapController = MapController();
-  MinMax<LatLng>? range;
 
   @override
   void initState() {
@@ -33,28 +32,22 @@ class _SimpleMapState extends State<SimpleMap> {
     checkPosition();
     streamPosition(defaultTargetPlatform, (Position position) {
       setState(() {
-        positions.add(position);
-        range = getCoordRange(positions);
+        locationService.addPosition(position);
       });
     });
-
   }
 
   @override
   Widget build(BuildContext context) {
     defaultTargetPlatform = Theme.of(context).platform;
     double width = MediaQuery.of(context).size.width;
-    Position? lastPos;
-    if (positions.isNotEmpty) {
-      lastPos = positions.last;
-    }
     return Column(
       children: [
-        if (positions.isNotEmpty) ...[
-          Text("longitude: ${lastPos!.longitude}"),
-          Text("latitude: ${lastPos!.latitude}"),
-          Text("min max: ${getCoordRange(positions)}"),
-          Text("positions: ${positions.length}"),
+        if (locationService.hasPositions) ...[
+          Text("longitude: ${locationService.lastPos.longitude}"),
+          Text("latitude: ${locationService.lastPos.latitude}"),
+          Text("min max: ${locationService.range}"),
+          Text("positions: ${locationService.posCount}"),
         ],
         SizedBox(
             width: width,
@@ -68,7 +61,7 @@ class _SimpleMapState extends State<SimpleMap> {
                       log("last position: $p");
                       if (p != null) {
                         setState(() {
-                          positions.add(p);
+                          locationService.positions.add(p);
                         });
                         mapController.move(
                             LatLng(p.latitude, p.longitude), 12.8);
@@ -77,7 +70,7 @@ class _SimpleMapState extends State<SimpleMap> {
                       Geolocator.getCurrentPosition().then((p) {
                         log("init position: $p");
                         setState(() {
-                          positions.add(p);
+                          locationService.positions.add(p);
                         });
                         mapController.move(
                             LatLng(p.latitude, p.longitude), 12.8);
@@ -91,7 +84,8 @@ class _SimpleMapState extends State<SimpleMap> {
                       InteractiveFlag.all & ~InteractiveFlag.rotate),
               nonRotatedChildren: [
                 CustomAttributionWidget.defaultWidget(
-                  source: '© OpenStreetMap contributors; United States Geological Survey',
+                  source:
+                      '© OpenStreetMap contributors; United States Geological Survey',
                   sourceTextStyle:
                       TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
                   onSourceTapped: () {},
@@ -110,18 +104,19 @@ class _SimpleMapState extends State<SimpleMap> {
                   polylineCulling: false,
                   polylines: [
                     Polyline(
-                      points: getLatLngList(positions),
+                      points: locationService.latLngList,
                       color: Colors.blue,
                       strokeWidth: 4,
                     ),
                     Polyline(points: [LatLng(42.4311972, -71.1088649)])
                   ],
                 ),
-                if (positions.isNotEmpty)
+                if (locationService.hasPositions)
                   MarkerLayer(
                     markers: [
                       Marker(
-                          point: LatLng(lastPos!.latitude, lastPos!.longitude),
+                          point: LatLng(locationService.lastPos.latitude,
+                              locationService.lastPos.longitude),
                           builder: (context) => FlutterLogo())
                     ],
                   )
@@ -168,4 +163,3 @@ class CustomAttributionWidget extends AttributionWidget {
         ),
       );
 }
-
