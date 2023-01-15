@@ -8,8 +8,54 @@ import "dart:developer";
 import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
+import 'package:geo_steps/src/utils/notification.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    int? totalExecutions;
+    final prefs = await SharedPreferences.getInstance(); //Initialize dependency
+
+    try {
+      //add code execution
+      totalExecutions = prefs.getInt("totalExecutions");
+      prefs.setInt(
+          "totalExecutions", totalExecutions == null ? 1 : totalExecutions + 1);
+    } catch (err) {
+      log(err
+          .toString()); // Logger flutter package, prints error on the debug console
+      throw Exception(err);
+    }
+
+    return Future.value(true);
+  });
+}
 
 void main() async {
+  AwesomeNotifications().initialize(
+      // set the icon to null if you want to use the default app icon
+      null, // default icon
+      [
+        NotificationChannel(
+            channelGroupKey: 'basic_channel_group',
+            channelKey: 'basic_channel',
+            channelName: 'Basic notifications',
+            channelDescription: 'Notification channel for basic tests',
+            playSound: false,
+            defaultColor: Color(0xFF9D50DD),
+            ledColor: Colors.white)
+      ],
+      // Channel groups are only visual and are not required
+      channelGroups: [
+        NotificationChannelGroup(
+            channelGroupKey: 'basic_channel_group',
+            channelGroupName: 'Basic group')
+      ],
+      debug: true);
+  // Workmanager().registerOneOffTask("dev.janeuster.geo_steps.test", "test", tag: "testing");
+
   runApp(MyWidgetsApp());
 }
 
@@ -22,42 +68,62 @@ class AppRoute {
   AppRoute(this.title, this.route, this.icon, this.page);
 }
 
-class MyWidgetsApp extends StatelessWidget {
+class MyWidgetsApp extends StatefulWidget {
   String title = "geo_steps";
+  late Map<String, AppRoute> routes = {
+    "/": AppRoute(title, "/", Icons.nordic_walking, const MyHomePage()),
+    "/today": AppRoute(
+        "today",
+        "/today",
+        Icons.bar_chart,
+        ListView(children: const [
+          SimpleMap(),
+        ])),
+    "/overviews":
+        AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
+    "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
+  };
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
-  MyWidgetsApp({super.key}) {
-    routes = {
-      "/": AppRoute(title, "/", Icons.nordic_walking, const MyHomePage()),
-      "/today": AppRoute(
-          "today",
-          "/today",
-          Icons.bar_chart,
-          ListView(children: [
-            SimpleMap(),
-          ])),
-      "/overviews":
-          AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
-      "/places":
-          AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
-    };
+  MyWidgetsApp({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _MyWidgetsAppState();
+}
+
+class _MyWidgetsAppState extends State<MyWidgetsApp> {
+  @override
+  void initState() {
+    requestNotificationAccess();
+
+    // Only after at least the action method is set, the notification events are delivered
+    AwesomeNotifications().setListeners(
+        onActionReceivedMethod: NotificationController.onActionReceivedMethod,
+        onNotificationCreatedMethod:
+            NotificationController.onNotificationCreatedMethod,
+        onNotificationDisplayedMethod:
+            NotificationController.onNotificationDisplayedMethod,
+        onDismissActionReceivedMethod:
+            NotificationController.onDismissActionReceivedMethod);
+
+    super.initState();
   }
-
-  late Map<String, AppRoute> routes;
 
   Route generate(RouteSettings settings) {
     Route page;
-    if (routes[settings.name] != null) {
-      title = routes[settings.name]!.title;
+    if (widget.routes[settings.name] != null) {
+      widget.title = widget.routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
         EdgeInsets insets = MediaQuery.of(context).viewInsets;
         EdgeInsets padding = MediaQuery.of(context).viewPadding;
         log("device insets || insets: $insets, padding: $padding");
         return PageWithNav(
-            title: title,
+            title: widget.title,
             color: const Color(0xFFFFFFFF),
-            navItems: routes.values.toList(),
-            child: routes[settings.name]?.page);
+            navItems: widget.routes.values.toList(),
+            child: widget.routes[settings.name]?.page);
       }, transitionsBuilder: (_, Animation<double> animation,
           Animation<double> second, Widget child) {
         return FadeTransition(
@@ -123,13 +189,49 @@ class MyWidgetsApp extends StatelessWidget {
   Widget build(BuildContext context) {
     log("target: ${Theme.of(context).platform}");
     return WidgetsApp(
+      navigatorKey: MyWidgetsApp.navigatorKey,
       onGenerateRoute: generate,
       onUnknownRoute: unKnownRoute,
       textStyle: const TextStyle(
           fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black),
-      initialRoute: "/today",
+      initialRoute: "/",
       color: const Color.fromRGBO(255, 0, 0, 1.0),
-      title: title,
+      title: widget.title,
     );
+  }
+}
+
+class NotificationController {
+  /// Use this method to detect when a new notification or a schedule is created
+  @pragma("vm:entry-point")
+  static Future<void> onNotificationCreatedMethod(
+      ReceivedNotification receivedNotification) async {
+    // Your code goes here
+  }
+
+  /// Use this method to detect every time that a new notification is displayed
+  @pragma("vm:entry-point")
+  static Future<void> onNotificationDisplayedMethod(
+      ReceivedNotification receivedNotification) async {
+    // Your code goes here
+  }
+
+  /// Use this method to detect if the user dismissed a notification
+  @pragma("vm:entry-point")
+  static Future<void> onDismissActionReceivedMethod(
+      ReceivedAction receivedAction) async {
+    // Your code goes here
+  }
+
+  /// Use this method to detect when the user taps on a notification or action button
+  @pragma("vm:entry-point")
+  static Future<void> onActionReceivedMethod(
+      ReceivedAction receivedAction) async {
+    // Your code goes here
+
+    // Navigate into pages, avoiding to open the notification details page over another details page already opened
+    // MyWidgetsApp.navigatorKey.currentState?.pushNamedAndRemoveUntil('/notification-page',
+    //         (route) => (route.settings.name != '/notification-page') || route.isFirst,
+    //     arguments: receivedAction);
   }
 }

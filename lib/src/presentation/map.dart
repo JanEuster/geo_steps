@@ -2,6 +2,7 @@
 import "dart:developer";
 
 // flutter imports
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
@@ -36,6 +37,17 @@ class _SimpleMapState extends State<SimpleMap> {
         range = getCoordRange(positions);
       });
     });
+
+    // test notifcation on today route load
+    // AwesomeNotifications().createNotification(
+    //     content: NotificationContent(
+    //         id: 10,
+    //         channelKey: 'basic_channel',
+    //         title: 'viewing map',
+    //         body: 'map men',
+    //         actionType: ActionType.Default,
+    //     )
+    // );
   }
 
   @override
@@ -59,27 +71,42 @@ class _SimpleMapState extends State<SimpleMap> {
             height: width,
             child: FlutterMap(
               mapController: mapController,
-              options: MapOptions(onMapReady: () {
-                // set initial position on map
-                Geolocator.getLastKnownPosition().then((p) {
-                  log("last position: $p");
-                  if (p != null) {
-                    setState(() {
-                      positions.add(p);
-                    });
-                    mapController.move(LatLng(p.latitude, p.longitude), 12.8);
-                  }
+              options: MapOptions(
+                  onMapReady: () {
+                    // set initial position on map
+                    Geolocator.getLastKnownPosition().then((p) {
+                      log("last position: $p");
+                      if (p != null) {
+                        setState(() {
+                          positions.add(p);
+                        });
+                        mapController.move(
+                            LatLng(p.latitude, p.longitude), 12.8);
+                      }
 
-                  Geolocator.getCurrentPosition().then((p) {
-                    log("init position: $p");
-                    setState(() {
-                      positions.add(p);
+                      Geolocator.getCurrentPosition().then((p) {
+                        log("init position: $p");
+                        setState(() {
+                          positions.add(p);
+                        });
+                        mapController.move(
+                            LatLng(p.latitude, p.longitude), 12.8);
+                      });
                     });
-                    mapController.move(LatLng(p.latitude, p.longitude), 12.8);
-                  });
-                });
-              },         zoom: 13.0,
-                maxZoom: 19.0,keepAlive: true, interactiveFlags: InteractiveFlag.all),
+                  },
+                  zoom: 13.0,
+                  maxZoom: 19.0,
+                  keepAlive: true,
+                  interactiveFlags: // all interactions except rotation
+                      InteractiveFlag.all & ~InteractiveFlag.rotate),
+              nonRotatedChildren: [
+                CustomAttributionWidget.defaultWidget(
+                  source: '© OpenStreetMap contributors',
+                  sourceTextStyle:
+                      TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+                  onSourceTapped: () {},
+                ),
+              ],
               children: [
                 TileLayer(
                   urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -96,17 +123,14 @@ class _SimpleMapState extends State<SimpleMap> {
                     Polyline(points: [LatLng(42.4311972, -71.1088649)])
                   ],
                 ),
-                if (positions.isNotEmpty) MarkerLayer(markers: [
-                  Marker(point: LatLng(lastPos!.latitude, lastPos!.longitude), builder: (context) => FlutterLogo())
-                ],)
-              ],
-              nonRotatedChildren: [
-                CustomAttributionWidget.defaultWidget(
-                  source: '© OpenStreetMap contributors',
-                  sourceTextStyle: TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
-
-                  onSourceTapped: () {},
-                ),
+                if (positions.isNotEmpty)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                          point: LatLng(lastPos!.latitude, lastPos!.longitude),
+                          builder: (context) => FlutterLogo())
+                    ],
+                  )
               ],
             )),
       ],
@@ -115,85 +139,39 @@ class _SimpleMapState extends State<SimpleMap> {
 }
 
 class CustomAttributionWidget extends AttributionWidget {
-  CustomAttributionWidget({required super.attributionBuilder});
+  const CustomAttributionWidget({super.key, required super.attributionBuilder});
 
   static Widget defaultWidget({
     required String source,
     void Function()? onSourceTapped,
     TextStyle sourceTextStyle = const TextStyle(color: Color(0xFF0078a8)),
     Alignment alignment = Alignment.bottomRight,
-  }) =>       Align(
-    alignment: alignment,
-    child: ColoredBox(
-      color: const Color(0xCCFFFFFF),
-      child: GestureDetector(
-        onTap: onSourceTapped,
-        child: Padding(
-          padding: const EdgeInsets.all(3),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              MouseRegion(
-                cursor: onSourceTapped == null
-                    ? MouseCursor.defer
-                    : SystemMouseCursors.click,
-                child: Text(
-                  source,
-                  style: onSourceTapped == null ? null : sourceTextStyle,
-                ),
+  }) =>
+      Align(
+        alignment: alignment,
+        child: ColoredBox(
+          color: const Color(0xCCFFFFFF),
+          child: GestureDetector(
+            onTap: onSourceTapped,
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MouseRegion(
+                    cursor: onSourceTapped == null
+                        ? MouseCursor.defer
+                        : SystemMouseCursors.click,
+                    child: Text(
+                      source,
+                      style: onSourceTapped == null ? null : sourceTextStyle,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
-
-// class CustomMapPainter extends CustomPainter {
-//   List<Position> positions;
-//
-//   CustomMapPainter(this.positions) : super();
-//
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     final basePaint = Paint()..color = Colors.yellow;
-//     final paint = Paint()
-//       ..strokeWidth = 2
-//       ..color = Colors.black
-//       ..style = PaintingStyle.stroke;
-//
-//     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), basePaint);
-//     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-//
-//     final lonlatRange = getCoordRange(positions);
-//     final xRange = lonlatRange.max.longitude - lonlatRange.min.longitude;
-//     final yRange = lonlatRange.max.latitude - lonlatRange.min.latitude;
-//
-//     final path = Path();
-//
-//     double prevX = 0;
-//     double prevY = 0;
-//     for (var i = 0; i < positions.length; i++) {
-//       var p = positions[i];
-//       final dx =
-//           (p.longitude - lonlatRange.min.longitude) / xRange * size.width;
-//       final dy = (p.latitude - lonlatRange.min.latitude) / yRange * size.height;
-//       if (i == 0) {
-//         path.moveTo(dx, dy);
-//       } else {
-//         path.relativeLineTo(dx - prevX, dy - prevY);
-//       }
-//       prevX = dx;
-//       prevY = dy;
-//     }
-//     canvas.drawPath(path, paint);
-//   }
-//
-//   @override
-//   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-//     // TODO: implement shouldRepaint
-//     return false;
-//   }
-// }
