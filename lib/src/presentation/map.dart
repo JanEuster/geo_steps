@@ -11,7 +11,7 @@ import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
 
 // local imports
-import 'package:geo_steps/src/utils/location.dart';
+import 'package:geo_steps/src/application/location.dart';
 
 class SimpleMap extends StatefulWidget {
   const SimpleMap({super.key});

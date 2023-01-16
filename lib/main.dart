@@ -8,7 +8,7 @@ import "dart:developer";
 import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
-import 'package:geo_steps/src/utils/notification.dart';
+import 'package:geo_steps/src/application/notification.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
