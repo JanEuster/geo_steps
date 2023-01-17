@@ -29,11 +29,15 @@ class _SimpleMapState extends State<SimpleMap> {
   void initState() {
     super.initState();
 
-    streamPosition(defaultTargetPlatform, (Position position) {
       setState(() {
-        locationService.addPosition(position);
+        locationService.record();
       });
-    });
+  }
+  @override
+  void dispose() {
+    locationService.stopRecording();
+
+    super.dispose();
   }
 
   @override

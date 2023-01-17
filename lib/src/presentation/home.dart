@@ -4,6 +4,7 @@ import 'package:geo_steps/src/application/preferences.dart';
 import "dart:developer";
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({super.key});
@@ -140,6 +141,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           AppSettings()
                               .trackingLocation
                               .set(isTrackingLocation!);
+                          if (isTrackingLocation == true) {
+                            Workmanager().registerPeriodicTask("dev.janeuster.geo_steps.gps_tracker", "gps_tracker",
+                                tag: "tracking", initialDelay: const Duration(seconds: 20), frequency: const Duration(minutes: 10));
+                          } else {
+                            Workmanager().cancelByTag("tracking");
+                          }
                         }
                       },
                       child: Container(

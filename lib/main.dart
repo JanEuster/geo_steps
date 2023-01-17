@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:geo_steps/src/application/location.dart';
 import "dart:developer";
 
 // local imports
@@ -19,20 +21,25 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    LocationService locationService = LocationService();
+    await locationService.record();
 
-    // test notifcation on today route load
-    Position? p = await Geolocator.getLastKnownPosition();
-    log("pos: $p");
-    // AwesomeNotifications().createNotification(
-    //     content: NotificationContent(
-    //   id: 10,
-    //   channelKey: 'basic_channel',
-    //   title: 'background notification',
-    //   body: "now longitude: ${p!.longitude} latitude: ${p!.latitude}",
-    //   actionType: ActionType.Default,
-    // ));
 
-    return Future.value(true);
+    Timer.periodic(const Duration(minutes: 1), (timer) {
+      log("background pos: ${locationService.lastPos}");
+      AwesomeNotifications().createNotification(
+          content: NotificationContent(
+            id: 10,
+            channelKey: 'basic_channel',
+            title: 'background notification',
+            body: "background pos: ${locationService.lastPos}",
+            actionType: ActionType.Default,
+          ));
+    });
+    await Future.delayed(const Duration(minutes: 10));
+    locationService.stopRecording();
+
+    return true;
   });
 }
 

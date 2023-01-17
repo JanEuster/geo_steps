@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
@@ -12,6 +13,7 @@ import "dart:developer";
 class LocationService {
   List<Position> positions = [];
   late Directory appDir;
+  StreamSubscription<Position>? recordingStream;
 
   LocationService() {
     ExternalPath.getExternalStorageDirectories().then((dirs) {
@@ -58,6 +60,15 @@ class LocationService {
 
   void addPosition(Position position) {
     positions.add(position);
+  }
+
+  Future<void> record() async {
+    log("start recording position data");
+    recordingStream = await streamPosition((p) => positions.add(p));
+  }
+  Future<void> stopRecording() async {
+    log("stop recording position data");
+    recordingStream?.cancel();
   }
 
   Future<void> loadToday() async {}
@@ -127,8 +138,7 @@ class LocationService {
   }
 }
 
-Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
-    Function(Position) addPosition) async {
+Future<StreamSubscription<Position>> streamPosition(Function(Position) addPosition) async {
   late LocationSettings locationSettings;
 
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -167,6 +177,7 @@ Future<void> streamPosition(TargetPlatform defaultTargetPlatform,
           .listen((Position? position) {
     addPosition(position!);
   });
+  return positionStream;
 }
 
 class MinMax<T> {
