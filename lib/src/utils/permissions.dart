@@ -5,20 +5,16 @@ import "dart:developer";
 Future<void> requestLocationAccess() async {
   // you need to request normal location access first, before being able to request locationAlways
   while (true) {
-    log("storage status: ${await Permission.location.status}");
     if ((await Permission.location
         .request())
         .isGranted) {
-      log("storage status: ${await Permission.location.status}");
       break;
     }
   }
   while (true) {
-    log("storage status: ${await Permission.locationAlways.status}");
     if ((await Permission.locationAlways
         .request())
         .isGranted) {
-      log("storage status: ${await Permission.locationAlways.status}");
       break;
     }
   }
@@ -26,11 +22,17 @@ Future<void> requestLocationAccess() async {
 
 Future<void> requestStorageAccess() async {
   while (true) {
-    log("storage status: ${await Permission.locationAlways.status}");
     if ((await Permission.storage
         .request())
         .isGranted) {
-      log("storage status: ${await Permission.storage.status}");
+      break;
+    }
+  }
+  // on android 11+ access to all files is necessary for creating files in emulated storage folders
+  while (true) {
+    if ((await Permission.manageExternalStorage
+        .request())
+        .isGranted) {
       break;
     }
   }
@@ -38,11 +40,9 @@ Future<void> requestStorageAccess() async {
 
 Future<void> requestNotificationAccess() async {
   while (true) {
-    log("storage status: ${await Permission.locationAlways.status}");
     if ((await Permission.notification
         .request())
         .isGranted) {
-      log("storage status: ${await Permission.notification.status}");
       break;
     }
   }
