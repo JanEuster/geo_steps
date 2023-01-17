@@ -30,7 +30,11 @@ class _SimpleMapState extends State<SimpleMap> {
     super.initState();
 
       setState(() {
-        locationService.record();
+
+        locationService.record(onReady: (p) {
+          mapController.move(
+              LatLng(p.latitude, p.longitude), 12.8);
+        });
       });
   }
   @override
@@ -60,25 +64,6 @@ class _SimpleMapState extends State<SimpleMap> {
               options: MapOptions(
                   onMapReady: () {
                     // set initial position on map
-                    Geolocator.getLastKnownPosition().then((p) {
-                      log("last position: $p");
-                      if (p != null) {
-                        setState(() {
-                          locationService.positions.add(p);
-                        });
-                        mapController.move(
-                            LatLng(p.latitude, p.longitude), 12.8);
-                      }
-
-                      Geolocator.getCurrentPosition().then((p) {
-                        log("init position: $p");
-                        setState(() {
-                          locationService.positions.add(p);
-                        });
-                        mapController.move(
-                            LatLng(p.latitude, p.longitude), 12.8);
-                      });
-                    });
                   },
                   zoom: 13.0,
                   maxZoom: 19.0,
