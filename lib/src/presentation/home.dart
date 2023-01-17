@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geo_steps/src/application/preferences.dart';
+import 'package:geo_steps/src/application/backgroundTasks.dart';
 import "dart:developer";
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -142,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               .trackingLocation
                               .set(isTrackingLocation!);
                           if (isTrackingLocation == true) {
-                            Workmanager().registerPeriodicTask("dev.janeuster.geo_steps.gps_tracker", "gps_tracker",
+                            Workmanager().registerPeriodicTask(locationTrackingTask, "gps_tracker",
                                 tag: "tracking", initialDelay: const Duration(seconds: 20), frequency: const Duration(minutes: 10));
                           } else {
                             Workmanager().cancelByTag("tracking");

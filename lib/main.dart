@@ -11,37 +11,13 @@ import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
 import 'package:geo_steps/src/application/notification.dart';
+import 'package:geo_steps/src/application/backgroundTasks.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
 import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
-
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    LocationService locationService = LocationService();
-    await locationService.record();
-
-
-    Timer.periodic(const Duration(minutes: 1), (timer) {
-      log("background pos: ${locationService.lastPos}");
-      AwesomeNotifications().createNotification(
-          content: NotificationContent(
-            id: 10,
-            channelKey: 'basic_channel',
-            title: 'background notification',
-            body: "background pos: ${locationService.lastPos}",
-            actionType: ActionType.Default,
-          ));
-    });
-    await Future.delayed(const Duration(minutes: 10));
-    locationService.stopRecording();
-
-    return true;
-  });
-}
 
 void main() async {
   AwesomeNotifications().initialize(
@@ -54,7 +30,7 @@ void main() async {
             channelName: 'Basic notifications',
             channelDescription: 'Notification channel for basic tests',
             playSound: false,
-            defaultColor: Color(0xFF9D50DD),
+            defaultColor: const Color(0xFF9D50DD),
             ledColor: Colors.white)
       ],
       // Channel groups are only visual and are not required
