@@ -25,13 +25,17 @@ void main() async {
       null, // default icon
       [
         NotificationChannel(
-            channelGroupKey: 'basic_channel_group',
-            channelKey: 'basic_channel',
-            channelName: 'Basic notifications',
-            channelDescription: 'Notification channel for basic tests',
-            playSound: false,
-            defaultColor: const Color(0xFF9D50DD),
-            ledColor: Colors.white)
+          channelGroupKey: 'basic_channel_group',
+          channelKey: 'basic_channel',
+          channelName: 'Basic notifications',
+          channelDescription: 'Notification channel for basic tests',
+          playSound: false,
+          defaultColor: const Color(0xFF9D50DD),
+          ledColor: Colors.white,
+          onlyAlertOnce: true,
+          enableVibration: false,
+          enableLights: false,
+        ),
       ],
       // Channel groups are only visual and are not required
       channelGroups: [
@@ -69,7 +73,8 @@ class AppRoute {
 class MyWidgetsApp extends StatefulWidget {
   String title = "geo_steps";
   late Map<String, AppRoute> routes = {
-    "/": AppRoute(title, "/", Icons.nordic_walking, Container(child: MyHomePage())),
+    "/": AppRoute(
+        title, "/", Icons.nordic_walking, Container(child: MyHomePage())),
     "/today": AppRoute(
         "today",
         "/today",
@@ -198,4 +203,3 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
     );
   }
 }
-
