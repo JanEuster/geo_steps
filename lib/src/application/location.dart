@@ -51,7 +51,7 @@ class LocationService {
         Trkseg(
             trkpts: positions
                 .map((p) =>
-                    Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude))
+                    Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude, time: p.timestamp))
                 .toList())
       ])
     ];
