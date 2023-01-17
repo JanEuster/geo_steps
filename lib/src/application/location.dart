@@ -14,6 +14,7 @@ class LocationService {
   List<Position> positions = [];
   late Directory appDir;
   StreamSubscription<Position>? recordingStream;
+  DateTime lastDate = DateTime.now().toUtc();
 
   LocationService() {
     ExternalPath.getExternalStorageDirectories().then((dirs) {
@@ -62,10 +63,28 @@ class LocationService {
     positions.add(position);
   }
 
-  Future<void> record() async {
+  Future<void> record({Function(Position)? onReady }) async {
     log("start recording position data");
+    Geolocator.getLastKnownPosition().then((p) {
+      log("last position: $p");
+      if (p != null) {
+          positions.add(p);
+          if (onReady != null) {
+            onReady(p);
+          }
+      }
+
+      Geolocator.getCurrentPosition().then((p) {
+        log("init position: $p");
+          positions.add(p);
+          if (onReady != null) {
+            onReady(p);
+          }
+      });
+    });
     recordingStream = await streamPosition((p) => positions.add(p));
   }
+
   Future<void> stopRecording() async {
     log("stop recording position data");
     recordingStream?.cancel();
@@ -74,7 +93,15 @@ class LocationService {
   Future<void> loadToday() async {}
 
   Future<void> saveToday() async {
-    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+    var now = DateTime.now().toUtc();
+    // check if its a new day and if so, remove all data from previous day
+    // necessary because a new gpx file is created for every day -> no overlay in data
+    // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
+    if (lastDate.day != now.day) {
+      positions = positions.where((p) => p.timestamp!.day == now.day).toList();
+      lastDate = now;
+    }
+    String date = lastDate.toIso8601String().split("T")[0];
 
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxDir = Directory(gpxDirPath);
@@ -138,7 +165,8 @@ class LocationService {
   }
 }
 
-Future<StreamSubscription<Position>> streamPosition(Function(Position) addPosition) async {
+Future<StreamSubscription<Position>> streamPosition(
+    Function(Position) addPosition) async {
   late LocationSettings locationSettings;
 
   if (defaultTargetPlatform == TargetPlatform.android) {
@@ -148,13 +176,14 @@ Future<StreamSubscription<Position>> streamPosition(Function(Position) addPositi
         forceLocationManager: true,
         intervalDuration: const Duration(seconds: 1),
         //(Optional) Set foreground notification config to keep the app alive
-        //when going to the background
-        foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationText:
-              "Example app will continue to receive your location even when you aren't using it",
-          notificationTitle: "Running in Background",
-          enableWakeLock: true,
-        ));
+        // when going to the background
+        // foregroundNotificationConfig: const ForegroundNotificationConfig(
+        //   notificationText:
+        //       "Example app will continue to receive your location even when you aren't using it",
+        //   notificationTitle: "Running in Background",
+        //   enableWakeLock: true,
+        // ),
+    );
   } else if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS) {
     locationSettings = AppleSettings(

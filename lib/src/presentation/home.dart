@@ -143,8 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               .trackingLocation
                               .set(isTrackingLocation!);
                           if (isTrackingLocation == true) {
-                            Workmanager().registerPeriodicTask(locationTrackingTask, "gps_tracker",
-                                tag: "tracking", initialDelay: const Duration(seconds: 20), frequency: const Duration(minutes: 10));
+                            registerLocationTrackingTask();
                           } else {
                             Workmanager().cancelByTag("tracking");
                           }
