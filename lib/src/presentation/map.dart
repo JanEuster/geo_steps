@@ -84,7 +84,7 @@ class _SimpleMapState extends State<SimpleMap> {
               nonRotatedChildren: [
                 CustomAttributionWidget.defaultWidget(
                   source:
-                      '© OpenStreetMap contributors; United States Geological Survey',
+                      '© OpenStreetMap contributors',
                   sourceTextStyle:
                       TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
                   onSourceTapped: () {},

@@ -23,14 +23,14 @@ void callbackDispatcher() {
     // test notifcation on today route load
     Position? p = await Geolocator.getLastKnownPosition();
     log("pos: $p");
-    AwesomeNotifications().createNotification(
-        content: NotificationContent(
-      id: 10,
-      channelKey: 'basic_channel',
-      title: 'background notification',
-      body: "now longitude: ${p!.longitude} latitude: ${p!.latitude}",
-      actionType: ActionType.Default,
-    ));
+    // AwesomeNotifications().createNotification(
+    //     content: NotificationContent(
+    //   id: 10,
+    //   channelKey: 'basic_channel',
+    //   title: 'background notification',
+    //   body: "now longitude: ${p!.longitude} latitude: ${p!.latitude}",
+    //   actionType: ActionType.Default,
+    // ));
 
     return Future.value(true);
   });
