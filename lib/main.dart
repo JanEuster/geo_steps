@@ -10,6 +10,7 @@ import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
 import 'package:geo_steps/src/application/notification.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
+import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
@@ -66,7 +67,11 @@ void main() async {
   Workmanager().registerOneOffTask("dev.janeuster.geo_steps.test", "test",
       tag: "testing", initialDelay: const Duration(seconds: 30));
 
-  runApp(MyWidgetsApp());
+  // set initial values for app settings if not already set
+  // before the app is built
+  AppSettings().initialize().then((_) {
+    runApp(MyWidgetsApp());
+  });
 }
 
 class AppRoute {
@@ -81,7 +86,7 @@ class AppRoute {
 class MyWidgetsApp extends StatefulWidget {
   String title = "geo_steps";
   late Map<String, AppRoute> routes = {
-    "/": AppRoute(title, "/", Icons.nordic_walking, const MyHomePage()),
+    "/": AppRoute(title, "/", Icons.nordic_walking, Container(child: MyHomePage())),
     "/today": AppRoute(
         "today",
         "/today",
@@ -211,37 +216,3 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   }
 }
 
-class NotificationController {
-  /// Use this method to detect when a new notification or a schedule is created
-  @pragma("vm:entry-point")
-  static Future<void> onNotificationCreatedMethod(
-      ReceivedNotification receivedNotification) async {
-    // Your code goes here
-  }
-
-  /// Use this method to detect every time that a new notification is displayed
-  @pragma("vm:entry-point")
-  static Future<void> onNotificationDisplayedMethod(
-      ReceivedNotification receivedNotification) async {
-    // Your code goes here
-  }
-
-  /// Use this method to detect if the user dismissed a notification
-  @pragma("vm:entry-point")
-  static Future<void> onDismissActionReceivedMethod(
-      ReceivedAction receivedAction) async {
-    // Your code goes here
-  }
-
-  /// Use this method to detect when the user taps on a notification or action button
-  @pragma("vm:entry-point")
-  static Future<void> onActionReceivedMethod(
-      ReceivedAction receivedAction) async {
-    // Your code goes here
-
-    // Navigate into pages, avoiding to open the notification details page over another details page already opened
-    // MyWidgetsApp.navigatorKey.currentState?.pushNamedAndRemoveUntil('/notification-page',
-    //         (route) => (route.settings.name != '/notification-page') || route.isFirst,
-    //     arguments: receivedAction);
-  }
-}

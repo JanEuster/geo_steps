@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:geo_steps/src/application/preferences.dart';
 import "dart:developer";
 
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
+import 'package:shared_preferences/shared_preferences.dart';
+
+class MyHomePage extends StatefulWidget {
+  MyHomePage({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  bool? isTrackingLocation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    AppSettings().trackingLocation.get().then((value) => setState(() {
+          isTrackingLocation = value;
+        }));
+  }
 
   @override
   Widget build(BuildContext context) {
     MediaQueryData media = MediaQuery.of(context);
-
     return ListView(children: [
       Padding(
           padding: const EdgeInsets.only(left: 20, right: 20),
@@ -21,10 +39,10 @@ class MyHomePage extends StatelessWidget {
                 children: const [
                   Text("3.742",
                       style:
-                      TextStyle(fontSize: 75, fontWeight: FontWeight.w900)),
+                          TextStyle(fontSize: 75, fontWeight: FontWeight.w900)),
                   Text("10,2 km",
                       style:
-                      TextStyle(fontSize: 40, fontWeight: FontWeight.w700)),
+                          TextStyle(fontSize: 40, fontWeight: FontWeight.w700)),
                 ],
               ),
               Container(
@@ -47,7 +65,7 @@ class MyHomePage extends StatelessWidget {
           child: Container(
               width: media.size.width,
               decoration:
-              BoxDecoration(border: Border.all(color: Colors.black)),
+                  BoxDecoration(border: Border.all(color: Colors.black)),
               child: Column(
                 children: [
                   Container(
@@ -87,7 +105,7 @@ class MyHomePage extends StatelessWidget {
                               Text("steps",
                                   textAlign: TextAlign.left,
                                   style:
-                                  TextStyle(fontWeight: FontWeight.w400)),
+                                      TextStyle(fontWeight: FontWeight.w400)),
                             ],
                           ),
                           Row(
@@ -112,17 +130,29 @@ class MyHomePage extends StatelessWidget {
                           image: DecorationImage(
                               image: AssetImage("assets/line_pattern.jpg"),
                               repeat: ImageRepeat.repeat))),
-                  SizedBox(
-                    width: media.size.width,
-                    height: 40,
-                    child: GestureDetector(
-                        onTap: () {},
-                        child: const Center(
-                            child: Text("stop tracking",
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500)))),
-                  )
+                  if (isTrackingLocation != null)
+                    GestureDetector(
+                      onTap: () {
+                        if (isTrackingLocation != null) {
+                          setState(() {
+                            isTrackingLocation = !isTrackingLocation!;
+                          });
+                          AppSettings()
+                              .trackingLocation
+                              .set(isTrackingLocation!);
+                        }
+                      },
+                      child: Container(
+                          width: media.size.width,
+                          height: 40,
+                          color: Colors.white,
+                          child: Center(
+                              child: Text(
+                                  isTrackingLocation! ? "stop tracking" : "start tracking",
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500)))),
+                    )
                 ],
               ))),
       const ActivityMap()
@@ -143,7 +173,7 @@ class ActivityMap extends StatelessWidget {
             child: Container(
                 width: media.size.width,
                 decoration:
-                BoxDecoration(border: Border.all(color: Colors.black)),
+                    BoxDecoration(border: Border.all(color: Colors.black)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
