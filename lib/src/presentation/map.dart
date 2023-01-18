@@ -21,7 +21,7 @@ class SimpleMap extends StatefulWidget {
 }
 
 class _SimpleMapState extends State<SimpleMap> {
-  LocationService locationService = LocationService();
+  late LocationService locationService;
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
   final mapController = MapController();
 
@@ -29,17 +29,23 @@ class _SimpleMapState extends State<SimpleMap> {
   void initState() {
     super.initState();
 
-      setState(() {
-
-        locationService.record(onReady: (p) {
+    locationService = LocationService(onReady: () {
+      locationService.loadToday().then((value) => setState(() =>
           mapController.move(
-              LatLng(p.latitude, p.longitude), 12.8);
-        });
-      });
+              LatLng(locationService.lastPos.latitude,
+                  locationService.lastPos.longitude),
+              12.8)));
+    });
+
+    // locationService.record(onReady: (p) {
+    //   mapController.move(
+    //       LatLng(p.latitude, p.longitude), 12.8);
+    // });
   }
+
   @override
   void dispose() {
-    locationService.stopRecording();
+    // locationService.stopRecording();
 
     super.dispose();
   }
@@ -72,8 +78,7 @@ class _SimpleMapState extends State<SimpleMap> {
                       InteractiveFlag.all & ~InteractiveFlag.rotate),
               nonRotatedChildren: [
                 CustomAttributionWidget.defaultWidget(
-                  source:
-                      '© OpenStreetMap contributors',
+                  source: '© OpenStreetMap contributors',
                   sourceTextStyle:
                       TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
                   onSourceTapped: () {},

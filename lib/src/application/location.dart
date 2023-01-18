@@ -16,10 +16,13 @@ class LocationService {
   StreamSubscription<Position>? recordingStream;
   DateTime lastDate = DateTime.now().toUtc();
 
-  LocationService() {
+  LocationService({Function()? onReady}) {
     ExternalPath.getExternalStorageDirectories().then((dirs) {
       appDir = Directory("${dirs[0]}/geo_steps");
       appDir.create();
+      if (onReady != null) {
+        onReady();
+      }
     });
   }
 
@@ -43,15 +46,18 @@ class LocationService {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
   }
 
-  String gpxRepresentation({bool pretty = false}) {
+  String toGPX({bool pretty = false}) {
     var gpx = Gpx();
     gpx.creator = "app.janeuster.geo_steps";
     gpx.trks = [
       Trk(trksegs: [
         Trkseg(
             trkpts: positions
-                .map((p) =>
-                    Wpt(ele: p.altitude, lat: p.latitude, lon: p.longitude, time: p.timestamp))
+                .map((p) => Wpt(
+                    ele: p.altitude,
+                    lat: p.latitude,
+                    lon: p.longitude,
+                    time: p.timestamp))
                 .toList())
       ])
     ];
@@ -59,27 +65,52 @@ class LocationService {
     return gpxString;
   }
 
+  List<Position> fromGPX(String xml, {bool setPos = true}) {
+    var xmlGpx = GpxReader().fromString(xml);
+    List<Position> posList = [];
+    for (var trk in xmlGpx.trks) {
+      for (var trkseg in trk.trksegs) {
+        for (var trkpt in trkseg.trkpts) {
+          posList.add(Position(
+              longitude: trkpt.lon!,
+              latitude: trkpt.lat!,
+              timestamp: trkpt.time,
+              accuracy: 0,
+              altitude: trkpt.ele!,
+              heading: 0,
+              speed: 0,
+              speedAccuracy: 0));
+        }
+      }
+    }
+    log("${posList.length} positions read from file");
+    if (setPos) {
+      positions = posList;
+    }
+    return posList;
+  }
+
   void addPosition(Position position) {
     positions.add(position);
   }
 
-  Future<void> record({Function(Position)? onReady }) async {
+  Future<void> record({Function(Position)? onReady}) async {
     log("start recording position data");
     Geolocator.getLastKnownPosition().then((p) {
       log("last position: $p");
       if (p != null) {
-          positions.add(p);
-          if (onReady != null) {
-            onReady(p);
-          }
+        positions.add(p);
+        if (onReady != null) {
+          onReady(p);
+        }
       }
 
       Geolocator.getCurrentPosition().then((p) {
         log("init position: $p");
-          positions.add(p);
-          if (onReady != null) {
-            onReady(p);
-          }
+        positions.add(p);
+        if (onReady != null) {
+          onReady(p);
+        }
       });
     });
     recordingStream = await streamPosition((p) => positions.add(p));
@@ -90,7 +121,18 @@ class LocationService {
     recordingStream?.cancel();
   }
 
-  Future<void> loadToday() async {}
+  Future<void> loadToday() async {
+    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+    var gpxDirPath = "${appDir.path}/gpxData";
+    var gpxFilePath = "$gpxDirPath/${date}.gpx";
+    var gpxFile = File(gpxFilePath);
+    // load only if actually exists
+    if (await gpxFile.exists()) {
+      log("todays gpx file exists");
+      var xml = await gpxFile.readAsString();
+      fromGPX(xml);
+    }
+  }
 
   Future<void> saveToday() async {
     var now = DateTime.now().toUtc();
@@ -112,7 +154,7 @@ class LocationService {
     var gpxFilePath = "$gpxDirPath/${date}.gpx";
     var gpxFile = File(gpxFilePath);
 
-    await gpxFile.writeAsString(gpxRepresentation(), flush: true);
+    await gpxFile.writeAsString(toGPX(), flush: true);
 
     log("gpx file saved to $gpxFilePath");
   }
@@ -130,7 +172,7 @@ class LocationService {
     var gpxFilePath = "$downloadsPath/${date}.gpx";
     var gpxFile = File(gpxFilePath);
 
-    await gpxFile.writeAsString(gpxRepresentation(pretty: true), flush: true);
+    await gpxFile.writeAsString(toGPX(pretty: true), flush: true);
 
     log("gpx file exported to $gpxFilePath");
   }
@@ -171,18 +213,18 @@ Future<StreamSubscription<Position>> streamPosition(
 
   if (defaultTargetPlatform == TargetPlatform.android) {
     locationSettings = AndroidSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 0,
-        forceLocationManager: true,
-        intervalDuration: const Duration(seconds: 1),
-        //(Optional) Set foreground notification config to keep the app alive
-        // when going to the background
-        // foregroundNotificationConfig: const ForegroundNotificationConfig(
-        //   notificationText:
-        //       "Example app will continue to receive your location even when you aren't using it",
-        //   notificationTitle: "Running in Background",
-        //   enableWakeLock: true,
-        // ),
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 0,
+      forceLocationManager: true,
+      intervalDuration: const Duration(seconds: 1),
+      //(Optional) Set foreground notification config to keep the app alive
+      // when going to the background
+      // foregroundNotificationConfig: const ForegroundNotificationConfig(
+      //   notificationText:
+      //       "Example app will continue to receive your location even when you aren't using it",
+      //   notificationTitle: "Running in Background",
+      //   enableWakeLock: true,
+      // ),
     );
   } else if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS) {
