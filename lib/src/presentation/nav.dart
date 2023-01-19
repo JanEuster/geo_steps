@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import "dart:developer";
 
 import 'package:geo_steps/main.dart';
 
@@ -56,6 +54,7 @@ class _NavbarState extends State<Navbar> {
 
   @override
   void initState() {
+    super.initState();
     menuOpen = false;
   }
 

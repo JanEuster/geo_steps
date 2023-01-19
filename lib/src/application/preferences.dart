@@ -1,5 +1,3 @@
-
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PreferenceKey<T> {
@@ -49,6 +47,9 @@ class PreferenceKey<T> {
       }
       case List<String>: {
         return prefs.getStringList(key) as T?;
+      }
+      default: {
+        return null;
       }
     }
   }

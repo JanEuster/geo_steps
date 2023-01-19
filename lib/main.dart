@@ -1,10 +1,9 @@
 import 'dart:async';
+import "dart:developer";
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
-    as NL;
-import "dart:developer";
+    as nl;
 import 'package:workmanager/workmanager.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 
@@ -13,34 +12,37 @@ import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/nav.dart';
 import 'package:geo_steps/src/presentation/map.dart';
 import 'package:geo_steps/src/application/notification.dart';
-import 'package:geo_steps/src/application/backgroundTasks.dart';
+import 'package:geo_steps/src/application/background_tasks.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
 import 'package:geo_steps/src/application/preferences.dart';
 
+// ignore: constant_identifier_names
+const String APP_TITLE = "geo_steps";
+
 // define the handler for ui
-void onData(NL.NotificationEvent event) {
-  print(event.toString());
+void onData(nl.NotificationEvent event) {
+  log(event.toString());
 }
 
 Future<void> initPlatformState() async {
-  NL.NotificationsListener.initialize();
+  nl.NotificationsListener.initialize();
   // register you event handler in the ui logic.
-  NL.NotificationsListener.receivePort?.listen((evt) => onData(evt));
+  nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
 }
 
 void startListeningToNotifications() async {
-  print("start listening");
-  var hasPermission = await NL.NotificationsListener.hasPermission;
+  log("start listening");
+  var hasPermission = await nl.NotificationsListener.hasPermission;
   if (!hasPermission!) {
-    print("no permission, so open settings");
-    NL.NotificationsListener.openPermissionSettings();
+    log("no permission, so open settings");
+    nl.NotificationsListener.openPermissionSettings();
     return;
   }
 
-  var isR = await NL.NotificationsListener.isRunning;
+  var isR = await nl.NotificationsListener.isRunning;
 
   if (!isR!) {
-    await NL.NotificationsListener.startService(
+    await nl.NotificationsListener.startService(
         foreground: true,
         // use false will not promote to foreground and without a notification
         title: "Change the title",
@@ -108,10 +110,11 @@ class AppRoute {
 }
 
 class MyWidgetsApp extends StatefulWidget {
-  String title = "geo_steps";
-  late Map<String, AppRoute> routes = {
+  String title = APP_TITLE;
+
+  final Map<String, AppRoute> routes = {
     "/": AppRoute(
-        title, "/", Icons.nordic_walking, Container(child: MyHomePage())),
+        APP_TITLE, "/", Icons.nordic_walking, Container(child: const MyHomePage())),
     "/today": AppRoute(
         "today",
         "/today",

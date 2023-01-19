@@ -1,9 +1,8 @@
 import 'dart:io';
+import "dart:developer";
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import "dart:developer";
 
 Future<void> requestLocationAccess() async {
   // you need to request normal location access first, before being able to request locationAlways

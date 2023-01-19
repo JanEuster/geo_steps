@@ -1,11 +1,5 @@
-// dart imports
-import "dart:developer";
-
 // flutter imports
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
@@ -79,7 +73,7 @@ class _SimpleMapState extends State<SimpleMap> {
                 CustomAttributionWidget.defaultWidget(
                   source: '© OpenStreetMap contributors',
                   sourceTextStyle:
-                      TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+                      const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
                   onSourceTapped: () {},
                 ),
               ],
@@ -109,7 +103,7 @@ class _SimpleMapState extends State<SimpleMap> {
                       Marker(
                           point: LatLng(locationService.lastPos.latitude,
                               locationService.lastPos.longitude),
-                          builder: (context) => FlutterLogo())
+                          builder: (context) => const FlutterLogo())
                     ],
                   )
               ],

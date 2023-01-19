@@ -2,8 +2,9 @@ import 'dart:async';
 import "dart:developer";
 
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:geo_steps/src/application/location.dart';
 import 'package:workmanager/workmanager.dart';
+
+import 'package:geo_steps/src/application/location.dart';
 
 const locationTrackingTask = "janeuster.geo_steps.gps_tracking";
 

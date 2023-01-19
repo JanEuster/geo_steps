@@ -1,14 +1,12 @@
 import 'dart:io';
+import 'dart:async';
+import "dart:developer";
 
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:external_path/external_path.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter/widgets.dart';
-import 'dart:async';
-import "dart:developer";
 
 class LocationService {
   List<Position> positions = [];
@@ -16,8 +14,7 @@ class LocationService {
   StreamSubscription<Position>? recordingStream;
   DateTime lastDate = DateTime.now().toUtc();
 
-  LocationService() {
-  }
+  LocationService();
 
    Future<void> init() async {
     var dirs = await ExternalPath.getExternalStorageDirectories();
@@ -123,7 +120,7 @@ class LocationService {
   Future<void> loadToday() async {
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
     var gpxDirPath = "${appDir.path}/gpxData";
-    var gpxFilePath = "$gpxDirPath/${date}.gpx";
+    var gpxFilePath = "$gpxDirPath/$date.gpx";
     var gpxFile = File(gpxFilePath);
     // load only if actually exists
     if (await gpxFile.exists()) {
@@ -150,7 +147,7 @@ class LocationService {
       await gpxDir.create(recursive: true);
     }
 
-    var gpxFilePath = "$gpxDirPath/${date}.gpx";
+    var gpxFilePath = "$gpxDirPath/$date.gpx";
     var gpxFile = File(gpxFilePath);
 
     await gpxFile.writeAsString(toGPX(), flush: true);
@@ -168,7 +165,7 @@ class LocationService {
       await gpxDir.create(recursive: true);
     }
 
-    var gpxFilePath = "$downloadsPath/${date}.gpx";
+    var gpxFilePath = "$downloadsPath/$date.gpx";
     var gpxFile = File(gpxFilePath);
 
     await gpxFile.writeAsString(toGPX(pretty: true), flush: true);

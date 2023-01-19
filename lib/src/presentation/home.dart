@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:geo_steps/src/application/preferences.dart';
-import 'package:geo_steps/src/application/backgroundTasks.dart';
-import "dart:developer";
-
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+import 'package:geo_steps/src/application/preferences.dart';
+import 'package:geo_steps/src/application/background_tasks.dart';
+
 class MyHomePage extends StatefulWidget {
-  MyHomePage({super.key});
+  const MyHomePage({super.key});
 
   @override
   State<StatefulWidget> createState() => _MyHomePageState();
