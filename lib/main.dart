@@ -12,8 +12,8 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 
 // local imports
 import 'package:geo_steps/src/presentation/home.dart';
-import 'package:geo_steps/src/presentation/nav.dart';
-import 'package:geo_steps/src/presentation/map.dart';
+import 'package:geo_steps/src/presentation/components/nav.dart';
+import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/application/notification.dart';
 import 'package:geo_steps/src/application/background_tasks.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
