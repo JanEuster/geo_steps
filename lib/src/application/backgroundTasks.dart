@@ -20,6 +20,8 @@ void callbackDispatcher() {
     switch (task) {
       case locationTrackingTask: {
         LocationService locationService = LocationService();
+        await locationService.init();
+        locationService.loadToday();
 
         await locationService.record();
 

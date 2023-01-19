@@ -16,14 +16,13 @@ class LocationService {
   StreamSubscription<Position>? recordingStream;
   DateTime lastDate = DateTime.now().toUtc();
 
-  LocationService({Function()? onReady}) {
-    ExternalPath.getExternalStorageDirectories().then((dirs) {
-      appDir = Directory("${dirs[0]}/geo_steps");
-      appDir.create();
-      if (onReady != null) {
-        onReady();
-      }
-    });
+  LocationService() {
+  }
+
+   Future<void> init() async {
+    var dirs = await ExternalPath.getExternalStorageDirectories();
+    appDir = Directory("${dirs[0]}/geo_steps");
+    appDir.create();
   }
 
   bool get hasPositions {
