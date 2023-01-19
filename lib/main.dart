@@ -4,6 +4,9 @@ import "dart:developer";
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
     as nl;
+import 'package:geo_steps/src/presentation/homepoints.dart';
+import 'package:geo_steps/src/presentation/overview.dart';
+import 'package:geo_steps/src/presentation/today.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 
@@ -119,12 +122,10 @@ class MyWidgetsApp extends StatefulWidget {
         "today",
         "/today",
         Icons.bar_chart,
-        ListView(children: const [
-          SimpleMap(),
-        ])),
+        Container(child: TodayPage())),
     "/overviews":
-        AppRoute("overviews", "/overviews", Icons.leaderboard, Container()),
-    "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container()),
+        AppRoute("overviews", "/overviews", Icons.leaderboard, Container(child: OverviewPage())),
+    "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container(child: HomepointsPage())),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -138,6 +139,7 @@ class MyWidgetsApp extends StatefulWidget {
 class _MyWidgetsAppState extends State<MyWidgetsApp> {
   @override
   void initState() {
+    super.initState();
     requestAllNecessaryPermissions();
     // startListeningToNotifications();
 
@@ -150,8 +152,6 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
             NotificationController.onNotificationDisplayedMethod,
         onDismissActionReceivedMethod:
             NotificationController.onDismissActionReceivedMethod);
-
-    super.initState();
   }
 
   Route generate(RouteSettings settings) {
