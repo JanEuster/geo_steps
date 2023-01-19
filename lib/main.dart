@@ -1,10 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:geo_steps/src/application/location.dart';
+import 'package:flutter_notification_listener/flutter_notification_listener.dart'
+    as NL;
 import "dart:developer";
+import 'package:workmanager/workmanager.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 
 // local imports
 import 'package:geo_steps/src/presentation/home.dart';
@@ -14,10 +16,37 @@ import 'package:geo_steps/src/application/notification.dart';
 import 'package:geo_steps/src/application/backgroundTasks.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
 import 'package:geo_steps/src/application/preferences.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
+
+// define the handler for ui
+void onData(NL.NotificationEvent event) {
+  print(event.toString());
+}
+
+Future<void> initPlatformState() async {
+  NL.NotificationsListener.initialize();
+  // register you event handler in the ui logic.
+  NL.NotificationsListener.receivePort?.listen((evt) => onData(evt));
+}
+
+void startListeningToNotifications() async {
+  print("start listening");
+  var hasPermission = await NL.NotificationsListener.hasPermission;
+  if (!hasPermission!) {
+    print("no permission, so open settings");
+    NL.NotificationsListener.openPermissionSettings();
+    return;
+  }
+
+  var isR = await NL.NotificationsListener.isRunning;
+
+  if (!isR!) {
+    await NL.NotificationsListener.startService(
+        foreground: true,
+        // use false will not promote to foreground and without a notification
+        title: "Change the title",
+        description: "Change the text");
+  }
+}
 
 void main() async {
   AwesomeNotifications().initialize(
@@ -29,6 +58,17 @@ void main() async {
           channelKey: 'basic_channel',
           channelName: 'Basic notifications',
           channelDescription: 'Notification channel for basic tests',
+          playSound: false,
+          defaultColor: const Color(0xFF9D50DD),
+          ledColor: Colors.white,
+          onlyAlertOnce: true,
+          enableVibration: false,
+          enableLights: false,
+        ),
+        NotificationChannel(
+          channelKey: 'geolocator_channel_01',
+          channelName: 'Background Location Notices',
+          channelDescription: 'GPS',
           playSound: false,
           defaultColor: const Color(0xFF9D50DD),
           ledColor: Colors.white,
@@ -96,6 +136,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   @override
   void initState() {
     requestAllNecessaryPermissions();
+    // startListeningToNotifications();
 
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(

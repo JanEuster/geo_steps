@@ -219,8 +219,7 @@ Future<StreamSubscription<Position>> streamPosition(
       //(Optional) Set foreground notification config to keep the app alive
       // when going to the background
       foregroundNotificationConfig: const ForegroundNotificationConfig(
-        notificationText:
-            "currently tracking location",
+        notificationText: "currently tracking location",
         notificationTitle: "geo_steps location service",
         enableWakeLock: true,
       ),
