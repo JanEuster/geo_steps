@@ -20,6 +20,7 @@ void callbackDispatcher() {
     switch (task) {
       case locationTrackingTask: {
         LocationService locationService = LocationService();
+
         await locationService.record();
 
 
@@ -32,8 +33,20 @@ void callbackDispatcher() {
                   id: 10,
                   channelKey: 'basic_channel',
                   title: 'background notification',
-                  body: "${locationService.lastPos}",
+                  body: "${locationService.lastPos} \n pos count: ${locationService.posCount} \n ${DateTime.now().toIso8601String()}",
                   actionType: ActionType.Default,
+                    notificationLayout: NotificationLayout.BigText,
+                ));
+          } else {
+            AwesomeNotifications
+              ().createNotification(
+                content: NotificationContent(
+                  id: 10,
+                  channelKey: 'basic_channel',
+                  title: 'background notification',
+                  body: "no new position \n ${DateTime.now().toIso8601String()}",
+                  actionType: ActionType.Default,
+                  notificationLayout: NotificationLayout.BigText,
                 ));
           }
         });

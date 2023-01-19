@@ -215,16 +215,16 @@ Future<StreamSubscription<Position>> streamPosition(
     locationSettings = AndroidSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 0,
-      forceLocationManager: true,
+      forceLocationManager: false,
       intervalDuration: const Duration(seconds: 1),
       //(Optional) Set foreground notification config to keep the app alive
       // when going to the background
-      // foregroundNotificationConfig: const ForegroundNotificationConfig(
-      //   notificationText:
-      //       "Example app will continue to receive your location even when you aren't using it",
-      //   notificationTitle: "Running in Background",
-      //   enableWakeLock: true,
-      // ),
+      foregroundNotificationConfig: const ForegroundNotificationConfig(
+        notificationText:
+            "currently tracking location",
+        notificationTitle: "geo_steps location service",
+        enableWakeLock: true,
+      ),
     );
   } else if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS) {

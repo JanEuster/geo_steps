@@ -51,9 +51,6 @@ void main() async {
           true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
       );
 
-  Workmanager().registerOneOffTask("dev.janeuster.geo_steps.test", "test",
-      tag: "testing", initialDelay: const Duration(seconds: 30));
-
   // set initial values for app settings if not already set
   // before the app is built
   AppSettings().initialize().then((_) {
