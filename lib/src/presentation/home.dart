@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
@@ -107,19 +110,24 @@ class _MyHomePageState extends State<MyHomePage> {
                                       TextStyle(fontWeight: FontWeight.w400)),
                             ],
                           ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.arrow_right_alt, size: 40),
-                              Padding(
-                                  padding: EdgeInsets.only(bottom: 5),
-                                  child: Text("more info",
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w500))),
-                            ],
-                          ),
+                          SizedBox(
+                              height: 40,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Transform.rotate(
+                                      angle: 0.5 * pi,
+                                      child:
+                                          const Icon(Icomoon.arrow, size: 30)),
+                                  const Padding(
+                                      padding: EdgeInsets.only(left: 5, bottom: 2),
+                                      child: Text("more info",
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w500))),
+                                ],
+                              )),
                         ],
                       )),
                   Container(
@@ -152,7 +160,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           color: Colors.white,
                           child: Center(
                               child: Text(
-                                  isTrackingLocation! ? "stop tracking" : "start tracking",
+                                  isTrackingLocation!
+                                      ? "stop tracking"
+                                      : "start tracking",
                                   style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500)))),

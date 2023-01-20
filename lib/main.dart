@@ -4,6 +4,7 @@ import "dart:developer";
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
     as nl;
+import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/homepoints.dart';
 import 'package:geo_steps/src/presentation/overview.dart';
 import 'package:geo_steps/src/presentation/today.dart';
@@ -117,15 +118,15 @@ class MyWidgetsApp extends StatefulWidget {
 
   final Map<String, AppRoute> routes = {
     "/": AppRoute(
-        APP_TITLE, "/", Icons.nordic_walking, Container(child: const MyHomePage())),
+        APP_TITLE, "/", Icomoon.walking_1, Container(child: const MyHomePage())),
     "/today": AppRoute(
         "today",
         "/today",
-        Icons.bar_chart,
+        Icomoon.stats_1,
         Container(child: TodayPage())),
     "/overviews":
-        AppRoute("overviews", "/overviews", Icons.leaderboard, Container(child: OverviewPage())),
-    "/places": AppRoute("home⋅points", "/places", Icons.push_pin, Container(child: HomepointsPage())),
+        AppRoute("overviews", "/overviews", Icomoon.stats_2, Container(child: OverviewPage())),
+    "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1, Container(child: HomepointsPage())),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();

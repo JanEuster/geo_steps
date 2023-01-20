@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:geo_steps/main.dart';
+import 'package:geo_steps/src/presentation/components/icons.dart';
 
 class PageWithNav extends StatelessWidget {
   PageWithNav(
@@ -89,7 +90,7 @@ class _NavbarState extends State<Navbar> {
                 ),
               ],
             ),
-            GestureDetector(onTap: () {}, child: const Icon(Icons.settings)),
+            GestureDetector(onTap: () {}, child: const Icon(Icomoon.settings)),
           ])),
       Container(height: 1, color: Colors.black),
       if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),
