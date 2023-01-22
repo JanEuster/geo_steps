@@ -3,18 +3,18 @@ import "dart:developer";
 
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
-    as nl;
+as nl;
+import 'package:workmanager/workmanager.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
+import "package:flutter_activity_recognition/flutter_activity_recognition.dart";
+
+// local imports
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/homepoints.dart';
 import 'package:geo_steps/src/presentation/overview.dart';
 import 'package:geo_steps/src/presentation/today.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:awesome_notifications/awesome_notifications.dart';
-
-// local imports
 import 'package:geo_steps/src/presentation/home.dart';
 import 'package:geo_steps/src/presentation/components/nav.dart';
-import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/application/notification.dart';
 import 'package:geo_steps/src/application/background_tasks.dart';
 import 'package:geo_steps/src/utils/permissions.dart';
@@ -47,7 +47,7 @@ void startListeningToNotifications() async {
 
   if (!isR!) {
     await nl.NotificationsListener.startService(
-        foreground: true,
+        foreground: false,
         // use false will not promote to foreground and without a notification
         title: "Change the title",
         description: "Change the text");
@@ -56,7 +56,7 @@ void startListeningToNotifications() async {
 
 void main() async {
   AwesomeNotifications().initialize(
-      // set the icon to null if you want to use the default app icon
+    // set the icon to null if you want to use the default app icon
       null, // default icon
       [
         NotificationChannel(
@@ -94,8 +94,8 @@ void main() async {
   Workmanager().initialize(
       callbackDispatcher, // The top level function, aka callbackDispatcher
       isInDebugMode:
-          true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-      );
+      true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
+  );
 
   // set initial values for app settings if not already set
   // before the app is built
@@ -117,19 +117,17 @@ class MyWidgetsApp extends StatefulWidget {
   String title = APP_TITLE;
 
   final Map<String, AppRoute> routes = {
-    "/": AppRoute(
-        APP_TITLE, "/", Icomoon.walking_1, Container(child: const MyHomePage())),
+    "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1,
+        Container(child: const MyHomePage())),
     "/today": AppRoute(
-        "today",
-        "/today",
-        Icomoon.stats_1,
-        Container(child: TodayPage())),
-    "/overviews":
-        AppRoute("overviews", "/overviews", Icomoon.stats_2, Container(child: OverviewPage())),
-    "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1, Container(child: HomepointsPage())),
+        "today", "/today", Icomoon.stats_1, Container(child: TodayPage())),
+    "/overviews": AppRoute("overviews", "/overviews", Icomoon.stats_2,
+        Container(child: OverviewPage())),
+    "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1,
+        Container(child: HomepointsPage())),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  GlobalKey<NavigatorState>();
 
   MyWidgetsApp({super.key});
 
@@ -138,21 +136,61 @@ class MyWidgetsApp extends StatefulWidget {
 }
 
 class _MyWidgetsAppState extends State<MyWidgetsApp> {
+  final _activityStreamController = StreamController<Activity>();
+  StreamSubscription<Activity>? _activityStreamSubscription;
+
+  void _onActivityReceive(Activity activity) {
+    log('Activity Detected >> ${activity.toJson()}');
+    _activityStreamController.sink.add(activity);
+  }
+
+  void _handleError(dynamic error) {
+    log('Catch Error >> $error');
+  }
+
   @override
   void initState() {
     super.initState();
     requestAllNecessaryPermissions();
     // startListeningToNotifications();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final activityRecognition = FlutterActivityRecognition.instance;
+
+      // Check if the user has granted permission. If not, request permission.
+      PermissionRequestResult reqResult;
+      reqResult = await activityRecognition.checkPermission();
+      if (reqResult == PermissionRequestResult.PERMANENTLY_DENIED) {
+        log('Permission is permanently denied.');
+        return;
+      } else if (reqResult == PermissionRequestResult.DENIED) {
+        reqResult = await activityRecognition.requestPermission();
+        if (reqResult != PermissionRequestResult.GRANTED) {
+          log('Permission is denied.');
+          return;
+        }
+      }
+      // Subscribe to the activity stream.
+      _activityStreamSubscription = activityRecognition.activityStream
+          .handleError(_handleError)
+          .listen(_onActivityReceive);
+    });
 
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(
         onActionReceivedMethod: NotificationController.onActionReceivedMethod,
         onNotificationCreatedMethod:
-            NotificationController.onNotificationCreatedMethod,
+        NotificationController.onNotificationCreatedMethod,
         onNotificationDisplayedMethod:
-            NotificationController.onNotificationDisplayedMethod,
+        NotificationController.onNotificationDisplayedMethod,
         onDismissActionReceivedMethod:
-            NotificationController.onDismissActionReceivedMethod);
+        NotificationController.onDismissActionReceivedMethod);
+  }
+
+  @override
+  void dispose() {
+    _activityStreamController.close();
+    _activityStreamSubscription?.cancel();
+    super.dispose();
   }
 
   Route generate(RouteSettings settings) {
@@ -161,8 +199,12 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
       widget.title = widget.routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
-        EdgeInsets insets = MediaQuery.of(context).viewInsets;
-        EdgeInsets padding = MediaQuery.of(context).viewPadding;
+        EdgeInsets insets = MediaQuery
+            .of(context)
+            .viewInsets;
+        EdgeInsets padding = MediaQuery
+            .of(context)
+            .viewPadding;
         log("device insets || insets: $insets, padding: $padding");
         return PageWithNav(
             title: widget.title,
@@ -232,7 +274,9 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
 
   @override
   Widget build(BuildContext context) {
-    log("target: ${Theme.of(context).platform}");
+    log("target: ${Theme
+        .of(context)
+        .platform}");
     return WidgetsApp(
       navigatorKey: MyWidgetsApp.navigatorKey,
       onGenerateRoute: generate,

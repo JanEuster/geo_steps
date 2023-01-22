@@ -9,18 +9,29 @@ import 'package:latlong2/latlong.dart';
 import 'package:external_path/external_path.dart';
 
 class LocationService {
-  List<Position> positions = [];
   late Directory appDir;
-  StreamSubscription<Position>? recordingStream;
   DateTime lastDate = DateTime.now().toUtc();
+
+  List<Position> _positions = [];
+  // List<Android.ActivityEvent> _activities = [];
+  StreamSubscription<Position>? positionStream;
+  // StreamSubscription<Android.ActivityEvent>? activityStream;
 
   LocationService();
 
-   Future<void> init() async {
+  Future<void> init() async {
     var dirs = await ExternalPath.getExternalStorageDirectories();
     appDir = Directory("${dirs[0]}/geo_steps");
     appDir.create();
   }
+
+  List<Position> get positions {
+    return _positions;
+  }
+
+  // List<Android.ActivityEvent> get activities {
+  //   return _activities;
+  // }
 
   bool get hasPositions {
     return positions.isNotEmpty;
@@ -81,7 +92,7 @@ class LocationService {
     }
     log("${posList.length} positions read from file");
     if (setPos) {
-      positions = posList;
+      _positions = posList;
     }
     return posList;
   }
@@ -93,28 +104,29 @@ class LocationService {
   Future<void> record({Function(Position)? onReady}) async {
     log("start recording position data");
     Geolocator.getLastKnownPosition().then((p) {
-      log("last position: $p");
+      log("last known position: $p");
       if (p != null) {
         positions.add(p);
         if (onReady != null) {
           onReady(p);
         }
       }
-
-      Geolocator.getCurrentPosition().then((p) {
-        log("init position: $p");
-        positions.add(p);
-        if (onReady != null) {
-          onReady(p);
-        }
-      });
     });
-    recordingStream = await streamPosition((p) => positions.add(p));
+    streamPosition((p) => positions.add(p));
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // streamActivities((a) => _activities.add(a),
+      //     (obj) => log("error streaming activities: $obj}"));
+      // log("start recording activity data");
+    }
   }
 
   Future<void> stopRecording() async {
     log("stop recording position data");
-    recordingStream?.cancel();
+    positionStream?.cancel();
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      log("stop recording activity data");
+      // activityStream?.cancel();
+    }
   }
 
   Future<void> loadToday() async {
@@ -131,12 +143,14 @@ class LocationService {
   }
 
   Future<void> saveToday() async {
+    // log("activities not saved: $_activities");
+
     var now = DateTime.now().toUtc();
     // check if its a new day and if so, remove all data from previous day
     // necessary because a new gpx file is created for every day -> no overlay in data
     // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
     if (lastDate.day != now.day) {
-      positions = positions.where((p) => p.timestamp!.day == now.day).toList();
+      _positions = positions.where((p) => p.timestamp!.day == now.day).toList();
       lastDate = now;
     }
     String date = lastDate.toIso8601String().split("T")[0];
@@ -201,49 +215,57 @@ class LocationService {
         (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
     return LatLng(latitude, longitude);
   }
-}
 
-Future<StreamSubscription<Position>> streamPosition(
-    Function(Position) addPosition) async {
-  late LocationSettings locationSettings;
+  StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
+    late LocationSettings locationSettings;
 
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    locationSettings = AndroidSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 0,
-      forceLocationManager: false,
-      intervalDuration: const Duration(seconds: 1),
-      //(Optional) Set foreground notification config to keep the app alive
-      // when going to the background
-      foregroundNotificationConfig: const ForegroundNotificationConfig(
-        notificationText: "currently tracking location",
-        notificationTitle: "geo_steps location service",
-        enableWakeLock: true,
-      ),
-    );
-  } else if (defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
-    locationSettings = AppleSettings(
-      accuracy: LocationAccuracy.high,
-      activityType: ActivityType.fitness,
-      distanceFilter: 0,
-      pauseLocationUpdatesAutomatically: true,
-      // Only set to true if our app will be started up in the background.
-      showBackgroundLocationIndicator: false,
-    );
-  } else {
-    locationSettings = const LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 0,
-    );
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+        forceLocationManager: false,
+        intervalDuration: const Duration(seconds: 1),
+        //(Optional) Set foreground notification config to keep the app alive
+        // when going to the background
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationText: "currently tracking location",
+          notificationTitle: "geo_steps location service",
+          enableWakeLock: true,
+        ),
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        activityType: ActivityType.fitness,
+        distanceFilter: 0,
+        pauseLocationUpdatesAutomatically: true,
+        // Only set to true if our app will be started up in the background.
+        showBackgroundLocationIndicator: false,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
+    }
+
+    positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position? position) {
+      addPosition(position!);
+    });
+    return positionStream!;
   }
 
-  StreamSubscription<Position> positionStream =
-      Geolocator.getPositionStream(locationSettings: locationSettings)
-          .listen((Position? position) {
-    addPosition(position!);
-  });
-  return positionStream;
+  // StreamSubscription<Android.ActivityEvent> streamActivities(
+  //     Function(Android.ActivityEvent) addActivity,
+  //     void Function(Object) onError) {
+  //   activityStream = Android.ActivityRecognition()
+  //       .activityStream(runForegroundService: true)
+  //       .listen(addActivity, onError: onError);
+  //   return activityStream!;
+  // }
 }
 
 class MinMax<T> {

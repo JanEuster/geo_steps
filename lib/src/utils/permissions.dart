@@ -40,6 +40,14 @@ Future<void> requestStorageAccess() async {
   }
 }
 
+Future<void> requestActivityAccess() async {
+  while (true) {
+    if ((await Permission.activityRecognition.request()).isGranted) {
+      break;
+    }
+  }
+}
+
 Future<void> requestNotificationAccess() async {
   while (true) {
     if ((await Permission.notification.request()).isGranted) {
@@ -52,5 +60,6 @@ Future<void> requestAllNecessaryPermissions() async {
   log("request all necessary permissions");
   await requestLocationAccess();
   await requestStorageAccess();
+  await requestActivityAccess();
   await requestNotificationAccess();
 }

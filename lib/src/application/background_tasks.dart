@@ -31,7 +31,7 @@ void callbackDispatcher() {
           var notificationTimer =
               Timer.periodic(const Duration(seconds: 1), (timer) {
             if (locationService.hasPositions) {
-              log("background pos: ${locationService.lastPos}");
+              // log("background pos: ${locationService.lastPos}");
 
               // channel key and notifiction id are those used by geolocator
               // for the foreground notifiction that keeps location tracking alive
