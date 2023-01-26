@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer';
 
 class PreferenceKey<T> {
   late String key;
@@ -66,19 +67,29 @@ class PreferenceKey<T> {
     prefs ??= await SharedPreferences.getInstance(); // set prefs if not provided as argument
     await prefs.remove(key);
   }
+
+  @override
+  String toString() {
+    return "<$T>$key initial: $initialValue";
+  }
 }
 
 class AppSettings {
-  PreferenceKey<bool> trackingLocation = PreferenceKey("trackingLocation", false);
+  final PreferenceKey<bool> trackingLocation = PreferenceKey("trackingLocation", false);
   late List<PreferenceKey<dynamic>> _preferences;
+  static final AppSettings _instance = AppSettings();
   AppSettings() {
     _preferences = [trackingLocation];
   }
 
-  Future<void> initialize() async {
-    for (var i = 0; i < _preferences.length; i++) {
-      var pref = _preferences[i];
-      pref.setIfUnset();
+  static AppSettings get instance {
+    return _instance;
+  }
+
+  static Future<void> initialize() async {
+    for (var i = 0; i < _instance._preferences.length; i++) {
+      var pref = _instance._preferences[i];
+      await pref.setIfUnset();
     }
   }
 }

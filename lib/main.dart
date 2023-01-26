@@ -99,7 +99,7 @@ void main() async {
 
   // set initial values for app settings if not already set
   // before the app is built
-  AppSettings().initialize().then((_) {
+  AppSettings.initialize().then((_) {
     runApp(MyWidgetsApp());
   });
 }
@@ -152,28 +152,30 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   void initState() {
     super.initState();
     requestAllNecessaryPermissions();
-    // startListeningToNotifications();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final activityRecognition = FlutterActivityRecognition.instance;
 
-      // Check if the user has granted permission. If not, request permission.
-      PermissionRequestResult reqResult;
-      reqResult = await activityRecognition.checkPermission();
-      if (reqResult == PermissionRequestResult.PERMANENTLY_DENIED) {
-        log('Permission is permanently denied.');
-        return;
-      } else if (reqResult == PermissionRequestResult.DENIED) {
-        reqResult = await activityRecognition.requestPermission();
-        if (reqResult != PermissionRequestResult.GRANTED) {
-          log('Permission is denied.');
-          return;
-        }
-      }
-      // Subscribe to the activity stream.
-      _activityStreamSubscription = activityRecognition.activityStream
-          .handleError(_handleError)
-          .listen(_onActivityReceive);
-    });
+
+    // startListeningToNotifications();
+    // WidgetsBinding.instance.addPostFrameCallback((_) async {
+    //   final activityRecognition = FlutterActivityRecognition.instance;
+    //
+    //   // Check if the user has granted permission. If not, request permission.
+    //   PermissionRequestResult reqResult;
+    //   reqResult = await activityRecognition.checkPermission();
+    //   if (reqResult == PermissionRequestResult.PERMANENTLY_DENIED) {
+    //     log('Permission is permanently denied.');
+    //     return;
+    //   } else if (reqResult == PermissionRequestResult.DENIED) {
+    //     reqResult = await activityRecognition.requestPermission();
+    //     if (reqResult != PermissionRequestResult.GRANTED) {
+    //       log('Permission is denied.');
+    //       return;
+    //     }
+    //   }
+    //   // Subscribe to the activity stream.
+    //   _activityStreamSubscription = activityRecognition.activityStream
+    //       .handleError(_handleError)
+    //       .listen(_onActivityReceive);
+    // });
 
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(

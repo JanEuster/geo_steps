@@ -1,4 +1,5 @@
-import 'dart:math';
+import 'dart:math' show pi;
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
@@ -21,13 +22,23 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
 
-    AppSettings().trackingLocation.get().then((value) => setState(() {
-          isTrackingLocation = value;
-        }));
+    AppSettings.instance.trackingLocation.get().then((value) {
+      setState(() {
+        isTrackingLocation = value;
+      });
+      // if (value == true) {
+      //   timer.cancel();
+      // }
+    });
+    // // check whether the necessary permissions have
+    // Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+    //
+    // },);
   }
 
   @override
   Widget build(BuildContext context) {
+    AppSettings.instance.trackingLocation.get().then((value) => log("$value"));
     MediaQueryData media = MediaQuery.of(context);
     return ListView(children: [
       Padding(
@@ -120,7 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                       child:
                                           const Icon(Icomoon.arrow, size: 30)),
                                   const Padding(
-                                      padding: EdgeInsets.only(left: 5, bottom: 2),
+                                      padding:
+                                          EdgeInsets.only(left: 5, bottom: 2),
                                       child: Text("more info",
                                           textAlign: TextAlign.left,
                                           style: TextStyle(
@@ -144,8 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           setState(() {
                             isTrackingLocation = !isTrackingLocation!;
                           });
-                          AppSettings()
-                              .trackingLocation
+                          AppSettings.instance.trackingLocation
                               .set(isTrackingLocation!);
                           if (isTrackingLocation == true) {
                             registerLocationTrackingTask();
