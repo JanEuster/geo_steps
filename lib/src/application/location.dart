@@ -129,7 +129,8 @@ class LocationService {
     // }
   }
 
-  Future<void> loadToday() async {
+  // bool indicates whether today could be loaded
+  Future<bool> loadToday() async {
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxFilePath = "$gpxDirPath/$date.gpx";
@@ -139,7 +140,10 @@ class LocationService {
       log("todays gpx file exists");
       var xml = await gpxFile.readAsString();
       fromGPX(xml);
+      return true; // was able to load today from file
     }
+    // un able to load today
+    return false;
   }
 
   Future<void> saveToday() async {

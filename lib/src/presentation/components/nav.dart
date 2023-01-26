@@ -80,7 +80,7 @@ class _NavbarState extends State<Navbar> {
                     onTap: () {
                         setMenu(menuOpen ? false : true);
                     },
-                    child: const Icon(Icons.menu)),
+                    child: const Icon(Icons.menu, size: 26)),
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   child: Text(
@@ -90,7 +90,7 @@ class _NavbarState extends State<Navbar> {
                 ),
               ],
             ),
-            GestureDetector(onTap: () {}, child: const Icon(Icomoon.settings)),
+            GestureDetector(onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
           ])),
       Container(height: 1, color: Colors.black),
       if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),

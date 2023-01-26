@@ -24,11 +24,16 @@ class _SimpleMapState extends State<SimpleMap> {
     super.initState();
 
     locationService = LocationService();
-    locationService.init().whenComplete(() => locationService.loadToday().then(
-        (value) => setState(() => mapController.move(
-            LatLng(locationService.lastPos.latitude,
-                locationService.lastPos.longitude),
-            12.8))));
+    locationService
+        .init()
+        .whenComplete(() => locationService.loadToday().then((wasLoaded) {
+              if (wasLoaded) {
+                setState(() => mapController.move(
+                    LatLng(locationService.lastPos.latitude,
+                        locationService.lastPos.longitude),
+                    12.8));
+              }
+            }));
 
     // locationService.record(onReady: (p) {
     //   mapController.move(
