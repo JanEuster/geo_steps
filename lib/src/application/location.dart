@@ -113,20 +113,20 @@ class LocationService {
       }
     });
     streamPosition((p) => positions.add(p));
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    // if (defaultTargetPlatform == TargetPlatform.android) {
       // streamActivities((a) => _activities.add(a),
       //     (obj) => log("error streaming activities: $obj}"));
       // log("start recording activity data");
-    }
+    // }
   }
 
   Future<void> stopRecording() async {
     log("stop recording position data");
     positionStream?.cancel();
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      log("stop recording activity data");
+    // if (defaultTargetPlatform == TargetPlatform.android) {
+    //   log("stop recording activity data");
       // activityStream?.cancel();
-    }
+    // }
   }
 
   Future<void> loadToday() async {
