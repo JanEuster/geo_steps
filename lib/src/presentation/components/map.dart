@@ -68,7 +68,7 @@ class _SimpleMapState extends State<SimpleMap> {
       children: [
         SizedBox(
             width: sizeHelper.width,
-            height: sizeHelper.heightWithoutNav - 150,
+            height: sizeHelper.heightWithoutNav - 200,
             child: FlutterMap(
               mapController: mapController,
               options: MapOptions(
@@ -124,8 +124,17 @@ class _SimpleMapState extends State<SimpleMap> {
             Text("more info on ${DateFormat.yMMMMEEEEd().format(widget.date)}", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             Padding(padding: EdgeInsets.only(bottom: 5)),
             Transform.rotate(angle: 1*pi, child: const Icon(Icomoon.arrow, color: Colors.white,)),
-          ],))
-
+          ],)),
+          Padding(padding: EdgeInsets.only(bottom: 10)),
+          SizedBox(width: sizeHelper.width,height: 120,child:
+             ListView.builder(itemCount: 24,scrollDirection: Axis.horizontal, controller: ScrollController(initialScrollOffset: 700), itemBuilder: (BuildContext context, int index) {
+               List<double> hours = [0, 0, 0, 0, 0, .1, .4, .6, 0, 0, .1, 0, .3, 1, .5,0, .1, .3, .2,0, 0, 0, 0, 0 ];
+               return Padding(padding: EdgeInsets.symmetric(horizontal: 5), child: Column(mainAxisAlignment: MainAxisAlignment.end,children: [
+                 Container(width: 50, height: 100*hours[index], color: Colors.black),
+                 Text("${index}")
+               ],));
+             })
+            )
         ],)
       ],
     );
