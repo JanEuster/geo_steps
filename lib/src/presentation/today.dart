@@ -12,7 +12,9 @@ class TodayPage extends StatefulWidget {
 class _TodayPageState extends State<TodayPage> {
   @override
   Widget build(BuildContext context) {
-    return ListView(children: const [
+    return ListView(
+      padding: EdgeInsets.zero,
+        children: [
       SimpleMap(),
     ]);
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:geo_steps/main.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/utils/sizing.dart';
 
 class PageWithNav extends StatelessWidget {
   PageWithNav(
@@ -18,20 +19,20 @@ class PageWithNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
-    EdgeInsets padding = media.viewPadding;
+    var sizeHelper = SizeHelper.of(context);
+    EdgeInsets padding = sizeHelper.pad;
     return Stack(children: [
       Positioned(
-          top: padding.top + 46,
-          width: media.size.width,
-          height: media.size.height - 46 - padding.vertical,
+          top: sizeHelper.padTopWithNav,
+          width: sizeHelper.width,
+          height: sizeHelper.heightWithoutNav,
           child: Container(
             color: color,
             child: child,
           )),
       Positioned(
           top: padding.top,
-          width: media.size.width,
+          width: sizeHelper.width,
           child: Navbar(
             title: title,
             navItems: navItems,
@@ -70,7 +71,7 @@ class _NavbarState extends State<Navbar> {
     return Column(children: [
       Container(
           color: Colors.white,
-          height: 45,
+          height: SizeHelper.navHeight-1, //-1 for separate border bottom container
           padding: const EdgeInsets.only(left: 10.0, right: 10.0),
           child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -106,13 +107,13 @@ class NavMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
+    var sizeHelper = SizeHelper.of(context);
     return SizedBox(
-        height: media.size.height - media.viewPadding.vertical,
+        height: sizeHelper.size.height - sizeHelper.pad.vertical,
         child: Column(
           children: [
             Container(
-                width: media.size.width,
+                width: sizeHelper.width,
                 // color: const Color(0xFFFFFFFF),
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(

@@ -2,13 +2,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
+import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/utils/sizing.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:intl/intl.dart';
 
 // local imports
 import 'package:geo_steps/src/application/location.dart';
 
 class SimpleMap extends StatefulWidget {
-  const SimpleMap({super.key});
+  late DateTime date;
+
+  SimpleMap({super.key, showDate}) {
+    if (showDate != null) {
+      date = showDate;
+    } else {
+      date = DateTime.now();
+    }
+  }
 
   @override
   State<StatefulWidget> createState() => _SimpleMapState();
@@ -51,18 +62,13 @@ class _SimpleMapState extends State<SimpleMap> {
   @override
   Widget build(BuildContext context) {
     defaultTargetPlatform = Theme.of(context).platform;
-    double width = MediaQuery.of(context).size.width;
+    SizeHelper sizeHelper = SizeHelper.of(context);
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        if (locationService.hasPositions) ...[
-          Text("longitude: ${locationService.lastPos.longitude}"),
-          Text("latitude: ${locationService.lastPos.latitude}"),
-          Text("min max: ${locationService.range}"),
-          Text("positions: ${locationService.posCount}"),
-        ],
         SizedBox(
-            width: width,
-            height: width,
+            width: sizeHelper.width,
+            height: sizeHelper.heightWithoutNav - 150,
             child: FlutterMap(
               mapController: mapController,
               options: MapOptions(
@@ -113,6 +119,14 @@ class _SimpleMapState extends State<SimpleMap> {
                   )
               ],
             )),
+        Column(children: [
+          Container(width: sizeHelper.width, padding: EdgeInsets.all(5), color: Colors.black, child: Column(children: [
+            Text("more info on ${DateFormat.yMMMMEEEEd().format(widget.date)}", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Padding(padding: EdgeInsets.only(bottom: 5)),
+            Transform.rotate(angle: 1*pi, child: const Icon(Icomoon.arrow, color: Colors.white,)),
+          ],))
+
+        ],)
       ],
     );
   }
