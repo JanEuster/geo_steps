@@ -40,6 +40,79 @@ class PageWithNav extends StatelessWidget {
   }
 }
 
+class PageWithBackNav extends StatelessWidget {
+  String title;
+  String backRoute;
+  Widget? child;
+  Color? color;
+
+  PageWithBackNav({super.key,
+    this.title = "modal", this.backRoute = "/", this.color, this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    var sizer = SizeHelper();
+    EdgeInsets padding = sizer.pad;
+    return Stack(children: [
+      Positioned(
+          top: sizer.padTopWithNav,
+          width: sizer.width,
+          height: sizer.heightWithoutNav,
+          child: Container(
+            color: color,
+            child: child,
+          )),
+      Positioned(
+          top: padding.top,
+          width: sizer.width,
+          child: BackNav(backRoute,
+              title
+          )),
+    ]);
+  }
+}
+
+class BackNav extends StatelessWidget {
+  String backRoute;
+  String title;
+
+  BackNav(this.backRoute, this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Container(
+          color: Colors.white,
+          height: SizeHelper.navHeight - 1,
+          //-1 for separate border bottom container
+          padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+          child:
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Row(
+              children: [
+                GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(backRoute);
+                    },
+                    child: const Icon(Icons.menu, size: 26)),
+                Container(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Text(
+                    title,
+                    style: const TextStyle(),
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+                onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
+          ])),
+      Container(height: 1, color: Colors.black),
+    ]);
+  }
+}
+
+
 class Navbar extends StatefulWidget {
   Navbar({super.key, this.title = "", this.navItems = const <AppRoute>[]});
 

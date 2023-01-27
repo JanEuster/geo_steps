@@ -1,4 +1,7 @@
 // flutter imports
+import 'dart:developer';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
@@ -26,7 +29,11 @@ class SimpleMap extends StatefulWidget {
   State<StatefulWidget> createState() => _SimpleMapState();
 }
 
-class _SimpleMapState extends State<SimpleMap> {
+class _SimpleMapState extends State<SimpleMap>
+    with SingleTickerProviderStateMixin {
+  late Animation<double> detailsAnimation;
+  late AnimationController detailsController;
+
   late LocationService locationService;
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
   final mapController = MapController();
@@ -53,6 +60,16 @@ class _SimpleMapState extends State<SimpleMap> {
     //   mapController.move(
     //       LatLng(p.latitude, p.longitude), 12.8);
     // });
+
+    detailsController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 150));
+    detailsAnimation = Tween<double>(
+            begin: mapHeightDetails + 58,
+            end: SizeHelper().heightWithoutNav - 200)
+        .animate(detailsController)
+      ..addListener(() {
+        setState(() {});
+      });
   }
 
   @override
@@ -60,6 +77,19 @@ class _SimpleMapState extends State<SimpleMap> {
     // locationService.stopRecording();
 
     super.dispose();
+  }
+
+  void toggleDetailsOpen() {
+    if (!showDetails) {
+      detailsController.forward();
+    } else {
+      detailsController.reverse();
+    }
+    log("before $showDetails");
+    setState(() {
+      showDetails = !showDetails;
+    });
+    log("after $showDetails");
   }
 
   @override
@@ -72,10 +102,8 @@ class _SimpleMapState extends State<SimpleMap> {
         children: [
           Positioned(
             child: SizedBox(
-                width: sizeHelper.width,
-                height: showDetails
-                    ? mapHeightDetails
-                    : sizeHelper.heightWithoutNav - 200,
+                width: sizer.width,
+                height: sizer.heightWithoutNav - detailsAnimation.value,
                 child: FlutterMap(
                   mapController: mapController,
                   options: MapOptions(
@@ -131,15 +159,11 @@ class _SimpleMapState extends State<SimpleMap> {
           Positioned(
             bottom: 0,
             child: SizedBox(
-              height: showDetails
-                  ? sizeHelper.heightWithoutNav - mapHeightDetails
-                  : 200,
+              height: detailsAnimation.value,
               child: Column(
                 children: [
                   GestureDetector(
-                      onTap: () => setState(() {
-                            showDetails = !showDetails;
-                          }),
+                      onTap: () => toggleDetailsOpen(),
                       child: Container(
                           width: sizer.width,
                           height: 58,
@@ -164,7 +188,7 @@ class _SimpleMapState extends State<SimpleMap> {
                           ))),
                   SizedBox(
                     width: sizer.width,
-                    height: mapHeightDetails,
+                    height: detailsAnimation.value-58,
                     child: !showDetails
                         ? HourlyActivity()
                         : ListView(
@@ -205,7 +229,8 @@ class HourlyActivity extends StatelessWidget {
         height: 120,
         child: ListView.builder(
             itemCount: 24,
-            padding: EdgeInsets.symmetric(horizontal: sizer.width/2-25, vertical: 0),
+            padding: EdgeInsets.symmetric(
+                horizontal: sizer.width / 2 - 25, vertical: 0),
             scrollDirection: Axis.horizontal,
             controller: ScrollController(initialScrollOffset: 700),
             itemBuilder: (BuildContext context, int index) {
