@@ -65,9 +65,9 @@ class _SimpleMapState extends State<SimpleMap> {
   @override
   Widget build(BuildContext context) {
     defaultTargetPlatform = Theme.of(context).platform;
-    SizeHelper sizeHelper = SizeHelper.of(context);
+    SizeHelper sizer = SizeHelper();
     return SizedBox(
-      height: sizeHelper.heightWithoutNav,
+      height: sizer.heightWithoutNav,
       child: Stack(
         children: [
           Positioned(
@@ -141,7 +141,7 @@ class _SimpleMapState extends State<SimpleMap> {
                             showDetails = !showDetails;
                           }),
                       child: Container(
-                          width: sizeHelper.width,
+                          width: sizer.width,
                           height: 58,
                           padding: EdgeInsets.all(5),
                           color: Colors.black,
@@ -163,10 +163,8 @@ class _SimpleMapState extends State<SimpleMap> {
                             ],
                           ))),
                   SizedBox(
-                    width: sizeHelper.width,
-                    height: showDetails
-                        ? sizeHelper.heightWithoutNav - mapHeightDetails - 58
-                        : 135,
+                    width: sizer.width,
+                    height: mapHeightDetails,
                     child: !showDetails
                         ? HourlyActivity()
                         : ListView(
@@ -201,13 +199,13 @@ class _SimpleMapState extends State<SimpleMap> {
 class HourlyActivity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var sizeHelper = SizeHelper(context);
+    var sizer = SizeHelper();
     return SizedBox(
-        width: sizeHelper.width,
+        width: sizer.width,
         height: 120,
         child: ListView.builder(
             itemCount: 24,
-            padding: EdgeInsets.symmetric(horizontal: sizeHelper.width/2-25, vertical: 0),
+            padding: EdgeInsets.symmetric(horizontal: sizer.width/2-25, vertical: 0),
             scrollDirection: Axis.horizontal,
             controller: ScrollController(initialScrollOffset: 700),
             itemBuilder: (BuildContext context, int index) {

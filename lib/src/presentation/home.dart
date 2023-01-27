@@ -41,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     AppSettings.instance.trackingLocation.get().then((value) => log("$value"));
-    var sizeHelper = SizeHelper.of(context);
+    var sizer = SizeHelper();
     return ListView(children: [
       Padding(
           padding: const EdgeInsets.only(left: 20, right: 20),
@@ -78,13 +78,13 @@ class _MyHomePageState extends State<MyHomePage> {
       Padding(
           padding: const EdgeInsets.all(30),
           child: Container(
-              width: sizeHelper.width,
+              width: sizer.width,
               decoration:
                   BoxDecoration(border: Border.all(color: Colors.black)),
               child: Column(
                 children: [
                   Container(
-                      width: sizeHelper.width,
+                      width: sizer.width,
                       padding: const EdgeInsets.symmetric(
                           vertical: 5, horizontal: 10),
                       child: Column(
@@ -145,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ],
                       )),
                   Container(
-                      width: sizeHelper.width,
+                      width: sizer.width,
                       height: 40,
                       decoration: const BoxDecoration(
                           image: DecorationImage(
@@ -168,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       },
                       child: Container(
-                          width: sizeHelper.width,
+                          width: sizer.width,
                           height: 40,
                           color: Colors.white,
                           child: Center(
@@ -192,13 +192,13 @@ class ActivityMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var sizeHelper = SizeHelper.of(context);
+    var sizer = SizeHelper();
     return SizedBox(
         height: 380,
         child: Padding(
             padding: const EdgeInsets.all(10),
             child: Container(
-                width: sizeHelper.width,
+                width: sizer.width,
                 decoration:
                     BoxDecoration(border: Border.all(color: Colors.black)),
                 child: Row(
@@ -212,7 +212,7 @@ class ActivityMap extends StatelessWidget {
                                 fontSize: 20, fontWeight: FontWeight.w500))),
                     Container(
                         color: Colors.black,
-                        width: sizeHelper.width / 5 * 3,
+                        width: sizer.width / 5 * 3,
                         height: 380)
                   ],
                 ))));

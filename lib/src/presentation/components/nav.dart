@@ -5,12 +5,11 @@ import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
 class PageWithNav extends StatelessWidget {
-  PageWithNav(
-      {super.key,
-      this.title = "",
-      this.navItems = const <AppRoute>[],
-      this.child,
-      this.color});
+  PageWithNav({super.key,
+    this.title = "",
+    this.navItems = const <AppRoute>[],
+    this.child,
+    this.color});
 
   String title;
   Widget? child;
@@ -19,20 +18,20 @@ class PageWithNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var sizeHelper = SizeHelper.of(context);
-    EdgeInsets padding = sizeHelper.pad;
+    var sizer = SizeHelper();
+    EdgeInsets padding = sizer.pad;
     return Stack(children: [
       Positioned(
-          top: sizeHelper.padTopWithNav,
-          width: sizeHelper.width,
-          height: sizeHelper.heightWithoutNav,
+          top: sizer.padTopWithNav,
+          width: sizer.width,
+          height: sizer.heightWithoutNav,
           child: Container(
             color: color,
             child: child,
           )),
       Positioned(
           top: padding.top,
-          width: sizeHelper.width,
+          width: sizer.width,
           child: Navbar(
             title: title,
             navItems: navItems,
@@ -71,15 +70,16 @@ class _NavbarState extends State<Navbar> {
     return Column(children: [
       Container(
           color: Colors.white,
-          height: SizeHelper.navHeight-1, //-1 for separate border bottom container
+          height: SizeHelper.navHeight - 1,
+          //-1 for separate border bottom container
           padding: const EdgeInsets.only(left: 10.0, right: 10.0),
           child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(
               children: [
                 GestureDetector(
                     onTap: () {
-                        setMenu(menuOpen ? false : true);
+                      setMenu(menuOpen ? false : true);
                     },
                     child: const Icon(Icons.menu, size: 26)),
                 Container(
@@ -91,7 +91,8 @@ class _NavbarState extends State<Navbar> {
                 ),
               ],
             ),
-            GestureDetector(onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
+            GestureDetector(
+                onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
           ])),
       Container(height: 1, color: Colors.black),
       if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),
@@ -107,13 +108,13 @@ class NavMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var sizeHelper = SizeHelper.of(context);
+    var sizer = SizeHelper();
     return SizedBox(
-        height: sizeHelper.size.height - sizeHelper.pad.vertical,
+        height: sizer.size.height - sizer.pad.vertical,
         child: Column(
           children: [
             Container(
-                width: sizeHelper.width,
+                width: sizer.width,
                 // color: const Color(0xFFFFFFFF),
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
@@ -139,18 +140,19 @@ class NavMenu extends StatelessWidget {
                     })
                   ],
                 )),
-            Expanded(child: GestureDetector(onTap: () {setMenu(false);},child: Container(color: Colors.white.withAlpha(125))))
+            Expanded(child: GestureDetector(onTap: () {
+              setMenu(false);
+            }, child: Container(color: Colors.white.withAlpha(125))))
           ],
         ));
   }
 }
 
 class NavMenuItem extends StatelessWidget {
-  NavMenuItem(
-      {super.key,
-      this.name = "home",
-      this.route = "/",
-      this.icon = Icons.nordic_walking});
+  NavMenuItem({super.key,
+    this.name = "home",
+    this.route = "/",
+    this.icon = Icons.nordic_walking});
 
   String name;
   String route;
@@ -163,7 +165,10 @@ class NavMenuItem extends StatelessWidget {
           Navigator.pushNamed(context, route);
         },
         child: Container(
-            width: MediaQuery.of(context).size.width,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
             alignment: Alignment.centerLeft,
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),

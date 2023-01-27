@@ -1,8 +1,10 @@
+import 'dart:developer';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class SizeHelper {
   static const double navHeight = 46;
-  late MediaQueryData media;
   late Size size;
   late double heightWithoutNav;
   late double padTopWithNav;
@@ -10,18 +12,17 @@ class SizeHelper {
   late double height;
   late EdgeInsets pad;
 
-  SizeHelper(BuildContext context) {
-    media = MediaQuery.of(context);
-    size = media.size;
-    pad = media.viewPadding;
+  SizeHelper() {
+    double ratio = window.devicePixelRatio;
+    size = window.physicalSize / ratio;
+    pad = EdgeInsets.fromLTRB(
+        window.padding.left / ratio,
+        window.padding.top / ratio,
+        window.padding.right / ratio,
+        window.padding.bottom / ratio);
     width = size.width;
     height = size.height;
-    heightWithoutNav =
-        media.size.height - navHeight - media.viewPadding.vertical;
-    padTopWithNav = navHeight + media.viewPadding.top;
-  }
-
-  static SizeHelper of(BuildContext context) {
-    return SizeHelper(context);
+    heightWithoutNav = size.height - navHeight - pad.vertical;
+    padTopWithNav = navHeight + pad.top;
   }
 }
