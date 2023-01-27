@@ -1,5 +1,31 @@
 import 'package:flutter/material.dart';
 
+
+class Line extends StatelessWidget {
+  const Line({Key? key, this.height = 1, this.color = Colors.black})
+      : super(key: key);
+  final double height;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(height: height, color: color);
+  }
+}
+
+class LineVertical extends StatelessWidget {
+  const LineVertical({Key? key, this.width = 1, this.color = Colors.black})
+      : super(key: key);
+  final double width;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: width, color: color);
+  }
+}
+
+
 class DottedLine extends StatelessWidget {
   const DottedLine({Key? key, this.height = 1, this.color = Colors.black})
       : super(key: key);

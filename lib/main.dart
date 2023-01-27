@@ -201,13 +201,6 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
       widget.title = widget.routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
-        EdgeInsets insets = MediaQuery
-            .of(context)
-            .viewInsets;
-        EdgeInsets padding = MediaQuery
-            .of(context)
-            .viewPadding;
-        log("device insets || insets: $insets, padding: $padding");
         return PageWithNav(
             title: widget.title,
             color: const Color(0xFFFFFFFF),

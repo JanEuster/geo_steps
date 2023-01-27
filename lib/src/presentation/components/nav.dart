@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:geo_steps/main.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
 class PageWithNav extends StatelessWidget {
@@ -107,7 +108,7 @@ class BackNav extends StatelessWidget {
             GestureDetector(
                 onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
           ])),
-      Container(height: 1, color: Colors.black),
+      const Line()
     ]);
   }
 }
@@ -167,7 +168,7 @@ class _NavbarState extends State<Navbar> {
             GestureDetector(
                 onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
           ])),
-      Container(height: 1, color: Colors.black),
+      const Line(),
       if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),
     ]);
   }
