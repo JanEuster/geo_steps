@@ -40,6 +40,7 @@ class OptionsWidgetState extends State<OptionsWidget> {
         index = value;
       });
     }
+    widget.indexChanged(index);
   }
 
   @override

@@ -34,6 +34,8 @@ class OverviewPage extends StatefulWidget {
 
 class _OverviewPageState extends State<OverviewPage> {
   OverviewCategory selectedCategory = OverviewCategory.Day;
+  DateTime startDate = DateTime.now();
+  DateTime endDate = DateTime.now();
   bool showCalenderModal = false;
 
   @override
@@ -71,8 +73,7 @@ class _OverviewPageState extends State<OverviewPage> {
     return ListView(padding: EdgeInsets.zero, children: [
       SizedBox(
         height: 650,
-        child: Stack(
-            children: [
+        child: Stack(children: [
           Column(children: [
             SizedBox(
                 width: sizer.width,
@@ -89,9 +90,10 @@ class _OverviewPageState extends State<OverviewPage> {
                           color: Colors.white,
                           child: Icon(Icomoon.calender,
                               size: 32,
-                              color: selectedCategory != OverviewCategory.AllTime
-                                  ? Colors.black
-                                  : Colors.grey)),
+                              color:
+                                  selectedCategory != OverviewCategory.AllTime
+                                      ? Colors.black
+                                      : Colors.grey)),
                     ),
                     const LineVertical(),
                     generateCategoryOptions(OverviewCategory.Day),
@@ -103,7 +105,16 @@ class _OverviewPageState extends State<OverviewPage> {
                 )),
             const Line(),
           ]),
-          CalenderWidget(DateTime.now()),
+          Column(children: [
+            const Padding(padding: EdgeInsets.only(top: 46)),
+            Text(startDate.toString()),
+            Text(endDate.toString()),
+          ],),
+          if (showCalenderModal) CalenderWidget(startDate, onClose: (date) => setState(() {
+            startDate = date;
+            endDate = date;
+            showCalenderModal = false;
+          }),),
         ]),
       ),
     ]);

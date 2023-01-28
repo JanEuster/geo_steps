@@ -7,8 +7,9 @@ import 'package:geo_steps/src/utils/sizing.dart';
 
 class CalenderWidget extends StatefulWidget {
   DateTime date;
+  void Function(DateTime) onClose;
 
-  CalenderWidget(this.date, {super.key});
+  CalenderWidget(this.date, {super.key, required this.onClose});
 
   @override
   State<StatefulWidget> createState() => CalenderWidgetState();
@@ -99,20 +100,29 @@ class CalenderWidgetState extends State<CalenderWidget> {
                     childAspectRatio: 4 / 3,
                     children: List.generate(6 * 7, (index) {
                       var i = firstInCalender + index;
-                      String day;
+                      int thisDay;
+                      bool enabled = true;
                       if (i < 0) {
                         // this day of the week is
-                        day = (daysInPreviousMonth + i).toString();
+                        thisDay = daysInPreviousMonth + i;
+                        enabled = false;
                       } else {
-                        day = ((i % daysInThisMonth) + 1).toString();
+                        thisDay = (i % daysInThisMonth) + 1;
+                      }
+                      if (i > daysInThisMonth-1) {
+                        enabled = false;
                       }
                       // var week =  (index / 7).ceil(); // 1: 0-6 2: 7-13 ...
                       // var dayOfWeek = (firstOfMonth.weekday-1 + index) % 6; // 0: monday 1: tuesday ...
                       return IconButtonWidget(
+                        onTap: enabled ? () => setState(() {
+                          day = thisDay;
+                        }) : null,
+                        color: enabled && thisDay == day ? Colors.black : Colors.white,
                           icon: Center(
                         child: Text(
-                          day,
-                          style: const TextStyle(),
+                          thisDay.toString(),
+                          style: TextStyle(color: enabled ? (thisDay == day ? Colors.white : Colors.black) : Colors.grey),
                         ),
                       ));
                     }),
@@ -122,9 +132,10 @@ class CalenderWidgetState extends State<CalenderWidget> {
                 child: Row(
                   children: [
                     IconButtonWidget(
+                      onTap: () => widget.onClose(DateTime(year, month, day)),
                       width: width-40,
                       height: 40,
-                        icon: Center(
+                        icon: const Center(
                       child: Text(
                         "Set Date",
                       ),
