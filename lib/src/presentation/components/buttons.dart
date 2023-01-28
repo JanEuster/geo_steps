@@ -9,7 +9,8 @@ class OptionsWidget extends StatefulWidget {
   int index;
   late int length;
 
-  OptionsWidget(this.options, {super.key, this.index = 0, required this.indexChanged}) {
+  OptionsWidget(this.options,
+      {super.key, this.index = 0, required this.indexChanged}) {
     length = options.length;
   }
 
@@ -46,22 +47,36 @@ class OptionsWidgetState extends State<OptionsWidget> {
     SizeHelper sizer = SizeHelper();
     return SizedBox(
       width: sizer.width - 100,
-      height: 100,
-      child: Row(children: [
-        IconButton(
+      child: Flex(direction: Axis.horizontal, children: [
+        IconButtonWidget(
           onTap: () => setOption(index - 1),
-          icon: const Icon(Icomoon.arrow, size: 30),
+          color: Colors.black,
+          icon: const Icon(
+            Icomoon.arrow,
+            size: 30,
+            color: Colors.white,
+          ),
           iconRotation: 1.5 * pi,
         ),
         const Padding(padding: EdgeInsets.only(left: 10)),
-        Text(
-          widget.options[index],
-          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        Expanded(
+          flex: 10,
+          child: Center(
+            child: Text(
+              widget.options[index],
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
         const Padding(padding: EdgeInsets.only(left: 10)),
-        IconButton(
+        IconButtonWidget(
           onTap: () => setOption(index + 1),
-          icon: const Icon(Icomoon.arrow, size: 30),
+          color: Colors.black,
+          icon: const Icon(
+            Icomoon.arrow,
+            size: 30,
+            color: Colors.white,
+          ),
           iconRotation: .5 * pi,
         ),
       ]),
@@ -69,25 +84,35 @@ class OptionsWidgetState extends State<OptionsWidget> {
   }
 }
 
-
 typedef GestureTapCallback = void Function();
 
-class IconButton extends StatelessWidget {
-  late Icon icon;
+class IconButtonWidget extends StatelessWidget {
+  double? width;
+  double? height;
+  late Widget icon;
   late double iconRotation;
   late GestureTapCallback? onTap = () {};
+  Color? color;
 
-  IconButton(
-      {super.key, required this.icon, this.onTap, this.iconRotation = 0});
+  IconButtonWidget(
+      {super.key,
+      required this.icon,
+      this.onTap,
+      this.iconRotation = 0,
+      this.color,
+      this.width,
+      this.height});
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          width: width,
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
+              color: color,
               border: Border.all(),
               borderRadius: const BorderRadius.all(Radius.circular(6))),
           child: Transform.rotate(
