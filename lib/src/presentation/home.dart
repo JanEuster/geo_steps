@@ -40,7 +40,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    AppSettings.instance.trackingLocation.get().then((value) => log("$value"));
     var sizer = SizeHelper();
     return ListView(children: [
       Padding(

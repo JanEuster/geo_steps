@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geo_steps/src/presentation/components/calender.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
@@ -18,7 +19,7 @@ extension OverviewCategoryExtension on OverviewCategory {
       case OverviewCategory.Range:
         return "range";
       case OverviewCategory.AllTime:
-        return "alltime";
+        return "all";
     }
     return ""; // never gets called
   }
@@ -33,6 +34,7 @@ class OverviewPage extends StatefulWidget {
 
 class _OverviewPageState extends State<OverviewPage> {
   OverviewCategory selectedCategory = OverviewCategory.Day;
+  bool showCalenderModal = false;
 
   @override
   void initState() {
@@ -40,48 +42,27 @@ class _OverviewPageState extends State<OverviewPage> {
   }
 
   Widget generateCategoryOptions(OverviewCategory cat) {
-    Widget option = Expanded(
-      flex: 3,
+    bool selected = selectedCategory == cat;
+    return Expanded(
+      flex: selected ? 4 : 3,
       child: GestureDetector(
         onTap: () => setState(() {
           selectedCategory = cat;
         }),
         child: Container(
-            color: Colors.white,
+            color: selected ? Colors.black : Colors.white,
             height: 45,
             child: Center(
               child: Text(cat.name,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black)),
+                      color: selected ? Colors.white : Colors.black)),
             )),
       ),
     );
-    if (cat == selectedCategory) {
-      option = Expanded(
-        flex: 4,
-        child: GestureDetector(
-          onTap: () => setState(() {
-            selectedCategory = cat;
-          }),
-          child: Container(
-              color: Colors.black,
-              height: 45,
-              child: Expanded(
-                  child: Center(
-                child: Text(cat.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-              ))),
-        ),
-      );
-    }
-    return option;
+    ;
   }
 
   @override
@@ -89,23 +70,42 @@ class _OverviewPageState extends State<OverviewPage> {
     var sizer = SizeHelper();
     return ListView(padding: EdgeInsets.zero, children: [
       SizedBox(
-          width: sizer.width,
-          height: 45,
-          child: Row(
+        height: 650,
+        child: Stack(
             children: [
-              Container(
-                  width: 70,
-                  color: Colors.white,
-                  child: const Icon(Icomoon.calender, size: 32)),
-              LineVertical(),
-              generateCategoryOptions(OverviewCategory.Day),
-              LineVertical(),
-              generateCategoryOptions(OverviewCategory.Range),
-              LineVertical(),
-              generateCategoryOptions(OverviewCategory.AllTime),
-            ],
-          )),
-      const Line(),
+          Column(children: [
+            SizedBox(
+                width: sizer.width,
+                height: 45,
+                child: Flex(
+                  direction: Axis.horizontal,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() {
+                        showCalenderModal = !showCalenderModal;
+                      }),
+                      child: Container(
+                          width: 70,
+                          color: Colors.white,
+                          child: Icon(Icomoon.calender,
+                              size: 32,
+                              color: selectedCategory != OverviewCategory.AllTime
+                                  ? Colors.black
+                                  : Colors.grey)),
+                    ),
+                    const LineVertical(),
+                    generateCategoryOptions(OverviewCategory.Day),
+                    const LineVertical(),
+                    generateCategoryOptions(OverviewCategory.Range),
+                    const LineVertical(),
+                    generateCategoryOptions(OverviewCategory.AllTime),
+                  ],
+                )),
+            const Line(),
+          ]),
+          CalenderWidget(DateTime.now()),
+        ]),
+      ),
     ]);
   }
 }
