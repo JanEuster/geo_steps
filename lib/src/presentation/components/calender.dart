@@ -42,6 +42,18 @@ class CalenderWidgetState extends State<CalenderWidget> {
     day = widget.date.day;
   }
 
+  void dayStillInRange() {
+    // check whether after month/ year change,
+    // a day is still in the months range of days
+    // and set it to the highest possible if not
+    var daysInThisMonth = DateUtils.getDaysInMonth(year, month);
+    if (daysInThisMonth < day) {
+      setState(() {
+        day = daysInThisMonth;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SizeHelper sizer = SizeHelper();
@@ -72,9 +84,13 @@ class CalenderWidgetState extends State<CalenderWidget> {
                 child: OptionsWidget(
                   yearOptions,
                   index: yearOptions.indexOf(year.toString()),
-                  indexChanged: (index) => setState(() {
-                    year = int.parse(yearOptions[index]);
-                  }),
+                  indexChanged: (index) {
+                    setState(() {
+                      year = int.parse(yearOptions[index]);
+
+                    });
+                    dayStillInRange();
+                  },
                 ),
               ),
               Padding(
@@ -83,9 +99,12 @@ class CalenderWidgetState extends State<CalenderWidget> {
                 child: OptionsWidget(
                   monthOptions,
                   index: month - 1,
-                  indexChanged: (index) => setState(() {
-                    month = index + 1;
-                  }),
+                  indexChanged: (index) {
+                    setState(() {
+                      month = index + 1;
+                    });
+                    dayStillInRange();
+                  },
                 ),
               ),
               Container(
