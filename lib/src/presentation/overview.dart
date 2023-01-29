@@ -44,13 +44,14 @@ class _OverviewPageState extends State<OverviewPage> {
     super.initState();
   }
 
-  Widget generateCategoryOptions(OverviewCategory cat) {
+  Widget generateCategoryOption(OverviewCategory cat) {
     bool selected = selectedCategory == cat;
     return Expanded(
       flex: selected ? 4 : 3,
       child: GestureDetector(
         onTap: () => setState(() {
           selectedCategory = cat;
+          showCalenderModal = false; // hide calender when category is changed
         }),
         child: Container(
             color: selected ? Colors.black : Colors.white,
@@ -84,7 +85,11 @@ class _OverviewPageState extends State<OverviewPage> {
                   children: [
                     GestureDetector(
                       onTap: () => setState(() {
-                        showCalenderModal = !showCalenderModal;
+                        // all time does not need a calender, therefore the calender is greyed out
+                        // and tapping the icon does not open the modal when this category is selected
+                        if (selectedCategory != OverviewCategory.AllTime) {
+                          showCalenderModal = !showCalenderModal;
+                        }
                       }),
                       child: Container(
                           width: 70,
@@ -97,11 +102,11 @@ class _OverviewPageState extends State<OverviewPage> {
                                       : Colors.grey)),
                     ),
                     const LineVertical(),
-                    generateCategoryOptions(OverviewCategory.Day),
+                    generateCategoryOption(OverviewCategory.Day),
                     const LineVertical(),
-                    generateCategoryOptions(OverviewCategory.Range),
+                    generateCategoryOption(OverviewCategory.Range),
                     const LineVertical(),
-                    generateCategoryOptions(OverviewCategory.AllTime),
+                    generateCategoryOption(OverviewCategory.AllTime),
                   ],
                 )),
             const Line(),
