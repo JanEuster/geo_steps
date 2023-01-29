@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/buttons.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
+import 'package:intl/intl.dart';
 
 class CalenderWidget extends StatefulWidget {
   DateTime date;
@@ -107,44 +108,57 @@ class CalenderWidgetState extends State<CalenderWidget> {
                   },
                 ),
               ),
+
               Container(
                   width: width,
-                  height: 240,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: GridView.count(
-                    padding: const EdgeInsets.only(top: 10),
-                    crossAxisCount: 7,
-                    mainAxisSpacing: 6,
-                    crossAxisSpacing: 6,
-                    childAspectRatio: 4 / 3,
-                    children: List.generate(6 * 7, (index) {
-                      var i = firstInCalender + index;
-                      int thisDay;
-                      bool enabled = true;
-                      if (i < 0) {
-                        // this day of the week is
-                        thisDay = daysInPreviousMonth + i;
-                        enabled = false;
-                      } else {
-                        thisDay = (i % daysInThisMonth) + 1;
-                      }
-                      if (i > daysInThisMonth-1) {
-                        enabled = false;
-                      }
-                      // var week =  (index / 7).ceil(); // 1: 0-6 2: 7-13 ...
-                      // var dayOfWeek = (firstOfMonth.weekday-1 + index) % 6; // 0: monday 1: tuesday ...
-                      return IconButtonWidget(
-                        onTap: enabled ? () => setState(() {
-                          day = thisDay;
-                        }) : null,
-                        color: enabled && thisDay == day ? Colors.black : Colors.white,
-                          icon: Center(
-                        child: Text(
-                          thisDay.toString(),
-                          style: TextStyle(color: enabled ? (thisDay == day ? Colors.white : Colors.black) : Colors.grey),
-                        ),
-                      ));
-                    }),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: Flex(direction: Axis.horizontal, children: List.generate(7, (index) {
+                          return Expanded(child: Text(["M", "T", "W", "T", "F", "S", "S"][index], textAlign: TextAlign.center,));
+                        }),),
+                      ),
+                      SizedBox(
+                        width: width,
+                        height: 240,
+                        child: GridView.count(
+                        padding: const EdgeInsets.only(top: 10),
+                        crossAxisCount: 7,
+                        mainAxisSpacing: 6,
+                        crossAxisSpacing: 6,
+                        childAspectRatio: 4 / 3,
+                        children: List.generate(6 * 7, (index) {
+                          var i = firstInCalender + index;
+                          int thisDay;
+                          bool enabled = true;
+                          if (i < 0) {
+                            // this day of the week is
+                            thisDay = daysInPreviousMonth + i;
+                            enabled = false;
+                          } else {
+                            thisDay = (i % daysInThisMonth) + 1;
+                          }
+                          if (i > daysInThisMonth-1) {
+                            enabled = false;
+                          }
+                          // var week =  (index / 7).ceil(); // 1: 0-6 2: 7-13 ...
+                          // var dayOfWeek = (firstOfMonth.weekday-1 + index) % 6; // 0: monday 1: tuesday ...
+                          return IconButtonWidget(
+                            onTap: enabled ? () => setState(() {
+                              day = thisDay;
+                            }) : null,
+                            color: enabled && thisDay == day ? Colors.black : Colors.white,
+                              icon: Center(
+                            child: Text(
+                              thisDay.toString(),
+                              style: TextStyle(color: enabled ? (thisDay == day ? Colors.white : Colors.black) : Colors.grey),
+                            ),
+                          ));
+                        }),
+                    ),
+                      ),]
                   )),
               Padding(
                 padding: const EdgeInsets.only(top: 20),

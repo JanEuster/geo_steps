@@ -4,6 +4,7 @@ import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
+import 'package:intl/intl.dart';
 
 enum OverviewCategory {
   Day,
@@ -105,16 +106,30 @@ class _OverviewPageState extends State<OverviewPage> {
                 )),
             const Line(),
           ]),
-          Column(children: [
-            const Padding(padding: EdgeInsets.only(top: 46)),
-            Text(startDate.toString()),
-            Text(endDate.toString()),
-          ],),
-          if (showCalenderModal) CalenderWidget(startDate, onClose: (date) => setState(() {
-            startDate = date;
-            endDate = date;
-            showCalenderModal = false;
-          }),),
+          Column(
+            children: [
+              const Padding(padding: EdgeInsets.only(top: 46)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 12 ),
+                child: Text(
+                  "${DateFormat.yMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMEd().format(endDate).replaceAll("/", ".")}",
+                  style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic),
+                ),
+              )
+            ],
+          ),
+          if (showCalenderModal)
+            CalenderWidget(
+              startDate,
+              onClose: (date) => setState(() {
+                startDate = date;
+                endDate = date;
+                showCalenderModal = false;
+              }),
+            ),
         ]),
       ),
     ]);
