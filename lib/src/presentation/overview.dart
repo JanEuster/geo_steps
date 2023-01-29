@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/calender.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
@@ -35,13 +37,16 @@ class OverviewPage extends StatefulWidget {
 
 class _OverviewPageState extends State<OverviewPage> {
   OverviewCategory selectedCategory = OverviewCategory.Day;
-  DateTime startDate = DateTime.now();
-  DateTime endDate = DateTime.now();
+  late DateTime startDate;
+  late DateTime endDate;
   bool showCalenderModal = false;
+  bool startDateSet = false;
 
   @override
   void initState() {
     super.initState();
+    startDate = DateTime.now();
+    endDate = startDate;
   }
 
   Widget generateCategoryOption(OverviewCategory cat) {
@@ -52,6 +57,7 @@ class _OverviewPageState extends State<OverviewPage> {
         onTap: () => setState(() {
           selectedCategory = cat;
           showCalenderModal = false; // hide calender when category is changed
+          startDateSet = false;
         }),
         child: Container(
             color: selected ? Colors.black : Colors.white,
@@ -115,13 +121,18 @@ class _OverviewPageState extends State<OverviewPage> {
             children: [
               const Padding(padding: EdgeInsets.only(top: 46)),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6,horizontal: 12 ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 child: Text(
-                  "${DateFormat.yMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMEd().format(endDate).replaceAll("/", ".")}",
+                  startDate != endDate
+                      ? "${DateFormat.yMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMEd().format(endDate).replaceAll("/", ".")}"
+                      : DateFormat.yMEd()
+                          .format(startDate)
+                          .replaceAll("/", "."),
                   style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FontStyle.italic),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic),
                 ),
               )
             ],
@@ -129,10 +140,24 @@ class _OverviewPageState extends State<OverviewPage> {
           if (showCalenderModal)
             CalenderWidget(
               startDate,
+              dateName: selectedCategory == OverviewCategory.Range
+                  ? (startDateSet ? "End Date" : "Start Date")
+                  : null,
               onClose: (date) => setState(() {
-                startDate = date;
-                endDate = date;
-                showCalenderModal = false;
+                if (selectedCategory == OverviewCategory.Range) {
+                  if (startDateSet) {
+                    endDate = date;
+                    showCalenderModal = false;
+                    startDateSet = false;
+                  } else {
+                    startDate = date;
+                    startDateSet = true;
+                  }
+                } else {
+                  startDate = date;
+                  endDate = date;
+                  showCalenderModal = false;
+                }
               }),
             ),
         ]),
