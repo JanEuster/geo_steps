@@ -12,8 +12,7 @@ class CalenderWidget extends StatefulWidget {
 
   void Function(DateTime) onClose;
 
-  CalenderWidget(this.date,
-      {super.key, required this.onClose, this.dateName});
+  CalenderWidget(this.date, {super.key, required this.onClose, this.dateName});
 
   @override
   State<StatefulWidget> createState() => CalenderWidgetState();
@@ -31,17 +30,18 @@ class CalenderWidgetState extends State<CalenderWidget> {
     "July",
     "August",
     "September",
+    "October",
     "November",
     "December"
   ];
-  int year = 2022;
+  final year = ValueNotifier<int>(2022);
   int month = 0;
   int day = 1;
 
   @override
   void initState() {
     super.initState();
-    year = widget.date.year;
+    year.value = widget.date.year;
     month = widget.date.month;
     day = widget.date.day;
   }
@@ -50,7 +50,7 @@ class CalenderWidgetState extends State<CalenderWidget> {
     // check whether after month/ year change,
     // a day is still in the months range of days
     // and set it to the highest possible if not
-    var daysInThisMonth = DateUtils.getDaysInMonth(year, month);
+    var daysInThisMonth = DateUtils.getDaysInMonth(year.value, month);
     if (daysInThisMonth < day) {
       setState(() {
         day = daysInThisMonth;
@@ -62,14 +62,13 @@ class CalenderWidgetState extends State<CalenderWidget> {
   Widget build(BuildContext context) {
     SizeHelper sizer = SizeHelper();
     var width = sizer.width - 30;
-    var firstOfMonth = DateTime(year, month);
+    var firstOfMonth = DateTime(year.value, month);
     var prevMonth = month - 1;
     var daysInPreviousMonth =
-        DateUtils.getDaysInMonth(year, prevMonth != 0 ? prevMonth : 12);
-    var daysInThisMonth = DateUtils.getDaysInMonth(year, month);
+        DateUtils.getDaysInMonth(year.value, prevMonth != 0 ? prevMonth : 12);
+    var daysInThisMonth = DateUtils.getDaysInMonth(year.value, month);
     var firstInCalender = -(firstOfMonth.weekday - 1);
     // days of this month get padded with days of previous and next month
-
     return Positioned(
       top: 80,
       left: 15,
@@ -85,15 +84,18 @@ class CalenderWidgetState extends State<CalenderWidget> {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-                child: OptionsWidget(
-                  yearOptions,
-                  index: yearOptions.indexOf(year.toString()),
-                  indexChanged: (index) {
-                    setState(() {
-                      year = int.parse(yearOptions[index]);
-                    });
-                    dayStillInRange();
-                  },
+                child: ValueListenableBuilder(
+                  valueListenable: year,
+                  builder: ((context, value, widget) {
+                    return OptionsWidget(
+                      yearOptions,
+                      index: yearOptions.indexOf(value.toString()),
+                      indexChanged: (index) {
+                        year.value = int.parse(yearOptions[index]);
+                        dayStillInRange();
+                      },
+                    );
+                  }),
                 ),
               ),
               Padding(
@@ -104,6 +106,16 @@ class CalenderWidgetState extends State<CalenderWidget> {
                   index: month - 1,
                   indexChanged: (index) {
                     setState(() {
+                      if (month == monthOptions.length && index + 1 == 1) {
+                        // month wrapped at top
+                        // -> year++
+                        year.value++;
+                      } else if (index + 1 == monthOptions.length &&
+                          month == 1) {
+                        // month wrapped at bottom
+                        // -> year--
+                        year.value--;
+                      }
                       month = index + 1;
                     });
                     dayStillInRange();
@@ -181,7 +193,7 @@ class CalenderWidgetState extends State<CalenderWidget> {
                 child: Row(
                   children: [
                     IconButtonWidget(
-                        onTap: () => widget.onClose(DateTime(year, month, day)),
+                        onTap: () => widget.onClose(DateTime(year.value, month, day)),
                         width: width - 40,
                         height: 40,
                         icon: Center(

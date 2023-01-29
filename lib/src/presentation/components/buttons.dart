@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
@@ -19,26 +21,17 @@ class OptionsWidget extends StatefulWidget {
 }
 
 class OptionsWidgetState extends State<OptionsWidget> {
-  late int index;
-
   @override
   void initState() {
-    index = widget.index;
+    super.initState();
   }
 
   void setOption(int value) {
+    var index = value;
     if (value < 0) {
-      setState(() {
-        index = widget.length + value;
-      });
+      index = widget.length + value;
     } else if (value >= widget.length) {
-      setState(() {
-        index = value - widget.length;
-      });
-    } else {
-      setState(() {
-        index = value;
-      });
+      index = value - widget.length;
     }
     widget.indexChanged(index);
   }
@@ -50,7 +43,7 @@ class OptionsWidgetState extends State<OptionsWidget> {
       width: sizer.width - 100,
       child: Flex(direction: Axis.horizontal, children: [
         IconButtonWidget(
-          onTap: () => setOption(index - 1),
+          onTap: () => setOption(widget.index - 1),
           color: Colors.black,
           icon: const Icon(
             Icomoon.arrow,
@@ -64,14 +57,14 @@ class OptionsWidgetState extends State<OptionsWidget> {
           flex: 10,
           child: Center(
             child: Text(
-              widget.options[index],
+              widget.options[widget.index],
               style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
           ),
         ),
         const Padding(padding: EdgeInsets.only(left: 10)),
         IconButtonWidget(
-          onTap: () => setOption(index + 1),
+          onTap: () => setOption(widget.index + 1),
           color: Colors.black,
           icon: const Icon(
             Icomoon.arrow,

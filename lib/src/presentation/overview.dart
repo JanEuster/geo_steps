@@ -125,7 +125,7 @@ class _OverviewPageState extends State<OverviewPage> {
                     const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 child: Text(
                   startDate != endDate
-                      ? "${DateFormat.yMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMEd().format(endDate).replaceAll("/", ".")}"
+                      ? "${DateFormat.yMMMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMMMEd().format(endDate).replaceAll("/", ".")}"
                       : DateFormat.yMEd()
                           .format(startDate)
                           .replaceAll("/", "."),
