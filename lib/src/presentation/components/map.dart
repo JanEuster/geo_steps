@@ -8,11 +8,93 @@ import 'package:flutter_map/plugin_api.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
 // local imports
 import 'package:geo_steps/src/application/location.dart';
+
+class MapPreview extends StatefulWidget {
+  List<Position> data = [];
+  MapPreview({super.key, required this.data});
+
+  @override
+  State<StatefulWidget> createState() => _MapPreviewState();
+}
+
+class _MapPreviewState extends State<MapPreview> {
+  final mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(seconds: 1),() => setState(() {
+      mapController.move(LocationService.getCoordCenter(
+          LocationService.getCoordRange(widget.data)), 12.8);
+    }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SizeHelper sizer = SizeHelper();
+    return Container(
+      color: Colors.black,
+      child: FlutterMap(
+        mapController: mapController,
+        options: MapOptions(
+            onMapReady: () {
+              // set initial position on map
+            },
+            zoom: 13.0,
+            maxZoom: 19.0,
+            keepAlive: true,
+            interactiveFlags: // all interactions except rotation
+                InteractiveFlag.none),
+        nonRotatedChildren: [
+          CustomAttributionWidget.defaultWidget(
+            source: 'geo_steps',
+            sourceTextStyle:
+                const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+            onSourceTapped: () {},
+          ),
+        ],
+        children: [
+          // TileLayer(
+          //   urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          //   userAgentPackageName: 'dev.janeuster.geo_steps',
+          // ),
+
+          PolylineLayer(
+            polylineCulling: false,
+            polylines: [
+              Polyline(
+                points: LocationService.positionsToLonLat(widget.data),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+              Polyline(points: [LatLng(42.4311972, -71.1088649)])
+            ],
+          ),
+          // if (locationService.hasPositions)
+          //   MarkerLayer(
+          //     markers: [
+          //       Marker(
+          //           point: LatLng(locationService.lastPos.latitude,
+          //               locationService.lastPos.longitude),
+          //           builder: (context) => const FlutterLogo())
+          //     ],
+          //   )
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
 
 class SimpleMap extends StatefulWidget {
   late DateTime date;
@@ -188,7 +270,7 @@ class _SimpleMapState extends State<SimpleMap>
                           ))),
                   SizedBox(
                     width: sizer.width,
-                    height: detailsAnimation.value-58,
+                    height: detailsAnimation.value - 58,
                     child: !showDetails
                         ? HourlyActivity()
                         : ListView(

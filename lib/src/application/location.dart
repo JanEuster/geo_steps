@@ -50,7 +50,7 @@ class LocationService {
   }
 
   List<LatLng> get latLngList {
-    return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
+    return LocationService.positionsToLonLat(_positions);
   }
 
   String toGPX({bool pretty = false}) {
@@ -191,7 +191,7 @@ class LocationService {
     log("gpx file exported to $gpxFilePath");
   }
 
-  MinMax<LatLng> getCoordRange(List<Position> positions) {
+  static MinMax<LatLng> getCoordRange(List<Position> positions) {
     double minLon = positions[0].longitude;
     double minLat = positions[0].latitude;
     double maxLon = positions[0].longitude;
@@ -212,7 +212,7 @@ class LocationService {
     return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
   }
 
-  LatLng getCoordCenter(MinMax<LatLng> range) {
+  static LatLng getCoordCenter(MinMax<LatLng> range) {
     double longitude =
         (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
     double latitude =
@@ -270,6 +270,10 @@ class LocationService {
   //       .listen(addActivity, onError: onError);
   //   return activityStream!;
   // }
+
+  static List<LatLng> positionsToLonLat(List<Position> data) {
+    return data.map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
 }
 
 class MinMax<T> {
@@ -295,3 +299,4 @@ class LonLat {
     return "long: $longitude, lat: $latitude";
   }
 }
+
