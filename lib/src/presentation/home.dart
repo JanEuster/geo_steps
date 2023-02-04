@@ -216,34 +216,37 @@ class _ActivityMapState extends State<ActivityMap> {
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
-    return SizedBox(
-        height: 320,
-        child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Container(
-              width: sizer.width,
-              decoration:
-                  BoxDecoration(border: Border.all(color: Colors.black)),
-              child: positionsToday.isNotEmpty
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                            padding: const EdgeInsets.all(8),
-                            child: const Text("todays map",
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500))),
-                        Container(
-                          decoration: const BoxDecoration(
-                              border: Border(left: BorderSide(width: 1))),
-                          width: sizer.width / 5 * 3,
-                          child: MapPreview(data: positionsToday),
-                        )
-                      ],
-                    )
-                  : const Text("no data for today"),
-            )));
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed("/today"),
+      child: SizedBox(
+          height: 320,
+          child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                width: sizer.width,
+                decoration:
+                    BoxDecoration(border: Border.all(color: Colors.black)),
+                child: positionsToday.isNotEmpty
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(8),
+                              child: const Text("todays map",
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500))),
+                          Container(
+                            decoration: const BoxDecoration(
+                                border: Border(left: BorderSide(width: 1))),
+                            width: sizer.width / 5 * 3,
+                            child: MapPreview(data: positionsToday),
+                          )
+                        ],
+                      )
+                    : const Text("no data for today"),
+              ))),
+    );
   }
 }
