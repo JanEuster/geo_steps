@@ -196,7 +196,7 @@ class ActivityMap extends StatefulWidget {
 }
 
 class _ActivityMapState extends State<ActivityMap> {
-  List<Position> positionsToday = [const Position(longitude: 0, latitude: 0, timestamp: null, accuracy: 0, altitude: 0, heading: 0, speed: 0, speedAccuracy: 0)];
+  List<Position> positionsToday = [];
 
   @override
   void initState() {
@@ -216,6 +216,7 @@ class _ActivityMapState extends State<ActivityMap> {
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
+    log("positions: ${positionsToday.length}");
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed("/today"),
       child: SizedBox(
