@@ -1,11 +1,14 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/calender.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
+import 'package:geo_steps/src/utils/datetime.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 
 enum OverviewCategory {
@@ -41,12 +44,44 @@ class _OverviewPageState extends State<OverviewPage> {
   late DateTime endDate;
   bool showCalenderModal = false;
   bool startDateSet = false;
+  LocationService? data;
 
   @override
   void initState() {
     super.initState();
     startDate = DateTime.now();
     endDate = startDate;
+    data = LocationService();
+    data!.init().whenComplete(() {
+      setData();
+    });
+  }
+
+  void setData() async {
+    // TODO: get data for any date / range
+    if (selectedCategory == OverviewCategory.Day &&
+        startDate.isSameDate(DateTime.now())) {
+      await data!.loadToday();
+      setState(() {});
+    } else {
+      data?.clearData();
+    }
+    log("$data");
+  }
+
+  void changeCategory(OverviewCategory cat) {
+    setState(() {
+      if (selectedCategory == OverviewCategory.Range &&
+          cat == OverviewCategory.Day) {
+        // set startDate = endDate when switching from range to day
+        endDate = startDate;
+      }
+      selectedCategory = cat;
+      showCalenderModal = false; // hide calender when category is changed
+      startDateSet = false;
+    });
+    log("change Category");
+    setData();
   }
 
   Widget generateCategoryOption(OverviewCategory cat) {
@@ -54,11 +89,7 @@ class _OverviewPageState extends State<OverviewPage> {
     return Expanded(
       flex: selected ? 4 : 3,
       child: GestureDetector(
-        onTap: () => setState(() {
-          selectedCategory = cat;
-          showCalenderModal = false; // hide calender when category is changed
-          startDateSet = false;
-        }),
+        onTap: () => changeCategory(cat),
         child: Container(
             color: selected ? Colors.black : Colors.white,
             height: 45,
@@ -80,7 +111,7 @@ class _OverviewPageState extends State<OverviewPage> {
     var sizer = SizeHelper();
     return ListView(padding: EdgeInsets.zero, children: [
       SizedBox(
-        height: 650,
+        height: showCalenderModal ? 580 : null,
         child: Stack(children: [
           Column(children: [
             SizedBox(
@@ -143,25 +174,74 @@ class _OverviewPageState extends State<OverviewPage> {
               dateName: selectedCategory == OverviewCategory.Range
                   ? (startDateSet ? "End Date" : "Start Date")
                   : null,
-              onClose: (date) => setState(() {
-                if (selectedCategory == OverviewCategory.Range) {
-                  if (startDateSet) {
-                    endDate = date;
-                    showCalenderModal = false;
-                    startDateSet = false;
+              onClose: (date) {
+                setState(() {
+                  if (selectedCategory == OverviewCategory.Range) {
+                    if (startDateSet) {
+                      endDate = date;
+                      showCalenderModal = false;
+                      startDateSet = false;
+                    } else {
+                      startDate = date;
+                      startDateSet = true;
+                    }
                   } else {
                     startDate = date;
-                    startDateSet = true;
+                    endDate = date;
+                    showCalenderModal = false;
                   }
-                } else {
-                  startDate = date;
-                  endDate = date;
-                  showCalenderModal = false;
-                }
-              }),
+                });
+                setData();
+              },
             ),
         ]),
       ),
+      if (data != null && data!.posCount > 0)
+        ActivityMap(positions: data!.positions),
     ]);
+  }
+}
+
+class ActivityMap extends StatelessWidget {
+  List<Position> positions = [];
+
+  ActivityMap({super.key, required this.positions});
+
+  @override
+  Widget build(BuildContext context) {
+    var sizer = SizeHelper();
+    log("positions: ${positions.length}");
+    return GestureDetector(
+      onTap: () => null,
+      child: SizedBox(
+          height: 175,
+          child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                width: sizer.width,
+                decoration:
+                    BoxDecoration(border: Border.all(color: Colors.black)),
+                child: positions.isNotEmpty
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(8),
+                              child: const Text("view map",
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w500))),
+                          Container(
+                            decoration: const BoxDecoration(
+                                border: Border(left: BorderSide(width: 1))),
+                            width: sizer.width / 5 * 3,
+                            child: MapPreview(data: positions),
+                          )
+                        ],
+                      )
+                    : const Text("no data for today"),
+              ))),
+    );
   }
 }
