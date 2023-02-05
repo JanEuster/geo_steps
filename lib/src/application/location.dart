@@ -129,6 +129,10 @@ class LocationService {
     // }
   }
 
+  void clearData() {
+    _positions = [];
+  }
+
   // bool indicates whether today could be loaded
   Future<bool> loadToday() async {
     String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
