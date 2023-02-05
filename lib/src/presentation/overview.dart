@@ -236,7 +236,7 @@ class ActivityMap extends StatelessWidget {
                             decoration: const BoxDecoration(
                                 border: Border(left: BorderSide(width: 1))),
                             width: sizer.width / 5 * 3,
-                            child: MapPreview(data: positions),
+                            child: MapPreview(data: positions, zoomMultiplier: 0.95),
                           )
                         ],
                       )

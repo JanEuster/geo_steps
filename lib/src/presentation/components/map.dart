@@ -1,5 +1,6 @@
 // flutter imports
 import 'dart:developer';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
+import 'package:geo_steps/src/utils/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -17,7 +19,9 @@ import 'package:geo_steps/src/application/location.dart';
 
 class MapPreview extends StatefulWidget {
   List<Position> data = [];
-  MapPreview({super.key, required this.data});
+  late double zoomMultiplier;
+
+  MapPreview({super.key, required this.data, this.zoomMultiplier = 1});
 
   @override
   State<StatefulWidget> createState() => _MapPreviewState();
@@ -30,10 +34,13 @@ class _MapPreviewState extends State<MapPreview> {
   void initState() {
     super.initState();
 
-    Future.delayed(const Duration(seconds: 1),() => setState(() {
-      mapController.move(LocationService.getCoordCenter(
-          LocationService.getCoordRange(widget.data)), 12.8);
-    }));
+    Future.delayed(
+        const Duration(seconds: 1),
+        () => setState(() {
+              var coordRange = LocationService.getCoordRange(widget.data);
+              mapController.move(LocationService.getCoordCenter(coordRange),
+                  widget.zoomMultiplier * getZoomLevel(coordRange));
+            }));
   }
 
   @override
@@ -91,10 +98,6 @@ class _MapPreviewState extends State<MapPreview> {
     );
   }
 }
-
-
-
-
 
 class SimpleMap extends StatefulWidget {
   late DateTime date;

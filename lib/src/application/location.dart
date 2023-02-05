@@ -304,3 +304,11 @@ class LonLat {
   }
 }
 
+extension Range on MinMax<LatLng> {
+  double get latRange {
+    return max.latitude-min.latitude;
+  }
+  double get lngRange {
+    return max.longitude-min.longitude;
+  }
+}
