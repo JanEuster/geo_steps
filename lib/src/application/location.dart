@@ -7,14 +7,20 @@ import 'package:geolocator/geolocator.dart';
 import 'package:gpx/gpx.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:external_path/external_path.dart';
+import 'package:pedometer/pedometer.dart';
 
 class LocationService {
   late Directory appDir;
   DateTime lastDate = DateTime.now().toUtc();
 
   List<Position> _positions = [];
+  List<StepCount> _stepCounts = [];
+  List<PedestrianStatus> _pedestrianStatuses = [];
+
   // List<Android.ActivityEvent> _activities = [];
   StreamSubscription<Position>? positionStream;
+  StreamSubscription<StepCount>? stepCountStream;
+  StreamSubscription<PedestrianStatus>? pedestrianStatusStream;
   // StreamSubscription<Android.ActivityEvent>? activityStream;
 
   LocationService();
@@ -113,6 +119,9 @@ class LocationService {
       }
     });
     streamPosition((p) => positions.add(p));
+    streamSteps((s) => _stepCounts.add(s));
+    streamPedestrianStatus((p) => _pedestrianStatuses.add(p));
+
     // if (defaultTargetPlatform == TargetPlatform.android) {
       // streamActivities((a) => _activities.add(a),
       //     (obj) => log("error streaming activities: $obj}"));
@@ -123,6 +132,8 @@ class LocationService {
   Future<void> stopRecording() async {
     log("stop recording position data");
     positionStream?.cancel();
+    stepCountStream?.cancel();
+    pedestrianStatusStream?.cancel();
     // if (defaultTargetPlatform == TargetPlatform.android) {
     //   log("stop recording activity data");
       // activityStream?.cancel();
@@ -256,6 +267,23 @@ class LocationService {
       addPosition(position!);
     });
     return positionStream!;
+  }
+
+  StreamSubscription<StepCount> streamSteps(Function(StepCount) addStepCount) {
+    stepCountStream = Pedometer.stepCountStream.listen((event) {
+      addStepCount(event);
+      log("steps: ${event}");
+    });
+
+    return stepCountStream!;
+  }
+  StreamSubscription<PedestrianStatus> streamPedestrianStatus(Function(PedestrianStatus) addPedStatus) {
+    pedestrianStatusStream = Pedometer.pedestrianStatusStream.listen((event) {
+      addPedStatus(event);
+      log("ped status: ${event}");
+    });
+
+    return pedestrianStatusStream!;
   }
 
   // StreamSubscription<Android.ActivityEvent> streamActivities(
