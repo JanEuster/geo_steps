@@ -10,6 +10,7 @@ import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geo_steps/src/application/background_tasks.dart';
+import 'package:restart_app/restart_app.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -166,6 +167,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             Workmanager().cancelByTag("tracking");
                             AwesomeNotifications().cancel(75415);
                             AwesomeNotifications().cancelAll();
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              // restart app to remove geolocation foreground notification
+                              Restart.restartApp();
+                            });
                           }
                         }
                       },
