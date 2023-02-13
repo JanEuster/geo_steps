@@ -2,17 +2,20 @@ import 'dart:async';
 import "dart:developer";
 
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:location/location.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/location.dart';
 
 const locationTrackingTask = "janeuster.geo_steps.gps_tracking";
 
+
 void registerLocationTrackingTask() {
   Workmanager().registerPeriodicTask(locationTrackingTask, locationTrackingTask,
       tag: "tracking",
       initialDelay: const Duration(seconds: 0),
-      frequency: const Duration(hours: 2));
+      frequency: const Duration(hours: 12)
+  );
 }
 
 @pragma('vm:entry-point')
@@ -61,7 +64,7 @@ void callbackDispatcher() {
           var saveTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
             locationService.saveToday();
           });
-          await Future.delayed(const Duration(hours: 2));
+          await Future.delayed(const Duration(hours: 12));
           locationService.stopRecording();
           notificationTimer.cancel();
           saveTimer.cancel();

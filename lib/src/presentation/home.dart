@@ -1,8 +1,11 @@
 import 'dart:math' show pi;
 import 'dart:developer';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
@@ -38,7 +41,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    AppSettings.instance.trackingLocation.get().then((value) => log("$value"));
     MediaQueryData media = MediaQuery.of(context);
     return ListView(children: [
       Padding(
@@ -162,6 +164,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             registerLocationTrackingTask();
                           } else {
                             Workmanager().cancelByTag("tracking");
+                            AwesomeNotifications().cancel(75415);
+                            AwesomeNotifications().cancelAll();
                           }
                         }
                       },
