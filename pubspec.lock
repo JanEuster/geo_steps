@@ -388,7 +388,7 @@ packages:
     source: hosted
     version: "2.1.3"
   pedometer:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: pedometer
       url: "https://pub.dartlang.org"
