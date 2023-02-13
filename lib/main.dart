@@ -23,36 +23,36 @@ import 'package:geo_steps/src/application/preferences.dart';
 // ignore: constant_identifier_names
 const String APP_TITLE = "geo_steps";
 
-// define the handler for ui
-void onData(nl.NotificationEvent event) {
-  log(event.toString());
-}
-
-Future<void> initPlatformState() async {
-  nl.NotificationsListener.initialize();
-  // register you event handler in the ui logic.
-  nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
-}
-
-void startListeningToNotifications() async {
-  log("start listening");
-  var hasPermission = await nl.NotificationsListener.hasPermission;
-  if (!hasPermission!) {
-    log("no permission, so open settings");
-    nl.NotificationsListener.openPermissionSettings();
-    return;
-  }
-
-  var isR = await nl.NotificationsListener.isRunning;
-
-  if (!isR!) {
-    await nl.NotificationsListener.startService(
-        foreground: false,
-        // use false will not promote to foreground and without a notification
-        title: "Change the title",
-        description: "Change the text");
-  }
-}
+// // define the handler for ui
+// void onData(nl.NotificationEvent event) {
+//   log(event.toString());
+// }
+//
+// Future<void> initPlatformState() async {
+//   nl.NotificationsListener.initialize();
+//   // register you event handler in the ui logic.
+//   nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
+// }
+//
+// void startListeningToNotifications() async {
+//   log("start listening");
+//   var hasPermission = await nl.NotificationsListener.hasPermission;
+//   if (!hasPermission!) {
+//     log("no permission, so open settings");
+//     nl.NotificationsListener.openPermissionSettings();
+//     return;
+//   }
+//
+//   var isR = await nl.NotificationsListener.isRunning;
+//
+//   if (!isR!) {
+//     await nl.NotificationsListener.startService(
+//         foreground: false,
+//         // use false will not promote to foreground and without a notification
+//         title: "Change the title",
+//         description: "Change the text");
+//   }
+// }
 
 void main() async {
   AwesomeNotifications().initialize(
@@ -89,7 +89,8 @@ void main() async {
             channelGroupKey: 'basic_channel_group',
             channelGroupName: 'Basic group')
       ],
-      debug: true);
+      debug: false
+  );
 
   Workmanager().initialize(
       callbackDispatcher, // The top level function, aka callbackDispatcher
@@ -139,43 +140,11 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   final _activityStreamController = StreamController<Activity>();
   StreamSubscription<Activity>? _activityStreamSubscription;
 
-  void _onActivityReceive(Activity activity) {
-    log('Activity Detected >> ${activity.toJson()}');
-    _activityStreamController.sink.add(activity);
-  }
-
-  void _handleError(dynamic error) {
-    log('Catch Error >> $error');
-  }
-
   @override
   void initState() {
     super.initState();
     requestAllNecessaryPermissions();
 
-
-    // startListeningToNotifications();
-    // WidgetsBinding.instance.addPostFrameCallback((_) async {
-    //   final activityRecognition = FlutterActivityRecognition.instance;
-    //
-    //   // Check if the user has granted permission. If not, request permission.
-    //   PermissionRequestResult reqResult;
-    //   reqResult = await activityRecognition.checkPermission();
-    //   if (reqResult == PermissionRequestResult.PERMANENTLY_DENIED) {
-    //     log('Permission is permanently denied.');
-    //     return;
-    //   } else if (reqResult == PermissionRequestResult.DENIED) {
-    //     reqResult = await activityRecognition.requestPermission();
-    //     if (reqResult != PermissionRequestResult.GRANTED) {
-    //       log('Permission is denied.');
-    //       return;
-    //     }
-    //   }
-    //   // Subscribe to the activity stream.
-    //   _activityStreamSubscription = activityRecognition.activityStream
-    //       .handleError(_handleError)
-    //       .listen(_onActivityReceive);
-    // });
 
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(
@@ -207,7 +176,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
         EdgeInsets padding = MediaQuery
             .of(context)
             .viewPadding;
-        log("device insets || insets: $insets, padding: $padding");
+
         return PageWithNav(
             title: widget.title,
             color: const Color(0xFFFFFFFF),
