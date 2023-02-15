@@ -13,14 +13,15 @@ class LocationService {
   late Directory appDir;
   DateTime lastDate = DateTime.now().toUtc();
 
-  List<Position> _positions = [];
-  List<StepCount> _stepCounts = [];
-  List<PedestrianStatus> _pedestrianStatuses = [];
+  List<LocationDataPoint> dataPoints = [];
+  int _newSteps = 0;
+  String _newPedStatus = LocationDataPoint.STATUS_STOPPED;
 
   // List<Android.ActivityEvent> _activities = [];
   StreamSubscription<Position>? positionStream;
   StreamSubscription<StepCount>? stepCountStream;
   StreamSubscription<PedestrianStatus>? pedestrianStatusStream;
+
   // StreamSubscription<Android.ActivityEvent>? activityStream;
 
   LocationService();
@@ -32,7 +33,7 @@ class LocationService {
   }
 
   List<Position> get positions {
-    return _positions;
+    return dataPoints.map((e) => e.position).toList();
   }
 
   // List<Android.ActivityEvent> get activities {
@@ -64,27 +65,30 @@ class LocationService {
     gpx.creator = "app.janeuster.geo_steps";
     gpx.trks = [
       Trk(trksegs: [
-        Trkseg(
-            trkpts: positions
-                .map((p) => Wpt(
-                    ele: p.altitude,
-                    lat: p.latitude,
-                    lon: p.longitude,
-                    time: p.timestamp))
-                .toList())
+        ...segmentDataToWpt().map((wpts) => Trkseg(trkpts: wpts))
+        // Trkseg(
+        //
+        //     trkpts: positions
+        //         .map((p) => Wpt(
+        //             ele: p.altitude,
+        //             lat: p.latitude,
+        //             lon: p.longitude,
+        //             time: p.timestamp,
+        //     ))
+        //         .toList())
       ])
     ];
     String gpxString = GpxWriter().asString(gpx, pretty: pretty);
     return gpxString;
   }
 
-  List<Position> fromGPX(String xml, {bool setPos = true}) {
+  List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
-    List<Position> posList = [];
+    List<LocationDataPoint> posList = [];
     for (var trk in xmlGpx.trks) {
       for (var trkseg in trk.trksegs) {
         for (var trkpt in trkseg.trkpts) {
-          posList.add(Position(
+          posList.add(LocationDataPoint(Position(
               longitude: trkpt.lon!,
               latitude: trkpt.lat!,
               timestamp: trkpt.time,
@@ -92,19 +96,20 @@ class LocationService {
               altitude: trkpt.ele!,
               heading: 0,
               speed: 0,
-              speedAccuracy: 0));
+              speedAccuracy: 0), 0, LocationDataPoint.STATUS_UNKNOWN));
         }
       }
     }
     log("${posList.length} positions read from file");
     if (setPos) {
-      _positions = posList;
+      dataPoints = posList;
     }
     return posList;
   }
 
   void addPosition(Position position) {
-    positions.add(position);
+    dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+    _newSteps = 0; // reset steps
   }
 
   Future<void> record({Function(Position)? onReady}) async {
@@ -112,20 +117,20 @@ class LocationService {
     Geolocator.getLastKnownPosition().then((p) {
       log("last known position: $p");
       if (p != null) {
-        positions.add(p);
+        addPosition(p);
         if (onReady != null) {
           onReady(p);
         }
       }
     });
-    streamPosition((p) => positions.add(p));
-    streamSteps((s) => _stepCounts.add(s));
-    streamPedestrianStatus((p) => _pedestrianStatuses.add(p));
+    streamPosition((p) => addPosition(p));
+    streamSteps((s) => _newSteps += s.steps);
+    streamPedestrianStatus((p) => _newPedStatus = p.status);
 
     // if (defaultTargetPlatform == TargetPlatform.android) {
-      // streamActivities((a) => _activities.add(a),
-      //     (obj) => log("error streaming activities: $obj}"));
-      // log("start recording activity data");
+    // streamActivities((a) => _activities.add(a),
+    //     (obj) => log("error streaming activities: $obj}"));
+    // log("start recording activity data");
     // }
   }
 
@@ -136,7 +141,7 @@ class LocationService {
     pedestrianStatusStream?.cancel();
     // if (defaultTargetPlatform == TargetPlatform.android) {
     //   log("stop recording activity data");
-      // activityStream?.cancel();
+    // activityStream?.cancel();
     // }
   }
 
@@ -161,7 +166,7 @@ class LocationService {
     // necessary because a new gpx file is created for every day -> no overlay in data
     // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
     if (lastDate.day != now.day) {
-      _positions = positions.where((p) => p.timestamp!.day == now.day).toList();
+      dataPoints = dataPoints.where((p) => p.timestamp!.day == now.day).toList();
       lastDate = now;
     }
     String date = lastDate.toIso8601String().split("T")[0];
@@ -277,7 +282,9 @@ class LocationService {
 
     return stepCountStream!;
   }
-  StreamSubscription<PedestrianStatus> streamPedestrianStatus(Function(PedestrianStatus) addPedStatus) {
+
+  StreamSubscription<PedestrianStatus> streamPedestrianStatus(
+      Function(PedestrianStatus) addPedStatus) {
     pedestrianStatusStream = Pedometer.pedestrianStatusStream.listen((event) {
       addPedStatus(event);
       log("ped status: ${event}");
@@ -294,6 +301,51 @@ class LocationService {
   //       .listen(addActivity, onError: onError);
   //   return activityStream!;
   // }
+}
+
+/// type for positions with step and pedestrian status data
+class LocationDataPoint {
+  static const STATUS_WALKING = 'walking';
+  static const STATUS_STOPPED = 'stopped';
+  static const STATUS_UNKNOWN = 'unknown';
+
+  late final double latitude;
+  late final double longitude;
+  late final double altitude;
+  late final double heading;
+  late final double speed;
+  late final DateTime? timestamp;
+
+  late final int steps;
+  late final String pedStatus;
+
+  LocationDataPoint(Position pos, int stepCount, String ped) {
+    latitude = pos.latitude;
+    longitude = pos.longitude;
+    altitude = pos.altitude;
+    heading = pos.heading;
+    speed = pos.speed;
+    timestamp = pos.timestamp!;
+
+    steps = steps;
+    pedStatus = ped;
+  }
+
+  bool get isStopped {
+    return pedStatus == STATUS_STOPPED;
+  }
+
+  Position get position {
+    return Position(longitude: longitude, latitude: latitude, timestamp: timestamp, accuracy: 0, altitude: altitude, heading: heading, speed: speed, speedAccuracy: 0);
+  }
+}
+
+class StopLocation {
+  final int startIndex;
+  final int endIndex;
+  final List<LocationDataPoint> dataPoints;
+
+  StopLocation(this.startIndex, this.endIndex, this.dataPoints);
 }
 
 class MinMax<T> {
