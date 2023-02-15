@@ -65,17 +65,19 @@ class LocationService {
     gpx.creator = "app.janeuster.geo_steps";
     gpx.trks = [
       Trk(trksegs: [
-        ...segmentDataToWpt().map((wpts) => Trkseg(trkpts: wpts))
-        // Trkseg(
-        //
-        //     trkpts: positions
-        //         .map((p) => Wpt(
-        //             ele: p.altitude,
-        //             lat: p.latitude,
-        //             lon: p.longitude,
-        //             time: p.timestamp,
-        //     ))
-        //         .toList())
+        // ...segmentDataToWpt().map((wpts) => Trkseg(trkpts: wpts))
+        Trkseg(
+
+            trkpts: dataPoints
+                .map((p) => Wpt(
+                    ele: p.altitude,
+                    lat: p.latitude,
+                    lon: p.longitude,
+                    time: p.timestamp,
+              type: p.pedStatus,
+              desc: "steps:${p.steps};heading:${p.heading};speed:${p.speed}"
+            ))
+                .toList())
       ])
     ];
     String gpxString = GpxWriter().asString(gpx, pretty: pretty);
@@ -88,15 +90,18 @@ class LocationService {
     for (var trk in xmlGpx.trks) {
       for (var trkseg in trk.trksegs) {
         for (var trkpt in trkseg.trkpts) {
-          posList.add(LocationDataPoint(Position(
-              longitude: trkpt.lon!,
-              latitude: trkpt.lat!,
-              timestamp: trkpt.time,
-              accuracy: 0,
-              altitude: trkpt.ele!,
-              heading: 0,
-              speed: 0,
-              speedAccuracy: 0), 0, LocationDataPoint.STATUS_UNKNOWN));
+          posList.add(LocationDataPoint(
+              Position(
+                  longitude: trkpt.lon!,
+                  latitude: trkpt.lat!,
+                  timestamp: trkpt.time,
+                  accuracy: 0,
+                  altitude: trkpt.ele!,
+                  heading: 0,
+                  speed: 0,
+                  speedAccuracy: 0),
+              0,
+              LocationDataPoint.STATUS_UNKNOWN));
         }
       }
     }
@@ -108,7 +113,14 @@ class LocationService {
   }
 
   void addPosition(Position position) {
-    dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+    // LocationDataPoint can only have steps > 0 if ped status is not stopped
+    // -> detecting stops clearer?
+    if (_newPedStatus == LocationDataPoint.STATUS_STOPPED && _newSteps > 0) {
+      dataPoints.add(LocationDataPoint(position, 0, _newPedStatus));
+      dataPoints[dataPoints.length - 2].steps += _newSteps;
+    } else {
+      dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+    }
     _newSteps = 0; // reset steps
   }
 
@@ -166,7 +178,8 @@ class LocationService {
     // necessary because a new gpx file is created for every day -> no overlay in data
     // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
     if (lastDate.day != now.day) {
-      dataPoints = dataPoints.where((p) => p.timestamp!.day == now.day).toList();
+      dataPoints =
+          dataPoints.where((p) => p.timestamp!.day == now.day).toList();
       lastDate = now;
     }
     String date = lastDate.toIso8601String().split("T")[0];
@@ -277,7 +290,7 @@ class LocationService {
   StreamSubscription<StepCount> streamSteps(Function(StepCount) addStepCount) {
     stepCountStream = Pedometer.stepCountStream.listen((event) {
       addStepCount(event);
-      log("steps: ${event}");
+      log("steps: $event");
     });
 
     return stepCountStream!;
@@ -287,7 +300,7 @@ class LocationService {
       Function(PedestrianStatus) addPedStatus) {
     pedestrianStatusStream = Pedometer.pedestrianStatusStream.listen((event) {
       addPedStatus(event);
-      log("ped status: ${event}");
+      log("ped status: $event");
     });
 
     return pedestrianStatusStream!;
@@ -336,7 +349,15 @@ class LocationDataPoint {
   }
 
   Position get position {
-    return Position(longitude: longitude, latitude: latitude, timestamp: timestamp, accuracy: 0, altitude: altitude, heading: heading, speed: speed, speedAccuracy: 0);
+    return Position(
+        longitude: longitude,
+        latitude: latitude,
+        timestamp: timestamp,
+        accuracy: 0,
+        altitude: altitude,
+        heading: heading,
+        speed: speed,
+        speedAccuracy: 0);
   }
 }
 
