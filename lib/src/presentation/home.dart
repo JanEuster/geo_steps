@@ -3,10 +3,9 @@ import 'dart:developer';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geo_steps/src/application/background_tasks.dart';
@@ -21,6 +20,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool? isTrackingLocation;
+  LocationService? locationService;
 
   @override
   void initState() {
@@ -29,15 +29,10 @@ class _MyHomePageState extends State<MyHomePage> {
     AppSettings.instance.trackingLocation.get().then((value) {
       setState(() {
         isTrackingLocation = value;
+        locationService = LocationService();
+        locationService!.init().then((value) => locationService!.loadToday());
       });
-      // if (value == true) {
-      //   timer.cancel();
-      // }
     });
-    // // check whether the necessary permissions have
-    // Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-    //
-    // },);
   }
 
   @override
@@ -161,16 +156,15 @@ class _MyHomePageState extends State<MyHomePage> {
                           });
                           AppSettings.instance.trackingLocation
                               .set(isTrackingLocation!);
+
+                          log("isTrackingLocation: $isTrackingLocation");
                           if (isTrackingLocation == true) {
-                            registerLocationTrackingTask();
+                            FlutterBackgroundService().invoke("startTracking");
                           } else {
-                            Workmanager().cancelByTag("tracking");
+                            FlutterBackgroundService().invoke("stopTracking");
+                            FlutterBackgroundService().invoke("stopService");
                             AwesomeNotifications().cancel(75415);
                             AwesomeNotifications().cancelAll();
-                            Future.delayed(const Duration(milliseconds: 100), () {
-                              // restart app to remove geolocation foreground notification
-                              Restart.restartApp();
-                            });
                           }
                         }
                       },

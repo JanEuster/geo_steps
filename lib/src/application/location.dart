@@ -275,7 +275,7 @@ class LocationService {
     } else {
       locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 0,
+        distanceFilter: 10,
       );
     }
 

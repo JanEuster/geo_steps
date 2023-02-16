@@ -2,9 +2,9 @@ import 'dart:async';
 import "dart:developer";
 
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
-as nl;
-import 'package:workmanager/workmanager.dart';
+    as nl;
 import 'package:awesome_notifications/awesome_notifications.dart';
 import "package:flutter_activity_recognition/flutter_activity_recognition.dart";
 
@@ -55,8 +55,11 @@ const String APP_TITLE = "geo_steps";
 // }
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  initializeBackgroundService();
+
   AwesomeNotifications().initialize(
-    // set the icon to null if you want to use the default app icon
+      // set the icon to null if you want to use the default app icon
       null, // default icon
       [
         NotificationChannel(
@@ -87,17 +90,11 @@ void main() async {
       channelGroups: [
         NotificationChannelGroup(
             channelGroupKey: 'basic_channel_group',
-            channelGroupName: 'Basic group')
+            channelGroupName: 'geo_steps')
       ],
-      debug: false
-  );
+      debug: false);
 
-  Workmanager().initialize(
-      callbackDispatcher, // The top level function, aka callbackDispatcher
-      isInDebugMode:
-      true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-  );
-
+  FlutterBackgroundService().startService();
   // set initial values for app settings if not already set
   // before the app is built
   AppSettings.initialize().then((_) {
@@ -128,7 +125,7 @@ class MyWidgetsApp extends StatefulWidget {
         Container(child: HomepointsPage())),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
-  GlobalKey<NavigatorState>();
+      GlobalKey<NavigatorState>();
 
   MyWidgetsApp({super.key});
 
@@ -145,16 +142,15 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
     super.initState();
     requestAllNecessaryPermissions();
 
-
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(
         onActionReceivedMethod: NotificationController.onActionReceivedMethod,
         onNotificationCreatedMethod:
-        NotificationController.onNotificationCreatedMethod,
+            NotificationController.onNotificationCreatedMethod,
         onNotificationDisplayedMethod:
-        NotificationController.onNotificationDisplayedMethod,
+            NotificationController.onNotificationDisplayedMethod,
         onDismissActionReceivedMethod:
-        NotificationController.onDismissActionReceivedMethod);
+            NotificationController.onDismissActionReceivedMethod);
   }
 
   @override
@@ -170,12 +166,8 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
       widget.title = widget.routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
-        EdgeInsets insets = MediaQuery
-            .of(context)
-            .viewInsets;
-        EdgeInsets padding = MediaQuery
-            .of(context)
-            .viewPadding;
+        EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        EdgeInsets padding = MediaQuery.of(context).viewPadding;
 
         return PageWithNav(
             title: widget.title,
@@ -245,9 +237,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
 
   @override
   Widget build(BuildContext context) {
-    log("target: ${Theme
-        .of(context)
-        .platform}");
+    log("target: ${Theme.of(context).platform}");
     return WidgetsApp(
       navigatorKey: MyWidgetsApp.navigatorKey,
       onGenerateRoute: generate,
