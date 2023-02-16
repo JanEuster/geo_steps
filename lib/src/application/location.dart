@@ -14,7 +14,7 @@ class LocationService {
   DateTime lastDate = DateTime.now().toUtc();
 
   List<LocationDataPoint> dataPoints = [];
-  int _newSteps = 0;
+  int? _newSteps = null;
   String _newPedStatus = LocationDataPoint.STATUS_STOPPED;
 
   // List<Android.ActivityEvent> _activities = [];
@@ -30,6 +30,8 @@ class LocationService {
     var dirs = await ExternalPath.getExternalStorageDirectories();
     appDir = Directory("${dirs[0]}/geo_steps");
     appDir.create();
+
+    log("location service initialized");
   }
 
   List<Position> get positions {
@@ -115,9 +117,10 @@ class LocationService {
   void addPosition(Position position) {
     // LocationDataPoint can only have steps > 0 if ped status is not stopped
     // -> detecting stops clearer?
-    if (_newPedStatus == LocationDataPoint.STATUS_STOPPED && _newSteps > 0) {
+    log("$position $_newSteps $_newPedStatus");
+    if (_newPedStatus == LocationDataPoint.STATUS_STOPPED && _newSteps != null && dataPoints[dataPoints.length - 2].steps != null) {
       dataPoints.add(LocationDataPoint(position, 0, _newPedStatus));
-      dataPoints[dataPoints.length - 2].steps += _newSteps;
+      dataPoints[dataPoints.length - 2].steps = _newSteps! + dataPoints[dataPoints.length - 2].steps!;
     } else {
       dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
     }
@@ -136,7 +139,8 @@ class LocationService {
       }
     });
     streamPosition((p) => addPosition(p));
-    streamSteps((s) => _newSteps += s.steps);
+    streamSteps((s) => _newSteps = s.steps);  // steps value is never reset internally
+                                              // -> steps totaled from first day of usage
     streamPedestrianStatus((p) => _newPedStatus = p.status);
 
     // if (defaultTargetPlatform == TargetPlatform.android) {
@@ -171,7 +175,8 @@ class LocationService {
   }
 
   Future<void> saveToday() async {
-    // log("activities not saved: $_activities");
+    if (dataPoints.length > 0) {
+    optimizeCapturedData();
 
     var now = DateTime.now().toUtc();
     // check if its a new day and if so, remove all data from previous day
@@ -196,6 +201,9 @@ class LocationService {
     await gpxFile.writeAsString(toGPX(), flush: true);
 
     log("gpx file saved to $gpxFilePath");
+    } else {
+      log("no dataPoint to save");
+    }
   }
 
   Future<void> exportGpx() async {
@@ -306,14 +314,14 @@ class LocationService {
     return pedestrianStatusStream!;
   }
 
-  // StreamSubscription<Android.ActivityEvent> streamActivities(
-  //     Function(Android.ActivityEvent) addActivity,
-  //     void Function(Object) onError) {
-  //   activityStream = Android.ActivityRecognition()
-  //       .activityStream(runForegroundService: true)
-  //       .listen(addActivity, onError: onError);
-  //   return activityStream!;
-  // }
+// StreamSubscription<Android.ActivityEvent> streamActivities(
+//     Function(Android.ActivityEvent) addActivity,
+//     void Function(Object) onError) {
+//   activityStream = Android.ActivityRecognition()
+//       .activityStream(runForegroundService: true)
+//       .listen(addActivity, onError: onError);
+//   return activityStream!;
+// }
 }
 
 /// type for positions with step and pedestrian status data
@@ -329,10 +337,10 @@ class LocationDataPoint {
   late final double speed;
   late final DateTime? timestamp;
 
-  late final int steps;
+  late int? steps;
   late final String pedStatus;
 
-  LocationDataPoint(Position pos, int stepCount, String ped) {
+  LocationDataPoint(Position pos, int? stepCount, String ped) {
     latitude = pos.latitude;
     longitude = pos.longitude;
     altitude = pos.altitude;
@@ -340,7 +348,7 @@ class LocationDataPoint {
     speed = pos.speed;
     timestamp = pos.timestamp!;
 
-    steps = steps;
+    steps = stepCount;
     pedStatus = ped;
   }
 
