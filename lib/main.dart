@@ -112,17 +112,16 @@ class AppRoute {
 }
 
 class MyWidgetsApp extends StatefulWidget {
-  String title = APP_TITLE;
 
   final Map<String, AppRoute> routes = {
     "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1,
         Container(child: const MyHomePage())),
     "/today": AppRoute(
-        "today", "/today", Icomoon.stats_1, Container(child: TodayPage())),
+        "today", "/today", Icomoon.stats_1, Container(child: const TodayPage())),
     "/overviews": AppRoute("overviews", "/overviews", Icomoon.stats_2,
-        Container(child: OverviewPage())),
+        Container(child: const OverviewPage())),
     "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1,
-        Container(child: HomepointsPage())),
+        Container(child: const HomepointsPage())),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -163,14 +162,14 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   Route generate(RouteSettings settings) {
     Route page;
     if (widget.routes[settings.name] != null) {
-      widget.title = widget.routes[settings.name]!.title;
+      var title = widget.routes[settings.name]!.title;
       page = PageRouteBuilder(pageBuilder: (BuildContext context,
           Animation<double> animation, Animation<double> secondaryAnimation) {
-        EdgeInsets insets = MediaQuery.of(context).viewInsets;
-        EdgeInsets padding = MediaQuery.of(context).viewPadding;
+        // EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        // EdgeInsets padding = MediaQuery.of(context).viewPadding;
 
         return PageWithNav(
-            title: widget.title,
+            title: title,
             color: const Color(0xFFFFFFFF),
             navItems: widget.routes.values.toList(),
             child: widget.routes[settings.name]?.page);
@@ -246,7 +245,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
           fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black),
       initialRoute: "/",
       color: const Color.fromRGBO(255, 0, 0, 1.0),
-      title: widget.title,
+      title: APP_TITLE,
     );
   }
 }

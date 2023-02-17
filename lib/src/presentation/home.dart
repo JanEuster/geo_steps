@@ -8,8 +8,6 @@ import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
-import 'package:geo_steps/src/application/background_tasks.dart';
-import 'package:restart_app/restart_app.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});

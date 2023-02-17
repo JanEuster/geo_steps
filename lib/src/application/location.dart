@@ -14,7 +14,7 @@ class LocationService {
   DateTime lastDate = DateTime.now().toUtc();
 
   List<LocationDataPoint> dataPoints = [];
-  int? _newSteps = null;
+  int? _newSteps;
   String _newPedStatus = LocationDataPoint.STATUS_STOPPED;
 
   // List<Android.ActivityEvent> _activities = [];
@@ -28,7 +28,7 @@ class LocationService {
 
   Future<void> init() async {
     var dirs = await ExternalPath.getExternalStorageDirectories();
-    appDir = Directory("${dirs[0]}/geo_steps");
+    appDir = Directory("${dirs.first}/geo_steps");
     appDir.create();
 
     log("location service initialized");
@@ -162,7 +162,7 @@ class LocationService {
   }
 
   Future<void> loadToday() async {
-    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxFilePath = "$gpxDirPath/$date.gpx";
     var gpxFile = File(gpxFilePath);
@@ -175,7 +175,7 @@ class LocationService {
   }
 
   Future<void> saveToday() async {
-    if (dataPoints.length > 0) {
+    if (dataPoints.isNotEmpty) {
     optimizeCapturedData();
 
     var now = DateTime.now().toUtc();
@@ -187,7 +187,7 @@ class LocationService {
           dataPoints.where((p) => p.timestamp!.day == now.day).toList();
       lastDate = now;
     }
-    String date = lastDate.toIso8601String().split("T")[0];
+    String date = lastDate.toIso8601String().split("T").first;
 
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxDir = Directory(gpxDirPath);
@@ -209,7 +209,7 @@ class LocationService {
   Future<void> exportGpx() async {
     String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
         ExternalPath.DIRECTORY_DOWNLOADS);
-    String date = DateTime.now().toUtc().toIso8601String().split("T")[0];
+    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
 
     var gpxDir = Directory(downloadsPath);
     if (!(await gpxDir.exists())) {
@@ -225,10 +225,10 @@ class LocationService {
   }
 
   MinMax<LatLng> getCoordRange(List<Position> positions) {
-    double minLon = positions[0].longitude;
-    double minLat = positions[0].latitude;
-    double maxLon = positions[0].longitude;
-    double maxLat = positions[0].latitude;
+    double minLon = positions.first.longitude;
+    double minLat = positions.first.latitude;
+    double maxLon = positions.first.longitude;
+    double maxLat = positions.first.latitude;
     for (var i = 0; i < positions.length; i++) {
       var p = positions[i];
       if (p.longitude > maxLon) {
