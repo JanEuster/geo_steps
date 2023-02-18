@@ -87,12 +87,26 @@ class LocationService {
     return gpxString;
   }
 
+  Map<String, String> parseGPXDesc(String desc) {
+    List<String> props = desc.split(";");
+    Map<String, String> propMap = Map.fromEntries(props.map((element) {
+      List<String> prop = element.split(":");
+      return MapEntry(prop[0], prop[1]);
+    }));
+
+    return propMap;
+  }
+
   List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
     List<LocationDataPoint> posList = [];
     for (var trk in xmlGpx.trks) {
       for (var trkseg in trk.trksegs) {
         for (var trkpt in trkseg.trkpts) {
+          var gpxDesc = parseGPXDesc(trkpt.desc ?? "");
+          var heading = double.parse(gpxDesc["heading"] ?? "0");
+          var speed = double.parse(gpxDesc["speed"] ?? "0");
+          var steps = gpxDesc["steps"] != "null" ? int.parse(gpxDesc["steps"] ?? "0") : null;
           posList.add(LocationDataPoint(
               Position(
                   longitude: trkpt.lon!,
@@ -100,11 +114,11 @@ class LocationService {
                   timestamp: trkpt.time,
                   accuracy: 0,
                   altitude: trkpt.ele!,
-                  heading: 0,
-                  speed: 0,
+                  heading: heading,
+                  speed: speed,
                   speedAccuracy: 0),
-              0,
-              LocationDataPoint.STATUS_UNKNOWN));
+              steps,
+              trkpt.type ?? LocationDataPoint.STATUS_UNKNOWN));
         }
       }
     }
