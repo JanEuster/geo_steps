@@ -156,10 +156,11 @@ class _MyHomePageState extends State<MyHomePage> {
                               .set(isTrackingLocation!);
 
                           log("isTrackingLocation: $isTrackingLocation");
+                          log("${isTrackingLocation == true}");
                           if (isTrackingLocation == true) {
-                            FlutterBackgroundService().invoke("startTracking");
+                            log("startTracking");
+                            FlutterBackgroundService().startService();
                           } else {
-                            FlutterBackgroundService().invoke("stopTracking");
                             FlutterBackgroundService().invoke("stopService");
                             AwesomeNotifications().cancel(75415);
                             AwesomeNotifications().cancelAll();

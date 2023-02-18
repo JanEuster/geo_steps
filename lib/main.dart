@@ -56,7 +56,6 @@ const String APP_TITLE = "geo_steps";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  initializeBackgroundService();
 
   AwesomeNotifications().initialize(
       // set the icon to null if you want to use the default app icon
@@ -94,7 +93,15 @@ void main() async {
       ],
       debug: false);
 
-  FlutterBackgroundService().startService();
+  await initializeBackgroundService();
+
+  var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
+  log("isTrackingLocation: $isTrackingLocation");
+  if (isTrackingLocation!) {
+    await FlutterBackgroundService().startService();
+    // FlutterBackgroundService().invoke("startTracking");
+  }
+
   // set initial values for app settings if not already set
   // before the app is built
   AppSettings.initialize().then((_) {

@@ -25,10 +25,14 @@ class _SimpleMapState extends State<SimpleMap> {
 
     locationService = LocationService();
     locationService.init().whenComplete(() => locationService.loadToday().then(
-        (value) => setState(() => mapController.move(
-            LatLng(locationService.lastPos.latitude,
-                locationService.lastPos.longitude),
-            12.8))));
+        (value) => setState(() {
+          if (locationService.hasPositions) {
+            mapController.move(
+                LatLng(locationService.lastPos!.latitude,
+                    locationService.lastPos!.longitude),
+                12.8);
+          }
+        })));
 
     // locationService.record(onReady: (p) {
     //   mapController.move(
@@ -50,8 +54,8 @@ class _SimpleMapState extends State<SimpleMap> {
     return Column(
       children: [
         if (locationService.hasPositions) ...[
-          Text("longitude: ${locationService.lastPos.longitude}"),
-          Text("latitude: ${locationService.lastPos.latitude}"),
+          Text("longitude: ${locationService.lastPos!.longitude}"),
+          Text("latitude: ${locationService.lastPos!.latitude}"),
           Text("min max: ${locationService.range}"),
           Text("positions: ${locationService.posCount}"),
         ],
@@ -101,8 +105,8 @@ class _SimpleMapState extends State<SimpleMap> {
                   MarkerLayer(
                     markers: [
                       Marker(
-                          point: LatLng(locationService.lastPos.latitude,
-                              locationService.lastPos.longitude),
+                          point: LatLng(locationService.lastPos!.latitude,
+                              locationService.lastPos!.longitude),
                           builder: (context) => const FlutterLogo())
                     ],
                   )

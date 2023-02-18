@@ -46,8 +46,8 @@ class LocationService {
     return positions.isNotEmpty;
   }
 
-  Position get lastPos {
-    return positions.last;
+  Position? get lastPos {
+    return positions.isNotEmpty ? positions.last : null;
   }
 
   int get posCount {
@@ -118,13 +118,8 @@ class LocationService {
     // LocationDataPoint can only have steps > 0 if ped status is not stopped
     // -> detecting stops clearer?
     log("$position $_newSteps $_newPedStatus");
-    if (_newPedStatus == LocationDataPoint.STATUS_STOPPED && _newSteps != null && dataPoints[dataPoints.length - 2].steps != null) {
-      dataPoints.add(LocationDataPoint(position, 0, _newPedStatus));
-      dataPoints[dataPoints.length - 2].steps = _newSteps! + dataPoints[dataPoints.length - 2].steps!;
-    } else {
-      dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
-    }
-    _newSteps = 0; // reset steps
+    dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+
   }
 
   Future<void> record({Function(Position)? onReady}) async {
@@ -176,7 +171,7 @@ class LocationService {
 
   Future<void> saveToday() async {
     if (dataPoints.isNotEmpty) {
-    optimizeCapturedData();
+    // optimizeCapturedData();
 
     var now = DateTime.now().toUtc();
     // check if its a new day and if so, remove all data from previous day
