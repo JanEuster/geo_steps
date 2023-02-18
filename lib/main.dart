@@ -113,22 +113,19 @@ class AppRoute {
   String title;
   String route;
   IconData icon;
-  StatelessWidget page;
+  Widget page;
 
   AppRoute(this.title, this.route, this.icon, this.page);
 }
 
 class MyWidgetsApp extends StatefulWidget {
-
   final Map<String, AppRoute> routes = {
-    "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1,
-        Container(child: const MyHomePage())),
-    "/today": AppRoute(
-        "today", "/today", Icomoon.stats_1, Container(child: const TodayPage())),
-    "/overviews": AppRoute("overviews", "/overviews", Icomoon.stats_2,
-        Container(child: const OverviewPage())),
-    "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1,
-        Container(child: const HomepointsPage())),
+    "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1, const MyHomePage()),
+    "/today": AppRoute("today", "/today", Icomoon.stats_1, const TodayPage()),
+    "/overviews": AppRoute(
+        "overviews", "/overviews", Icomoon.stats_2, const OverviewPage()),
+    "/places": AppRoute(
+        "home⋅points", "/places", Icomoon.homepin_1, const HomepointsPage()),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -190,6 +187,35 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
           ),
         );
       });
+    } else if (settings.name == "/notification-page") {
+      // redirect to today page from notification
+      var c = context;
+      // SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      //   Navigator.of(c).pushNamed("/today");
+      // });
+      // page = PageWithNav(title: "Notification Page", navItems: widget.routes.values.toList(), child: const Text("redirecting to relevant page"),) as Route;
+
+      var route = widget.routes["/today"]!;
+      page = PageRouteBuilder(pageBuilder: (BuildContext context,
+          Animation<double> animation, Animation<double> secondaryAnimation) {
+        // EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        // EdgeInsets padding = MediaQuery.of(context).viewPadding;
+
+        return PageWithNav(
+            title: route.title,
+            color: const Color(0xFFFFFFFF),
+            navItems: widget.routes.values.toList(),
+            child: route.page);
+      }, transitionsBuilder: (_, Animation<double> animation,
+          Animation<double> second, Widget child) {
+        return FadeTransition(
+          opacity: animation,
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
+            child: child,
+          ),
+        );
+      });
     } else {
       page = unKnownRoute(settings);
     }
@@ -215,6 +241,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
                     onTap: () => Navigator.of(context).pop(),
                     child: Column(
                       children: [
+                        Text(settings.name ?? ""),
                         Container(
                           padding: const EdgeInsets.all(10.0),
                           color: const Color(0xFFAAAAFF),
