@@ -8,6 +8,7 @@ import 'package:flutter_background_service_android/flutter_background_service_an
 import 'package:flutter_background_service_ios/flutter_background_service_ios.dart';
 
 import 'package:geo_steps/src/application/location.dart';
+import 'package:geo_steps/src/application/preferences.dart';
 
 
 @pragma("vm:entry-point")
@@ -38,10 +39,6 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     service.on("setAsBackground").listen((event) {
       service.setAsBackgroundService();
     });
-    service.on("requestTrackingData").listen((event) {
-      service.invoke(
-          "sendTrackingData", {"trackingData": locationService.dataPoints.toJson()});
-    });
     // // start
     // service.on("startTracking").listen((event) async {
     //   log("starting tracking service");
@@ -64,13 +61,22 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     //   await locationService.saveToday();
     // });
   }
+  service.on("requestTrackingData").listen((event) {
+    service.invoke(
+        "sendTrackingData", {"trackingData": locationService.dataPoints.toJson()});
+  });
+  service.on("saveTrackingData").listen((event) async {
+    var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
+    if (isTrackingLocation != null && isTrackingLocation) {
+      await locationService.saveToday();
+    }
+  });
   service.on("stopService").listen((event) async {
     log("stopping tracking service");
     await locationService.stopRecording();
     trackingNotificationTimer?.cancel();
     trackingSaveTimer?.cancel();
     await locationService.saveToday();
-    ;
     service.stopSelf();
   });
 
