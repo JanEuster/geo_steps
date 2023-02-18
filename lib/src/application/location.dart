@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import "dart:developer";
+import "dart:convert";
 
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -76,9 +77,9 @@ class LocationService {
                     lat: p.latitude,
                     lon: p.longitude,
                     time: p.timestamp,
-              type: p.pedStatus,
-              desc: "steps:${p.steps};heading:${p.heading};speed:${p.speed}"
-            ))
+                    type: p.pedStatus,
+                    desc:
+                        "steps:${p.steps};heading:${p.heading};speed:${p.speed}"))
                 .toList())
       ])
     ];
@@ -134,8 +135,9 @@ class LocationService {
       }
     });
     streamPosition((p) => addPosition(p));
-    streamSteps((s) => _newSteps = s.steps);  // steps value is never reset internally
-                                              // -> steps totaled from first day of usage
+    streamSteps(
+        (s) => _newSteps = s.steps); // steps value is never reset internally
+    // -> steps totaled from first day of usage
     streamPedestrianStatus((p) => _newPedStatus = p.status);
 
     // if (defaultTargetPlatform == TargetPlatform.android) {
@@ -173,29 +175,29 @@ class LocationService {
     if (dataPoints.isNotEmpty) {
     // optimizeCapturedData();
 
-    var now = DateTime.now().toUtc();
-    // check if its a new day and if so, remove all data from previous day
-    // necessary because a new gpx file is created for every day -> no overlay in data
-    // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
-    if (lastDate.day != now.day) {
-      dataPoints =
-          dataPoints.where((p) => p.timestamp!.day == now.day).toList();
-      lastDate = now;
-    }
-    String date = lastDate.toIso8601String().split("T").first;
+      var now = DateTime.now().toUtc();
+      // check if its a new day and if so, remove all data from previous day
+      // necessary because a new gpx file is created for every day -> no overlay in data
+      // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
+      if (lastDate.day != now.day) {
+        dataPoints =
+            dataPoints.where((p) => p.timestamp!.day == now.day).toList();
+        lastDate = now;
+      }
+      String date = lastDate.toIso8601String().split("T").first;
 
-    var gpxDirPath = "${appDir.path}/gpxData";
-    var gpxDir = Directory(gpxDirPath);
-    if (!(await gpxDir.exists())) {
-      await gpxDir.create(recursive: true);
-    }
+      var gpxDirPath = "${appDir.path}/gpxData";
+      var gpxDir = Directory(gpxDirPath);
+      if (!(await gpxDir.exists())) {
+        await gpxDir.create(recursive: true);
+      }
 
-    var gpxFilePath = "$gpxDirPath/$date.gpx";
-    var gpxFile = File(gpxFilePath);
+      var gpxFilePath = "$gpxDirPath/$date.gpx";
+      var gpxFile = File(gpxFilePath);
 
-    await gpxFile.writeAsString(toGPX(), flush: true);
+      await gpxFile.writeAsString(toGPX(), flush: true);
 
-    log("gpx file saved to $gpxFilePath");
+      log("gpx file saved to $gpxFilePath");
     } else {
       log("no dataPoint to save");
     }
@@ -361,6 +363,50 @@ class LocationDataPoint {
         heading: heading,
         speed: speed,
         speedAccuracy: 0);
+  }
+
+  LocationDataPoint.fromJson(Map<String, dynamic> json) {
+    latitude = double.parse(json["latitude"]);
+    longitude = double.parse(json["longitude"]);
+    altitude = double.parse(json["altitude"]);
+    heading = double.parse(json["heading"]);
+    speed = double.parse(json["speed"]);
+    timestamp = DateTime.parse(json["timestamp"]);
+
+    steps = json["steps"];
+    pedStatus = json["pedStatus"];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "longitude": longitude.toStringAsPrecision(10),
+      "latitude": latitude.toStringAsPrecision(10),
+      "altitude": altitude.toStringAsPrecision(2),
+      "heading": heading.toStringAsPrecision(2),
+      "speed": speed.toStringAsPrecision(2),
+      "timestamp": timestamp != null ? timestamp!.toIso8601String() : "",
+      "steps": steps,
+      "pedStatus": pedStatus,
+    };
+  }
+}
+
+extension Averaged on List<LocationDataPoint> {
+  LatLng averaged() {
+    return LatLng(map((e) => e.latitude).fold(0.0, (a, b) => a + b) / length,
+        map((e) => e.longitude).fold(0.0, (a, b) => a + b) / length);
+  }
+}
+
+extension ToJson on List<LocationDataPoint> {
+  List<Map<String, dynamic>> toJson() {
+    return map((e) => e.toJson()).toList();
+  }
+}
+
+extension ToLocationDataPoints on List<dynamic> {
+  List<LocationDataPoint> toLocationDataPoints() {
+    return map((e) => LocationDataPoint.fromJson(e)).toList();
   }
 }
 

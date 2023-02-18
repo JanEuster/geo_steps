@@ -25,8 +25,8 @@ FutureOr<bool> onStart(ServiceInstance service) async {
   await locationService.record();
   trackingNotificationTimer =
       Timer.periodic(const Duration(seconds: 1), (timer) {
-        updateTrackingNotification(locationService, timer);
-      });
+    updateTrackingNotification(locationService, timer);
+  });
   trackingSaveTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
     locationService.saveToday();
   });
@@ -37,6 +37,10 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     });
     service.on("setAsBackground").listen((event) {
       service.setAsBackgroundService();
+    });
+    service.on("requestTrackingData").listen((event) {
+      service.invoke(
+          "sendTrackingData", {"trackingData": locationService.dataPoints.toJson()});
     });
     // // start
     // service.on("startTracking").listen((event) async {
@@ -65,7 +69,8 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     await locationService.stopRecording();
     trackingNotificationTimer?.cancel();
     trackingSaveTimer?.cancel();
-    await locationService.saveToday();;
+    await locationService.saveToday();
+    ;
     service.stopSelf();
   });
 

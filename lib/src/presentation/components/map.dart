@@ -1,7 +1,12 @@
 // flutter imports
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
+import 'package:geo_steps/src/application/preferences.dart';
 import 'package:latlong2/latlong.dart';
 
 // local imports
@@ -24,15 +29,28 @@ class _SimpleMapState extends State<SimpleMap> {
     super.initState();
 
     locationService = LocationService();
-    locationService.init().whenComplete(() => locationService.loadToday().then(
-        (value) => setState(() {
-          if (locationService.hasPositions) {
-            mapController.move(
-                LatLng(locationService.lastPos!.latitude,
-                    locationService.lastPos!.longitude),
-                12.8);
-          }
-        })));
+    locationService.init().whenComplete(
+        () => locationService.loadToday().then((value) => setState(() {
+              if (locationService.hasPositions) {
+                mapController.move(
+                    LatLng(locationService.lastPos!.latitude,
+                        locationService.lastPos!.longitude),
+                    12.8);
+              }
+            })));
+
+    AppSettings().trackingLocation.get().then((isTrackingLocation) {
+      if (isTrackingLocation != null && isTrackingLocation) {
+        FlutterBackgroundService().on("sendTrackingData").listen((event) {
+          setState(() {
+            locationService.dataPoints = (event!["trackingData"] as List<dynamic>).toLocationDataPoints();
+          });
+        });
+        Timer.periodic(const Duration(seconds: 10), (timer) {
+          FlutterBackgroundService().invoke("requestTrackingData");
+        });
+      }
+    });
 
     // locationService.record(onReady: (p) {
     //   mapController.move(
