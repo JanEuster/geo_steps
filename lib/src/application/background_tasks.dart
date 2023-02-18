@@ -99,10 +99,11 @@ Future<void> initializeBackgroundService() async {
 
   await service.configure(
       iosConfiguration: IosConfiguration(
-          autoStart: true,
+          autoStart: false,
           onForeground: onStart,
           onBackground: runBackgroundIosService),
       androidConfiguration: AndroidConfiguration(
+        autoStart: false,
         onStart: onStart,
         isForegroundMode: false,
         notificationChannelId: 'geolocator_channel_01',
