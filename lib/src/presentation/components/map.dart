@@ -43,7 +43,7 @@ class _SimpleMapState extends State<SimpleMap> {
       if (isTrackingLocation != null && isTrackingLocation) {
         FlutterBackgroundService().on("sendTrackingData").listen((event) {
           setState(() {
-            locationService.dataPoints = (event!["trackingData"] as List<dynamic>).toLocationDataPoints();
+            locationService.dataPointsFromKV(event!["trackingData"]);
           });
         });
         Timer.periodic(const Duration(seconds: 10), (timer) {

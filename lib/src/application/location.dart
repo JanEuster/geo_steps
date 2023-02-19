@@ -70,17 +70,21 @@ class LocationService {
       Trk(trksegs: [
         // ...segmentDataToWpt().map((wpts) => Trkseg(trkpts: wpts))
         Trkseg(
-
-            trkpts: dataPoints
-                .map((p) => Wpt(
-                    ele: p.altitude,
-                    lat: p.latitude,
-                    lon: p.longitude,
-                    time: p.timestamp,
-                    type: p.pedStatus,
-                    desc:
-                        "steps:${p.steps};heading:${p.heading};speed:${p.speed}"))
-                .toList())
+            trkpts: dataPoints.map((p) {
+          return Wpt(
+              ele: p.altitude,
+              lat: p.latitude,
+              lon: p.longitude,
+              time: p.timestamp,
+              type: p.pedStatus,
+              desc: "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
+              extensions: {
+                "pedStatus": p.pedStatus,
+                "steps": p.steps.toString(),
+                "heading": p.heading.toStringAsFixed(2),
+                "speed": p.speed.toStringAsFixed(2),
+              });
+        }).toList())
       ])
     ];
     String gpxString = GpxWriter().asString(gpx, pretty: pretty);
@@ -97,6 +101,10 @@ class LocationService {
     return propMap;
   }
 
+  void dataPointsFromKV(List<dynamic> entries) {
+    dataPoints = entries.toLocationDataPoints();
+  }
+
   List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
     List<LocationDataPoint> posList = [];
@@ -106,7 +114,21 @@ class LocationService {
           var gpxDesc = parseGPXDesc(trkpt.desc ?? "");
           var heading = double.parse(gpxDesc["heading"] ?? "0");
           var speed = double.parse(gpxDesc["speed"] ?? "0");
-          var steps = gpxDesc["steps"] != "null" ? int.parse(gpxDesc["steps"] ?? "0") : null;
+          var steps = gpxDesc["steps"] != "null"
+              ? int.parse(gpxDesc["steps"] ?? "0")
+              : null;
+
+          var ext = trkpt.extensions;
+          if (ext["heading"] != null) {
+            heading = double.parse(ext["heading"] ?? "0");
+          }
+          if (ext["speed"] != null) speed = double.parse(ext["speed"] ?? "0");
+          if (ext["steps"] != null) {
+            steps = gpxDesc["steps"] != "null"
+                ? int.parse(gpxDesc["steps"] ?? "0")
+                : null;
+          }
+
           posList.add(LocationDataPoint(
               Position(
                   longitude: trkpt.lon!,
@@ -134,7 +156,6 @@ class LocationService {
     // -> detecting stops clearer?
     log("$position $_newSteps $_newPedStatus");
     dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
-
   }
 
   Future<void> record({Function(Position)? onReady}) async {
@@ -187,7 +208,7 @@ class LocationService {
 
   Future<void> saveToday() async {
     if (dataPoints.isNotEmpty) {
-    // optimizeCapturedData();
+      // optimizeCapturedData();
 
       var now = DateTime.now().toUtc();
       // check if its a new day and if so, remove all data from previous day
@@ -393,11 +414,11 @@ class LocationDataPoint {
 
   Map<String, dynamic> toJson() {
     return {
-      "longitude": longitude.toStringAsPrecision(10),
-      "latitude": latitude.toStringAsPrecision(10),
-      "altitude": altitude.toStringAsPrecision(2),
-      "heading": heading.toStringAsPrecision(2),
-      "speed": speed.toStringAsPrecision(2),
+      "longitude": longitude.toStringAsFixed(10),
+      "latitude": latitude.toStringAsFixed(10),
+      "altitude": altitude.toStringAsFixed(2),
+      "heading": heading.toStringAsFixed(2),
+      "speed": speed.toStringAsFixed(2),
       "timestamp": timestamp != null ? timestamp!.toIso8601String() : "",
       "steps": steps,
       "pedStatus": pedStatus,
