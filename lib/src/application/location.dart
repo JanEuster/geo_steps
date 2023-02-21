@@ -93,10 +93,19 @@ class LocationService {
 
   Map<String, String> parseGPXDesc(String desc) {
     List<String> props = desc.split(";");
-    Map<String, String> propMap = Map.fromEntries(props.map((element) {
-      List<String> prop = element.split(":");
-      return MapEntry(prop[0], prop[1]);
-    }));
+    Map<String, String> propMap;
+
+    // weird error when the desc attribute = ""
+    // somehow this scenario produces one prop = ""
+    // that gets mapped and has only index 0 -> error
+    if (!(desc.trim() == "" || props.isNotEmpty)) {
+       propMap = Map.fromEntries(props.map((element) {
+        List<String> prop = element.split(":");
+        return MapEntry(prop[0], prop[1]);
+      }));
+    } else {
+      propMap = {};
+    }
 
     return propMap;
   }
