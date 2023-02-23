@@ -39,27 +39,6 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     service.on("setAsBackground").listen((event) {
       service.setAsBackgroundService();
     });
-    // // start
-    // service.on("startTracking").listen((event) async {
-    //   log("starting tracking service");
-    //   await locationService.loadToday();
-    //   await locationService.record();
-    //   trackingNotificationTimer =
-    //       Timer.periodic(const Duration(seconds: 1), (timer) {
-    //     updateTrackingNotification(locationService, timer);
-    //   });
-    //   trackingSaveTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
-    //     locationService.saveToday();
-    //   });
-    // });
-    // // stop
-    // service.on("stopTracking").listen((event) async {
-    //   log("stopping tracking service");
-    //   await locationService.stopRecording();
-    //   trackingNotificationTimer?.cancel();
-    //   trackingSaveTimer?.cancel();
-    //   await locationService.saveToday();
-    // });
   }
   service.on("requestTrackingData").listen((event) {
     service.invoke(
@@ -79,18 +58,6 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     await locationService.saveToday();
     service.stopSelf();
   });
-
-  // bring to foreground
-  // Timer.periodic(const Duration(seconds: 1), (timer) async {
-  //   if (service is AndroidServiceInstance) {
-  //     if (await service.isForegroundService()) {
-  //       service.setForegroundNotificationInfo(
-  //         title: "geosteps tracking your moves",
-  //         content: "Updated at ${DateTime.now()}",
-  //       );
-  //     }
-  //   }
-  // });
 
   return true;
 }

@@ -15,8 +15,17 @@ class LocationService {
   DateTime lastDate = DateTime.now().toUtc();
 
   List<LocationDataPoint> dataPoints = [];
+
+  /// last received step count value
   int? _newSteps;
+
+  /// last received pedestrian status
   String _newPedStatus = LocationDataPoint.STATUS_STOPPED;
+
+  /// time since last detected movement in milliseconds
+  DateTime timeOfLastMove = DateTime(0);
+  /// boundary for recorded speed value at which movement is detected
+  double speedBoundary = 0.8;
 
   // List<Android.ActivityEvent> _activities = [];
   StreamSubscription<Position>? positionStream;
@@ -178,11 +187,24 @@ class LocationService {
         }
       }
     });
-    streamPosition((p) => addPosition(p));
-    streamSteps(
-        (s) => _newSteps = s.steps); // steps value is never reset internally
+    streamPosition((p) {
+      addPosition(p);
+
+      if (p.speed > speedBoundary) {
+        timeOfLastMove = p.timestamp ?? DateTime.now();
+      }
+    });
+    streamSteps((s) {
+      _newSteps = s.steps;
+      timeOfLastMove = s.timeStamp;
+    }); // steps value is never reset internally
     // -> steps totaled from first day of usage
-    streamPedestrianStatus((p) => _newPedStatus = p.status);
+    streamPedestrianStatus((p) {
+      _newPedStatus = p.status;
+      if (p.status == LocationDataPoint.STATUS_WALKING) {
+        timeOfLastMove = p.timeStamp;
+      }
+    });
 
     // if (defaultTargetPlatform == TargetPlatform.android) {
     // streamActivities((a) => _activities.add(a),
