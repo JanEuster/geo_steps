@@ -179,7 +179,32 @@ class _MyHomePageState extends State<MyHomePage> {
                                   style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500)))),
-                    )
+                    ),
+                  GestureDetector(
+                    onTap: () async {
+                      // locationService!.loadToday();
+                      // FlutterBackgroundService().invoke("requestTrackingData");
+                      // FlutterBackgroundService().on("sendTrackingData").listen((event) async {
+                      //   locationService!.dataPointsFromKV(event!["trackingData"]);
+                      //   log("${locationService!.dataPoints.length}");
+                      //   log("${locationService!.dataPoints.map((e) => e.heading)}");
+                      //   await locationService!.saveToday();
+                      //   await locationService!.loadToday();
+                      // });
+                      await locationService!.loadToday();
+                      log("dp len: ${locationService!.dataPoints.length}");
+                      locationService!.optimizeCapturedData();
+                    },
+                    child: Container(
+                        width: media.size.width,
+                        height: 40,
+                        color: Colors.white,
+                        child: const Center(
+                            child: Text("test data",
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w500)))),
+                  )
                 ],
               ))),
       const ActivityMap()

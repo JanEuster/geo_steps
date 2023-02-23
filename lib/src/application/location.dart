@@ -72,6 +72,96 @@ class LocationService {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
   }
 
+  void optimizeCapturedData() {
+    // remove redundant data points from positions list
+    // - keep only start and end of a stop
+    // - average multiple points at a location, when little movement is happening
+    log("optimize data");
+
+    // into segments
+    List<TripSegment> segments = [];
+    var i = 0;
+    // speed at which a dataPoint is thought of as moving
+    var startI = i;
+    while (i < dataPoints.length - 1) {
+      // is stop
+      if (dataPoints[i].isStopped && dataPoints[i].speed < speedBoundary) {
+        var endOfStop = false;
+        while (!endOfStop) {
+          var point = dataPoints[i];
+          if (!point.isStopped || point.speed > speedBoundary) {
+            var endI = i - 1;
+            segments.add(StopSegment(
+                startI, endI, dataPoints.sublist(startI, endI + 1)));
+            startI = i;
+            endOfStop = true;
+          }
+          if (i < dataPoints.length - 1) {
+            i++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      // is moving
+      var endOfMove = false;
+      while (!endOfMove) {
+        var point = dataPoints[i];
+        if (point.isStopped && point.speed < speedBoundary) {
+          var endI =
+              i; // one too high because sublist is not inclusive sublist(10,11) => [10]
+          segments
+              .add(MoveSegment(startI, endI, dataPoints.sublist(startI, endI)));
+          startI = i;
+          endOfMove = true;
+        }
+        if (i < dataPoints.length - 1) {
+          i++;
+        } else {
+          break;
+        }
+      }
+
+      i++;
+    }
+    for (var element in segments) {
+      log(element.toString());
+    }
+
+    // remove artifacts:
+    // - short stops at a junction
+    // - short walks around the house
+  }
+
+  List<List<Wpt>> segmentDataToWpt() {
+    List<List<Wpt>> segmented = [];
+    //    <trkpt lat="42.453298333333336" lon="-71.1212">
+    //      <ele>78.0</ele>
+    //      <time>2023-01-21T17:36:54.083Z</time>
+    //      <type>stopped|walking|biking|transportation</type>
+    //      <cmt>steps:5;heading:NNW;speed:5kmh</cmt>
+    //      or
+    //      <extensions>
+    //        <?xml version="1.0" encoding="UTF-8"?>
+    //        <steps>3</steps>
+    //      </extensions>
+    //    </trkpt>
+
+    // determine stop positions / trkseq splits
+    // - position changes little for some time
+    // - pedestrian status = stopped
+    // > before every save, the optimizeCapturedData method is called, which makes this easier
+
+    // determine type of movement for <type>
+    // - based on speed between points, average speed over all points
+    // -> 5-20km/h = biking; 20-150km/h = car or train; >150km/h = train
+    // -> outlier data points like a 25km/h bike ride or >150km/h autobahn drive should probably be ignored
+    // - based on pedestrian status, which will not have steps recorded, when not on foot
+
+    return segmented;
+  }
+
   String toGPX({bool pretty = false}) {
     var gpx = Gpx();
     gpx.creator = "app.janeuster.geo_steps";
@@ -108,7 +198,7 @@ class LocationService {
     // somehow this scenario produces one prop = ""
     // that gets mapped and has only index 0 -> error
     if (!(desc.trim() == "" || props.isNotEmpty)) {
-       propMap = Map.fromEntries(props.map((element) {
+      propMap = Map.fromEntries(props.map((element) {
         List<String> prop = element.split(":");
         return MapEntry(prop[0], prop[1]);
       }));
@@ -239,7 +329,7 @@ class LocationService {
 
   Future<void> saveToday() async {
     if (dataPoints.isNotEmpty) {
-      // optimizeCapturedData();
+      optimizeCapturedData();
 
       var now = DateTime.now().toUtc();
       // check if its a new day and if so, remove all data from previous day
@@ -476,12 +566,42 @@ extension ToLocationDataPoints on List<dynamic> {
   }
 }
 
-class StopLocation {
+abstract class TripSegment {
   final int startIndex;
   final int endIndex;
+  late final DateTime? startTime;
+  late final DateTime? endTime;
   final List<LocationDataPoint> dataPoints;
 
-  StopLocation(this.startIndex, this.endIndex, this.dataPoints);
+  TripSegment(this.startIndex, this.endIndex, this.dataPoints) {
+    startTime = dataPoints[0].timestamp;
+    endTime = dataPoints[dataPoints.length - 1].timestamp;
+  }
+
+  Duration duration() {
+    if (startTime != null && endTime != null) {
+      return endTime!.difference(startTime!);
+    }
+    return const Duration(seconds: 1);
+  }
+}
+
+class MoveSegment extends TripSegment {
+  MoveSegment(super.startIndex, super.endIndex, super.dataPoints);
+
+  @override
+  String toString() {
+    return "MoveSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime]";
+  }
+}
+
+class StopSegment extends TripSegment {
+  StopSegment(super.startIndex, super.endIndex, super.dataPoints);
+
+  @override
+  String toString() {
+    return "StopSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime]";
+  }
 }
 
 class MinMax<T> {
