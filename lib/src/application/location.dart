@@ -332,7 +332,7 @@ class LocationService {
             dataPoints.last.longitude, newPos.latitude, newPos.longitude);
         log("new dist $dist");
         // distance
-        if (dist > 50) {
+        if (dist > 60 || (dist > 35 && newPos.speed > speedBoundary)) {
           timeOfLastMove = newPos.timestamp ?? DateTime.now();
           log("resuming location stream");
           dataPoints.add(LocationDataPoint(newPos, _newSteps, _newPedStatus));
