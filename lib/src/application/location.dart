@@ -23,11 +23,14 @@ class LocationService {
   String _newPedStatus = LocationDataPoint.STATUS_STOPPED;
 
   /// time since last detected movement in milliseconds
-  DateTime timeOfLastMove = DateTime(0);
+  DateTime timeOfLastMove = DateTime.now();
+
   /// boundary for recorded speed value at which movement is detected
   double speedBoundary = 0.8;
 
-  // List<Android.ActivityEvent> _activities = [];
+  /// whether adding location updates to dataPoints is paused or not
+  bool isPaused = false;
+
   StreamSubscription<Position>? positionStream;
   StreamSubscription<StepCount>? stepCountStream;
   StreamSubscription<PedestrianStatus>? pedestrianStatusStream;
@@ -277,13 +280,18 @@ class LocationService {
         }
       }
     });
-    streamPosition((p) {
-      addPosition(p);
 
-      if (p.speed > speedBoundary) {
-        timeOfLastMove = p.timestamp ?? DateTime.now();
-      }
-    });
+    if (isPaused) {
+      isPaused = false;
+    } else {
+      streamPosition((p) {
+          addPosition(p);
+
+        if (p.speed > speedBoundary) {
+          timeOfLastMove = p.timestamp ?? DateTime.now();
+        }
+      });
+    }
     streamSteps((s) {
       _newSteps = s.steps;
       timeOfLastMove = s.timeStamp;
@@ -301,6 +309,39 @@ class LocationService {
     //     (obj) => log("error streaming activities: $obj}"));
     // log("start recording activity data");
     // }
+  }
+
+  /// determines whether the dataPoint.last is at a defined homepoint
+  bool isAtHomepoint() {
+    return false;
+  }
+
+  /// pauses location update streams until new movement is detected
+  Future<void> pauseIfStopped() async {
+    log("pauseIfStopped - isPaused: $isPaused - time since move ${DateTime.now().difference(timeOfLastMove).inSeconds}s");
+    if (!isPaused &&
+        (DateTime.now().difference(timeOfLastMove).inSeconds >= 90 ||
+            isAtHomepoint())) {
+      log("pausing location stream");
+      isPaused = true;
+      positionStream?.pause();
+
+      Timer.periodic(const Duration(seconds: 15), (timer) async {
+        var newPos = await Geolocator.getCurrentPosition();
+        var dist = Geolocator.distanceBetween(dataPoints.last.latitude,
+            dataPoints.last.longitude, newPos.latitude, newPos.longitude);
+        log("new dist $dist");
+        // distance
+        if (dist > 30) {
+          timeOfLastMove = newPos.timestamp ?? DateTime.now();
+          log("resuming location stream");
+          dataPoints.add(LocationDataPoint(newPos, _newSteps, _newPedStatus));
+          isPaused = false;
+          positionStream?.resume();
+          timer.cancel();
+        }
+      });
+    }
   }
 
   Future<void> stopRecording() async {
@@ -409,10 +450,11 @@ class LocationService {
   StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
     late LocationSettings locationSettings;
 
+    const distanceFilter = 8;
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 0,
+        distanceFilter: distanceFilter,
         forceLocationManager: false,
         intervalDuration: const Duration(seconds: 1),
         //(Optional) Set foreground notification config to keep the app alive
@@ -428,7 +470,7 @@ class LocationService {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.fitness,
-        distanceFilter: 0,
+        distanceFilter: distanceFilter,
         pauseLocationUpdatesAutomatically: true,
         // Only set to true if our app will be started up in the background.
         showBackgroundLocationIndicator: false,
@@ -436,7 +478,7 @@ class LocationService {
     } else {
       locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
+        distanceFilter: distanceFilter,
       );
     }
 

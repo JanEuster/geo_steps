@@ -10,7 +10,6 @@ import 'package:flutter_background_service_ios/flutter_background_service_ios.da
 import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/application/preferences.dart';
 
-
 @pragma("vm:entry-point")
 FutureOr<bool> onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
@@ -20,6 +19,7 @@ FutureOr<bool> onStart(ServiceInstance service) async {
 
   Timer? trackingNotificationTimer;
   Timer? trackingSaveTimer;
+  Timer? checkStoppedTimer;
 
   log("starting tracking service");
   await locationService.loadToday();
@@ -31,6 +31,9 @@ FutureOr<bool> onStart(ServiceInstance service) async {
   trackingSaveTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
     locationService.saveToday();
   });
+  checkStoppedTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    locationService.pauseIfStopped();
+  });
 
   if (service is AndroidServiceInstance) {
     service.on("setAsForeground").listen((event) {
@@ -41,8 +44,8 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     });
   }
   service.on("requestTrackingData").listen((event) {
-    service.invoke(
-        "sendTrackingData", {"trackingData": locationService.dataPoints.toJson()});
+    service.invoke("sendTrackingData",
+        {"trackingData": locationService.dataPoints.toJson()});
   });
   service.on("saveTrackingData").listen((event) async {
     var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
@@ -55,6 +58,7 @@ FutureOr<bool> onStart(ServiceInstance service) async {
     await locationService.stopRecording();
     trackingNotificationTimer?.cancel();
     trackingSaveTimer?.cancel();
+    checkStoppedTimer?.cancel();
     await locationService.saveToday();
     service.stopSelf();
   });
@@ -87,6 +91,7 @@ Future<void> initializeBackgroundService() async {
 }
 
 void updateTrackingNotification(LocationService locationService, Timer timer) {
+  log("${locationService.timeOfLastMove}");
   if (locationService.hasPositions) {
     // log("background pos: ${locationService.lastPos}");
 
@@ -99,7 +104,7 @@ void updateTrackingNotification(LocationService locationService, Timer timer) {
       channelKey: 'geolocator_channel_01',
       title: 'background notification',
       body:
-          "${locationService.lastPos} \n pos count: ${locationService.posCount} \n ${DateTime.now().toIso8601String()}",
+          locationService.isPaused ? "location updates paused" : "${locationService.lastPos} \n pos count: ${locationService.posCount} \n ${DateTime.now().toIso8601String()}",
       actionType: ActionType.Default,
       notificationLayout: NotificationLayout.BigText,
     ));
