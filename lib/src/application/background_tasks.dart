@@ -103,8 +103,9 @@ void updateTrackingNotification(LocationService locationService, Timer timer) {
       id: 75415,
       channelKey: 'geolocator_channel_01',
       title: 'background notification',
-      body:
-          locationService.isPaused ? "location updates paused" : "${locationService.lastPos} \n pos count: ${locationService.posCount} \n ${DateTime.now().toIso8601String()}",
+      body: locationService.isPaused
+          ? "location updates paused - last: ${locationService.lastPos} at ${locationService.timeOfLastMove.toLocal()}"
+          : "${locationService.lastPos} \n pos count: ${locationService.posCount} \n ${DateTime.now().toLocal()}",
       actionType: ActionType.Default,
       notificationLayout: NotificationLayout.BigText,
     ));
