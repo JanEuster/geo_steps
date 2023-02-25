@@ -320,7 +320,7 @@ class LocationService {
   Future<void> pauseIfStopped() async {
     log("pauseIfStopped - isPaused: $isPaused - time since move ${DateTime.now().difference(timeOfLastMove).inSeconds}s");
     if (!isPaused &&
-        (DateTime.now().difference(timeOfLastMove).inSeconds >= 90 ||
+        (DateTime.now().difference(timeOfLastMove).inSeconds >= 60 ||
             isAtHomepoint())) {
       log("pausing location stream");
       isPaused = true;
@@ -332,7 +332,7 @@ class LocationService {
             dataPoints.last.longitude, newPos.latitude, newPos.longitude);
         log("new dist $dist");
         // distance
-        if (dist > 30) {
+        if (dist > 50) {
           timeOfLastMove = newPos.timestamp ?? DateTime.now();
           log("resuming location stream");
           dataPoints.add(LocationDataPoint(newPos, _newSteps, _newPedStatus));

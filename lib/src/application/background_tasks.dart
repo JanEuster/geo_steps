@@ -91,7 +91,6 @@ Future<void> initializeBackgroundService() async {
 }
 
 void updateTrackingNotification(LocationService locationService, Timer timer) {
-  log("${locationService.timeOfLastMove}");
   if (locationService.hasPositions) {
     // log("background pos: ${locationService.lastPos}");
 
