@@ -59,7 +59,7 @@ void main() async {
 
   AwesomeNotifications().initialize(
       // set the icon to null if you want to use the default app icon
-      null, // default icon
+      "resource://drawable/res_notifications_icon", // default icon
       [
         NotificationChannel(
           channelGroupKey: 'basic_channel_group',
