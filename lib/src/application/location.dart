@@ -326,7 +326,7 @@ class LocationService {
       isPaused = true;
       positionStream?.pause();
 
-      Timer.periodic(const Duration(seconds: 15), (timer) async {
+      Timer.periodic(const Duration(seconds: 45), (timer) async {
         var newPos = await Geolocator.getCurrentPosition();
         var dist = Geolocator.distanceBetween(dataPoints.last.latitude,
             dataPoints.last.longitude, newPos.latitude, newPos.longitude);
@@ -450,7 +450,7 @@ class LocationService {
   StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
     late LocationSettings locationSettings;
 
-    const distanceFilter = 8;
+    const distanceFilter = 24;
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
