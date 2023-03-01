@@ -15,6 +15,7 @@ class LocationService {
   DateTime lastDate = DateTime.now().toUtc();
 
   List<LocationDataPoint> dataPoints = [];
+  List<TripSegment> segmentedData = [];
 
   /// last received step count value
   int? _newSteps;
@@ -135,10 +136,54 @@ class LocationService {
     // remove artifacts:
     // - short stops at a junction
     // - short walks around the house
+    TripSegment mergeSegments(
+        TripSegment s1, TripSegment s2, bool firstLonger) {
+      var startIndex = s1.startIndex;
+      var endIndex = s2.endIndex;
+      List<LocationDataPoint> dps = [...s1.dataPoints, ...s2.dataPoints];
+
+      if (s1.runtimeType == MoveSegment) {
+        return MoveSegment(startIndex, endIndex, dps);
+      } else {
+        return StopSegment(startIndex, endIndex, dps);
+      }
+    }
+
+    /// min duration of a segment in seconds
+    const minSegmentLength = 45;
+    var index = 1;
+    while (index < segments.length) {
+      var s1 = segments[index - 1];
+      var s2 = segments[index];
+
+      if (s1.duration().inSeconds < minSegmentLength ||
+          s2.duration().inSeconds < minSegmentLength) {
+        // this 2. condition should only be necessary for the last segment,
+        // because it will never be s1, only s2 and therefore otherwise
+        // not checked for length
+
+        // merge segments
+        // is first longer
+        TripSegment mergedSegment = mergeSegments(
+            s1, s2, s1.duration().inSeconds > s2.duration().inSeconds);
+        segments = [
+          ...segments.sublist(0, index - 1),
+          mergedSegment,
+          ...segments.sublist(index + 1)
+        ];
+      } else {
+        index++;
+      }
+    }
+    log("optimized segments");
+    for (var element in segments) {
+      log(element.toString());
+    }
+    segmentedData = segments;
   }
 
-  List<List<Wpt>> segmentDataToWpt() {
-    List<List<Wpt>> segmented = [];
+  List<Trkseg> dataToTrksegs() {
+    List<Trkseg> trksegs = [];
     //    <trkpt lat="42.453298333333336" lon="-71.1212">
     //      <ele>78.0</ele>
     //      <time>2023-01-21T17:36:54.083Z</time>
