@@ -129,9 +129,6 @@ class LocationService {
 
       i++;
     }
-    for (var element in segments) {
-      log(element.toString());
-    }
 
     // remove artifacts:
     // - short stops at a junction
@@ -196,44 +193,65 @@ class LocationService {
     //      </extensions>
     //    </trkpt>
 
-    // determine stop positions / trkseq splits
-    // - position changes little for some time
-    // - pedestrian status = stopped
-    // > before every save, the optimizeCapturedData method is called, which makes this easier
-
     // determine type of movement for <type>
     // - based on speed between points, average speed over all points
     // -> 5-20km/h = biking; 20-150km/h = car or train; >150km/h = train
     // -> outlier data points like a 25km/h bike ride or >150km/h autobahn drive should probably be ignored
     // - based on pedestrian status, which will not have steps recorded, when not on foot
+    // NOT ACTUALLY WHAT THE CODE BELOW DOES; JUST AN IDEA
+    // BELOW ITS A MORE CRUDE APPROACH
+    /// gets speed value as m/s
+    String typeBasedOnSpeed(String pedStatus, double speed) {
+      if (pedStatus == LocationDataPoint.STATUS_WALKING) {
+        if (speed > 6) {
+          return LocationDataPoint.STATUS_BIKING;
+        } else {
+          return pedStatus;
+        }
+      } else if (pedStatus == LocationDataPoint.STATUS_STOPPED) {
+        if (speed > 6) {
+          return LocationDataPoint.STATUS_DRIVING;
+        } else {
+          return pedStatus;
+        }
+      } else {
+        // pedStatus == LocationDataPoint.STATUS_UNKNOWN
+        return LocationDataPoint.STATUS_UNKNOWN;
+      }
+    }
 
-    return segmented;
+    for (var seg in segmentedData) {
+      trksegs.add(Trkseg(
+          trkpts: seg.dataPoints
+              .map((p) => Wpt(
+                      ele: p.altitude,
+                      lat: p.latitude,
+                      lon: p.longitude,
+                      time: p.timestamp,
+                      type: typeBasedOnSpeed(p.pedStatus, p.speed),
+                      desc:
+                          "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
+                      extensions: {
+                        "pedStatus": p.pedStatus,
+                        "steps": p.steps.toString(),
+                        "heading": p.heading.toStringAsFixed(2),
+                        "speed": p.speed.toStringAsFixed(2),
+                      }))
+              .toList(),
+          extensions: {
+            "duration": "${seg.duration().inSeconds}s",
+            "startTime": seg.startTime.toString() ?? "",
+            "endTime": seg.endTime.toString() ?? "",
+          }));
+    }
+
+    return trksegs;
   }
 
-  String toGPX({bool pretty = false}) {
+  String toGPX({bool pretty = true}) {
     var gpx = Gpx();
     gpx.creator = "app.janeuster.geo_steps";
-    gpx.trks = [
-      Trk(trksegs: [
-        // ...segmentDataToWpt().map((wpts) => Trkseg(trkpts: wpts))
-        Trkseg(
-            trkpts: dataPoints.map((p) {
-          return Wpt(
-              ele: p.altitude,
-              lat: p.latitude,
-              lon: p.longitude,
-              time: p.timestamp,
-              type: p.pedStatus,
-              desc: "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
-              extensions: {
-                "pedStatus": p.pedStatus,
-                "steps": p.steps.toString(),
-                "heading": p.heading.toStringAsFixed(2),
-                "speed": p.speed.toStringAsFixed(2),
-              });
-        }).toList())
-      ])
-    ];
+    gpx.trks = [Trk(trksegs: dataToTrksegs())];
     String gpxString = GpxWriter().asString(gpx, pretty: pretty);
     return gpxString;
   }
@@ -330,7 +348,7 @@ class LocationService {
       isPaused = false;
     } else {
       streamPosition((p) {
-          addPosition(p);
+        addPosition(p);
 
         if (p.speed > speedBoundary) {
           timeOfLastMove = p.timestamp ?? DateTime.now();
@@ -348,12 +366,6 @@ class LocationService {
         timeOfLastMove = p.timeStamp;
       }
     });
-
-    // if (defaultTargetPlatform == TargetPlatform.android) {
-    // streamActivities((a) => _activities.add(a),
-    //     (obj) => log("error streaming activities: $obj}"));
-    // log("start recording activity data");
-    // }
   }
 
   /// determines whether the dataPoint.last is at a defined homepoint
@@ -569,6 +581,8 @@ class LocationDataPoint {
   static const STATUS_WALKING = 'walking';
   static const STATUS_STOPPED = 'stopped';
   static const STATUS_UNKNOWN = 'unknown';
+  static const STATUS_BIKING = 'biking';
+  static const STATUS_DRIVING = 'driving';
 
   late final double latitude;
   late final double longitude;
@@ -678,7 +692,7 @@ class MoveSegment extends TripSegment {
 
   @override
   String toString() {
-    return "MoveSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime]";
+    return "MoveSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime, duration: ${duration().inSeconds}]";
   }
 }
 
@@ -687,7 +701,7 @@ class StopSegment extends TripSegment {
 
   @override
   String toString() {
-    return "StopSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime]";
+    return "StopSegment[indexes: $startIndex-$endIndex, time: $startTime - $endTime, duration: ${duration().inSeconds}]";
   }
 }
 

@@ -193,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       // });
                       await locationService!.loadToday();
                       log("dp len: ${locationService!.dataPoints.length}");
-                      locationService!.optimizeCapturedData();
+                      locationService!.saveToday();
                     },
                     child: Container(
                         width: media.size.width,
