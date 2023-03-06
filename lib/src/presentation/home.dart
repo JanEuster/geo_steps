@@ -3,14 +3,11 @@ import 'dart:developer';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:workmanager/workmanager.dart';
 
 import 'package:geo_steps/src/application/preferences.dart';
-import 'package:geo_steps/src/application/background_tasks.dart';
-import 'package:restart_app/restart_app.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -21,6 +18,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool? isTrackingLocation;
+  LocationService? locationService;
 
   @override
   void initState() {
@@ -29,15 +27,10 @@ class _MyHomePageState extends State<MyHomePage> {
     AppSettings.instance.trackingLocation.get().then((value) {
       setState(() {
         isTrackingLocation = value;
+        locationService = LocationService();
+        locationService!.init().then((value) => locationService!.loadToday());
       });
-      // if (value == true) {
-      //   timer.cancel();
-      // }
     });
-    // // check whether the necessary permissions have
-    // Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-    //
-    // },);
   }
 
   @override
@@ -161,16 +154,16 @@ class _MyHomePageState extends State<MyHomePage> {
                           });
                           AppSettings.instance.trackingLocation
                               .set(isTrackingLocation!);
+
+                          log("isTrackingLocation: $isTrackingLocation");
+                          log("${isTrackingLocation == true}");
                           if (isTrackingLocation == true) {
-                            registerLocationTrackingTask();
+                            log("startTracking");
+                            FlutterBackgroundService().startService();
                           } else {
-                            Workmanager().cancelByTag("tracking");
+                            FlutterBackgroundService().invoke("stopService");
                             AwesomeNotifications().cancel(75415);
                             AwesomeNotifications().cancelAll();
-                            Future.delayed(const Duration(milliseconds: 100), () {
-                              // restart app to remove geolocation foreground notification
-                              Restart.restartApp();
-                            });
                           }
                         }
                       },
@@ -186,7 +179,32 @@ class _MyHomePageState extends State<MyHomePage> {
                                   style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500)))),
-                    )
+                    ),
+                  // GestureDetector(
+                  //   onTap: () async {
+                  //     // locationService!.loadToday();
+                  //     // FlutterBackgroundService().invoke("requestTrackingData");
+                  //     // FlutterBackgroundService().on("sendTrackingData").listen((event) async {
+                  //     //   locationService!.dataPointsFromKV(event!["trackingData"]);
+                  //     //   log("${locationService!.dataPoints.length}");
+                  //     //   log("${locationService!.dataPoints.map((e) => e.heading)}");
+                  //     //   await locationService!.saveToday();
+                  //     //   await locationService!.loadToday();
+                  //     // });
+                  //     await locationService!.loadToday();
+                  //     log("dp len: ${locationService!.dataPoints.length}");
+                  //     // locationService!.saveToday();
+                  //   },
+                  //   child: Container(
+                  //       width: media.size.width,
+                  //       height: 40,
+                  //       color: Colors.white,
+                  //       child: const Center(
+                  //           child: Text("test data",
+                  //               style: TextStyle(
+                  //                   fontSize: 20,
+                  //                   fontWeight: FontWeight.w500)))),
+                  // )
                 ],
               ))),
       const ActivityMap()

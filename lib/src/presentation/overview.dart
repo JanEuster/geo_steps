@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
 
 class OverviewPage extends StatefulWidget {
-  OverviewPage({super.key});
+  const OverviewPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _OverviewPageState();

@@ -1,7 +1,12 @@
 // flutter imports
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
+import 'package:geo_steps/src/application/preferences.dart';
 import 'package:latlong2/latlong.dart';
 
 // local imports
@@ -24,11 +29,35 @@ class _SimpleMapState extends State<SimpleMap> {
     super.initState();
 
     locationService = LocationService();
-    locationService.init().whenComplete(() => locationService.loadToday().then(
-        (value) => setState(() => mapController.move(
-            LatLng(locationService.lastPos.latitude,
-                locationService.lastPos.longitude),
-            12.8))));
+    locationService.init().whenComplete(
+        () => locationService.loadToday().then((value) => setState(() {
+              if (locationService.hasPositions) {
+                mapController.move(
+                    LatLng(locationService.lastPos!.latitude,
+                        locationService.lastPos!.longitude),
+                    12.8);
+              }
+            })));
+
+    AppSettings().trackingLocation.get().then((isTrackingLocation) {
+      if (isTrackingLocation != null && isTrackingLocation) {
+        FlutterBackgroundService().on("sendTrackingData").listen((event) {
+          setState(() {
+            List<dynamic> receivedDataPoints = event!["trackingData"];
+            var changed = locationService.dataPointsFromKV(receivedDataPoints);
+            if (changed) {
+              mapController.move(
+                  LatLng(locationService.lastPos!.latitude,
+                      locationService.lastPos!.longitude),
+                  14.5);
+            }
+          });
+        });
+        Timer.periodic(const Duration(seconds: 10), (timer) {
+          FlutterBackgroundService().invoke("requestTrackingData");
+        });
+      }
+    });
 
     // locationService.record(onReady: (p) {
     //   mapController.move(
@@ -50,8 +79,8 @@ class _SimpleMapState extends State<SimpleMap> {
     return Column(
       children: [
         if (locationService.hasPositions) ...[
-          Text("longitude: ${locationService.lastPos.longitude}"),
-          Text("latitude: ${locationService.lastPos.latitude}"),
+          Text("longitude: ${locationService.lastPos!.longitude}"),
+          Text("latitude: ${locationService.lastPos!.latitude}"),
           Text("min max: ${locationService.range}"),
           Text("positions: ${locationService.posCount}"),
         ],
@@ -101,8 +130,8 @@ class _SimpleMapState extends State<SimpleMap> {
                   MarkerLayer(
                     markers: [
                       Marker(
-                          point: LatLng(locationService.lastPos.latitude,
-                              locationService.lastPos.longitude),
+                          point: LatLng(locationService.lastPos!.latitude,
+                              locationService.lastPos!.longitude),
                           builder: (context) => const FlutterLogo())
                     ],
                   )

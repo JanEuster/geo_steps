@@ -4,17 +4,17 @@ import 'package:geo_steps/main.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 
 class PageWithNav extends StatelessWidget {
-  PageWithNav(
+  const PageWithNav(
       {super.key,
       this.title = "",
       this.navItems = const <AppRoute>[],
       this.child,
       this.color});
 
-  String title;
-  Widget? child;
-  Color? color;
-  List<AppRoute> navItems;
+  final String title;
+  final Widget? child;
+  final Color? color;
+  final List<AppRoute> navItems;
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +41,10 @@ class PageWithNav extends StatelessWidget {
 }
 
 class Navbar extends StatefulWidget {
-  Navbar({super.key, this.title = "", this.navItems = const <AppRoute>[]});
+  const Navbar({super.key, this.title = "", this.navItems = const <AppRoute>[]});
 
-  String title;
-  List<AppRoute> navItems;
+  final String title;
+  final List<AppRoute> navItems;
 
   @override
   _NavbarState createState() => _NavbarState();
@@ -99,10 +99,10 @@ class _NavbarState extends State<Navbar> {
 }
 
 class NavMenu extends StatelessWidget {
-  NavMenu(this.setMenu, {super.key, this.navItems = const <AppRoute>[]});
+  const NavMenu(this.setMenu, {super.key, this.navItems = const <AppRoute>[]});
 
-  List<AppRoute> navItems;
-  Function(bool) setMenu;
+  final List<AppRoute> navItems;
+  final Function(bool) setMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -145,15 +145,15 @@ class NavMenu extends StatelessWidget {
 }
 
 class NavMenuItem extends StatelessWidget {
-  NavMenuItem(
+  const NavMenuItem(
       {super.key,
       this.name = "home",
       this.route = "/",
       this.icon = Icons.nordic_walking});
 
-  String name;
-  String route;
-  IconData icon;
+  final String name;
+  final String route;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
