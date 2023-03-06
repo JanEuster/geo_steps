@@ -76,6 +76,110 @@ class LocationService {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
   }
 
+
+  Future<void> record({Function(Position)? onReady}) async {
+    log("start recording position data");
+    Geolocator.getLastKnownPosition().then((p) {
+      log("last known position: $p");
+      if (p != null) {
+        addPosition(p);
+        if (onReady != null) {
+          onReady(p);
+        }
+      }
+    });
+
+    if (isPaused) {
+      isPaused = false;
+    } else {
+      streamPosition((p) {
+        // LocationDataPoint can only have steps > 0 if ped status is not stopped
+        // -> detecting stops clearer?
+        log("$p $_newSteps $_newPedStatus");
+        dataPoints.add(LocationDataPoint(p, _newSteps, _newPedStatus));
+
+        if (p.speed > speedBoundary) {
+          timeOfLastMove = p.timestamp ?? DateTime.now();
+        }
+      });
+    }
+    streamSteps((s) {
+      _newSteps = s.steps;
+      timeOfLastMove = s.timeStamp;
+    }); // steps value is never reset internally
+    // -> steps totaled from first day of usage
+    streamPedestrianStatus((p) {
+      _newPedStatus = p.status;
+      if (p.status == LocationDataPoint.STATUS_WALKING) {
+        timeOfLastMove = p.timeStamp;
+      }
+    });
+  }
+
+  Future<void> stopRecording() async {
+    log("stop recording position data");
+    positionStream?.cancel();
+    stepCountStream?.cancel();
+    pedestrianStatusStream?.cancel();
+    // if (defaultTargetPlatform == TargetPlatform.android) {
+    //   log("stop recording activity data");
+    // activityStream?.cancel();
+    // }
+  }
+
+  /// determines whether the dataPoint.last is at a defined homepoint
+  bool isAtHomepoint() {
+    return false;
+  }
+
+  /// pauses location update streams until new movement is detected
+  Future<void> pauseIfStopped() async {
+    log("pauseIfStopped - isPaused: $isPaused - time since move ${DateTime.now().difference(timeOfLastMove).inSeconds}s");
+    if (!isPaused &&
+        (DateTime.now().difference(timeOfLastMove).inSeconds >= 60 ||
+            isAtHomepoint())) {
+      log("pausing location stream");
+      isPaused = true;
+      positionStream?.pause();
+
+      Timer.periodic(const Duration(seconds: 45), (timer) async {
+        var newPos = await Geolocator.getCurrentPosition();
+        var dist = Geolocator.distanceBetween(dataPoints.last.latitude,
+            dataPoints.last.longitude, newPos.latitude, newPos.longitude);
+        log("new dist $dist");
+        // distance
+        if (dist > 60 || (dist > 35 && newPos.speed > speedBoundary)) {
+          timeOfLastMove = newPos.timestamp ?? DateTime.now();
+          log("resuming location stream");
+          dataPoints.add(LocationDataPoint(newPos, _newSteps, _newPedStatus));
+          isPaused = false;
+          positionStream?.resume();
+          timer.cancel();
+        }
+      });
+    }
+  }
+
+  /// returns whether data has changed
+  bool dataPointsFromKV(List<dynamic> entries) {
+    var kvDP = entries.toLocationDataPoints();
+    if (dataPoints.length != kvDP.length) {
+      dataPoints = kvDP;
+      return true;
+    }
+    return false;
+  }
+
+
+  void addPosition(Position position) {
+    // LocationDataPoint can only have steps > 0 if ped status is not stopped
+    // -> detecting stops clearer?
+    log("$position $_newSteps $_newPedStatus");
+    dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+  }
+
+
+
   void optimizeCapturedData() {
     // remove redundant data points from positions list
     // - keep only start and end of a stop
@@ -179,105 +283,8 @@ class LocationService {
     segmentedData = segments;
   }
 
-  List<Trkseg> dataToTrksegs() {
-    List<Trkseg> trksegs = [];
-    //    <trkpt lat="42.453298333333336" lon="-71.1212">
-    //      <ele>78.0</ele>
-    //      <time>2023-01-21T17:36:54.083Z</time>
-    //      <type>stopped|walking|biking|transportation</type>
-    //      <cmt>steps:5;heading:NNW;speed:5kmh</cmt>
-    //      or
-    //      <extensions>
-    //        <?xml version="1.0" encoding="UTF-8"?>
-    //        <steps>3</steps>
-    //      </extensions>
-    //    </trkpt>
 
-    // determine type of movement for <type>
-    // - based on speed between points, average speed over all points
-    // -> 5-20km/h = biking; 20-150km/h = car or train; >150km/h = train
-    // -> outlier data points like a 25km/h bike ride or >150km/h autobahn drive should probably be ignored
-    // - based on pedestrian status, which will not have steps recorded, when not on foot
-    // NOT ACTUALLY WHAT THE CODE BELOW DOES; JUST AN IDEA
-    // BELOW ITS A MORE CRUDE APPROACH
-    /// gets speed value as m/s
-    String typeBasedOnSpeed(String pedStatus, double speed) {
-      if (pedStatus == LocationDataPoint.STATUS_WALKING) {
-        if (speed > 6) {
-          return LocationDataPoint.STATUS_BIKING;
-        } else {
-          return pedStatus;
-        }
-      } else if (pedStatus == LocationDataPoint.STATUS_STOPPED) {
-        if (speed > 6) {
-          return LocationDataPoint.STATUS_DRIVING;
-        } else {
-          return pedStatus;
-        }
-      } else {
-        // pedStatus == LocationDataPoint.STATUS_UNKNOWN
-        return LocationDataPoint.STATUS_UNKNOWN;
-      }
-    }
 
-    for (var seg in segmentedData) {
-      trksegs.add(Trkseg(
-          trkpts: seg.dataPoints
-              .map((p) => Wpt(
-                      ele: p.altitude,
-                      lat: p.latitude,
-                      lon: p.longitude,
-                      time: p.timestamp,
-                      type: typeBasedOnSpeed(p.pedStatus, p.speed),
-                      desc:
-                          "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
-                      extensions: {
-                        "pedStatus": p.pedStatus,
-                        "steps": p.steps.toString(),
-                        "heading": p.heading.toStringAsFixed(2),
-                        "speed": p.speed.toStringAsFixed(2),
-                      }))
-              .toList(),
-          extensions: {
-            "duration": "${seg.duration().inSeconds}s",
-            "startTime": seg.startTime.toString() ?? "",
-            "endTime": seg.endTime.toString() ?? "",
-          }));
-    }
-
-    return trksegs;
-  }
-
-  String toGPX({bool pretty = true}) {
-    var gpx = Gpx();
-    gpx.creator = "app.janeuster.geo_steps";
-    gpx.trks = [Trk(trksegs: dataToTrksegs())];
-    String gpxString = GpxWriter().asString(gpx, pretty: pretty);
-    return gpxString;
-  }
-
-  Map<String, String> parseGPXDesc(String desc) {
-    List<String> props = desc.split(";");
-    Map<String, String> propMap;
-
-    // weird error when the desc attribute = ""
-    // somehow this scenario produces one prop = ""
-    // that gets mapped and has only index 0 -> error
-    if (!(desc.trim() == "" || props.isNotEmpty)) {
-      propMap = Map.fromEntries(props.map((element) {
-        List<String> prop = element.split(":");
-        return MapEntry(prop[0], prop[1]);
-      }));
-    } else {
-      propMap = {};
-    }
-
-    return propMap;
-  }
-
-  void dataPointsFromKV(List<dynamic> entries) {
-    dataPoints = entries.toLocationDataPoints();
-  }
 
   List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
@@ -325,92 +332,122 @@ class LocationService {
     return posList;
   }
 
-  void addPosition(Position position) {
-    // LocationDataPoint can only have steps > 0 if ped status is not stopped
-    // -> detecting stops clearer?
-    log("$position $_newSteps $_newPedStatus");
-    dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
+  List<Trkseg> dataToTrksegs() {
+    List<Trkseg> trksegs = [];
+    //    <trkpt lat="42.453298333333336" lon="-71.1212">
+    //      <ele>78.0</ele>
+    //      <time>2023-01-21T17:36:54.083Z</time>
+    //      <type>stopped|walking|biking|transportation</type>
+    //      <cmt>steps:5;heading:NNW;speed:5kmh</cmt>
+    //      or
+    //      <extensions>
+    //        <?xml version="1.0" encoding="UTF-8"?>
+    //        <steps>3</steps>
+    //      </extensions>
+    //    </trkpt>
+
+    // determine type of movement for <type>
+    // - based on speed between points, average speed over all points
+    // -> 5-20km/h = biking; 20-150km/h = car or train; >150km/h = train
+    // -> outlier data points like a 25km/h bike ride or >150km/h autobahn drive should probably be ignored
+    // - based on pedestrian status, which will not have steps recorded, when not on foot
+    // NOT ACTUALLY WHAT THE CODE BELOW DOES; JUST AN IDEA
+    // BELOW ITS A MORE CRUDE APPROACH
+    /// gets speed value as m/s
+    String typeBasedOnSpeed(String pedStatus, double speed) {
+      if (pedStatus == LocationDataPoint.STATUS_WALKING) {
+        if (speed > 6) {
+          return LocationDataPoint.STATUS_BIKING;
+        } else {
+          return pedStatus;
+        }
+      } else if (pedStatus == LocationDataPoint.STATUS_STOPPED) {
+        if (speed > 6) {
+          return LocationDataPoint.STATUS_DRIVING;
+        } else {
+          return pedStatus;
+        }
+      } else {
+        // pedStatus == LocationDataPoint.STATUS_UNKNOWN
+        return LocationDataPoint.STATUS_UNKNOWN;
+      }
+    }
+
+    for (var seg in segmentedData) {
+      trksegs.add(Trkseg(
+          trkpts: seg.dataPoints
+              .map((p) => Wpt(
+              ele: p.altitude,
+              lat: p.latitude,
+              lon: p.longitude,
+              time: p.timestamp,
+              type: typeBasedOnSpeed(p.pedStatus, p.speed),
+              desc:
+              "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
+              extensions: {
+                "pedStatus": p.pedStatus,
+                "steps": p.steps.toString(),
+                "heading": p.heading.toStringAsFixed(2),
+                "speed": p.speed.toStringAsFixed(2),
+              }))
+              .toList(),
+          extensions: {
+            "duration": "${seg.duration().inSeconds}s",
+            "startTime": seg.startTime.toString() ?? "",
+            "endTime": seg.endTime.toString() ?? "",
+          }));
+    }
+
+    return trksegs;
   }
 
-  Future<void> record({Function(Position)? onReady}) async {
-    log("start recording position data");
-    Geolocator.getLastKnownPosition().then((p) {
-      log("last known position: $p");
-      if (p != null) {
-        addPosition(p);
-        if (onReady != null) {
-          onReady(p);
-        }
-      }
-    });
+  String toGPX({bool pretty = true}) {
+    var gpx = Gpx();
+    gpx.creator = "app.janeuster.geo_steps";
+    gpx.trks = [Trk(trksegs: dataToTrksegs())];
+    String gpxString = GpxWriter().asString(gpx, pretty: pretty);
+    return gpxString;
+  }
 
-    if (isPaused) {
-      isPaused = false;
+  Map<String, String> parseGPXDesc(String desc) {
+    List<String> props = desc.split(";");
+    Map<String, String> propMap;
+
+    // weird error when the desc attribute = ""
+    // somehow this scenario produces one prop = ""
+    // that gets mapped and has only index 0 -> error
+    if (!(desc.trim() == "" || props.isNotEmpty)) {
+      propMap = Map.fromEntries(props.map((element) {
+        List<String> prop = element.split(":");
+        return MapEntry(prop[0], prop[1]);
+      }));
     } else {
-      streamPosition((p) {
-        addPosition(p);
-
-        if (p.speed > speedBoundary) {
-          timeOfLastMove = p.timestamp ?? DateTime.now();
-        }
-      });
+      propMap = {};
     }
-    streamSteps((s) {
-      _newSteps = s.steps;
-      timeOfLastMove = s.timeStamp;
-    }); // steps value is never reset internally
-    // -> steps totaled from first day of usage
-    streamPedestrianStatus((p) {
-      _newPedStatus = p.status;
-      if (p.status == LocationDataPoint.STATUS_WALKING) {
-        timeOfLastMove = p.timeStamp;
-      }
-    });
+
+    return propMap;
   }
 
-  /// determines whether the dataPoint.last is at a defined homepoint
-  bool isAtHomepoint() {
-    return false;
-  }
+  Future<void> exportGpx() async {
+    String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
+        ExternalPath.DIRECTORY_DOWNLOADS);
+    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
 
-  /// pauses location update streams until new movement is detected
-  Future<void> pauseIfStopped() async {
-    log("pauseIfStopped - isPaused: $isPaused - time since move ${DateTime.now().difference(timeOfLastMove).inSeconds}s");
-    if (!isPaused &&
-        (DateTime.now().difference(timeOfLastMove).inSeconds >= 60 ||
-            isAtHomepoint())) {
-      log("pausing location stream");
-      isPaused = true;
-      positionStream?.pause();
-
-      Timer.periodic(const Duration(seconds: 45), (timer) async {
-        var newPos = await Geolocator.getCurrentPosition();
-        var dist = Geolocator.distanceBetween(dataPoints.last.latitude,
-            dataPoints.last.longitude, newPos.latitude, newPos.longitude);
-        log("new dist $dist");
-        // distance
-        if (dist > 60 || (dist > 35 && newPos.speed > speedBoundary)) {
-          timeOfLastMove = newPos.timestamp ?? DateTime.now();
-          log("resuming location stream");
-          dataPoints.add(LocationDataPoint(newPos, _newSteps, _newPedStatus));
-          isPaused = false;
-          positionStream?.resume();
-          timer.cancel();
-        }
-      });
+    var gpxDir = Directory(downloadsPath);
+    if (!(await gpxDir.exists())) {
+      await gpxDir.create(recursive: true);
     }
+
+    var gpxFilePath = "$downloadsPath/$date.gpx";
+    var gpxFile = File(gpxFilePath);
+
+    await gpxFile.writeAsString(toGPX(pretty: true), flush: true);
+
+    log("gpx file exported to $gpxFilePath");
   }
 
-  Future<void> stopRecording() async {
-    log("stop recording position data");
-    positionStream?.cancel();
-    stepCountStream?.cancel();
-    pedestrianStatusStream?.cancel();
-    // if (defaultTargetPlatform == TargetPlatform.android) {
-    //   log("stop recording activity data");
-    // activityStream?.cancel();
-    // }
-  }
+
+
 
   Future<void> loadToday() async {
     String date = DateTime.now().toUtc().toIso8601String().split("T").first;
@@ -457,52 +494,6 @@ class LocationService {
     }
   }
 
-  Future<void> exportGpx() async {
-    String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
-        ExternalPath.DIRECTORY_DOWNLOADS);
-    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
-
-    var gpxDir = Directory(downloadsPath);
-    if (!(await gpxDir.exists())) {
-      await gpxDir.create(recursive: true);
-    }
-
-    var gpxFilePath = "$downloadsPath/$date.gpx";
-    var gpxFile = File(gpxFilePath);
-
-    await gpxFile.writeAsString(toGPX(pretty: true), flush: true);
-
-    log("gpx file exported to $gpxFilePath");
-  }
-
-  MinMax<LatLng> getCoordRange(List<Position> positions) {
-    double minLon = positions.first.longitude;
-    double minLat = positions.first.latitude;
-    double maxLon = positions.first.longitude;
-    double maxLat = positions.first.latitude;
-    for (var i = 0; i < positions.length; i++) {
-      var p = positions[i];
-      if (p.longitude > maxLon) {
-        maxLon = p.longitude;
-      } else if (p.longitude < minLon) {
-        minLon = p.longitude;
-      }
-      if (p.latitude > maxLat) {
-        maxLat = p.latitude;
-      } else if (p.latitude < minLat) {
-        minLat = p.latitude;
-      }
-    }
-    return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
-  }
-
-  LatLng getCoordCenter(MinMax<LatLng> range) {
-    double longitude =
-        (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
-    double latitude =
-        (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
-    return LatLng(latitude, longitude);
-  }
 
   StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
     late LocationSettings locationSettings;
@@ -565,15 +556,35 @@ class LocationService {
 
     return pedestrianStatusStream!;
   }
+}
 
-// StreamSubscription<Android.ActivityEvent> streamActivities(
-//     Function(Android.ActivityEvent) addActivity,
-//     void Function(Object) onError) {
-//   activityStream = Android.ActivityRecognition()
-//       .activityStream(runForegroundService: true)
-//       .listen(addActivity, onError: onError);
-//   return activityStream!;
-// }
+MinMax<LatLng> getCoordRange(List<Position> positions) {
+  double minLon = positions.first.longitude;
+  double minLat = positions.first.latitude;
+  double maxLon = positions.first.longitude;
+  double maxLat = positions.first.latitude;
+  for (var i = 0; i < positions.length; i++) {
+    var p = positions[i];
+    if (p.longitude > maxLon) {
+      maxLon = p.longitude;
+    } else if (p.longitude < minLon) {
+      minLon = p.longitude;
+    }
+    if (p.latitude > maxLat) {
+      maxLat = p.latitude;
+    } else if (p.latitude < minLat) {
+      minLat = p.latitude;
+    }
+  }
+  return MinMax(LatLng(minLat, minLon), LatLng(maxLat, maxLon));
+}
+
+LatLng getCoordCenter(MinMax<LatLng> range) {
+  double longitude =
+      (range.max.longitude - range.min.longitude) / 2 + range.min.longitude;
+  double latitude =
+      (range.max.latitude - range.min.latitude) / 2 + range.min.latitude;
+  return LatLng(latitude, longitude);
 }
 
 /// type for positions with step and pedestrian status data

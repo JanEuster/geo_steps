@@ -44,8 +44,8 @@ class _SimpleMapState extends State<SimpleMap> {
         FlutterBackgroundService().on("sendTrackingData").listen((event) {
           setState(() {
             List<dynamic> receivedDataPoints = event!["trackingData"];
-            locationService.dataPointsFromKV(receivedDataPoints);
-            if (receivedDataPoints.isNotEmpty) {
+            var changed = locationService.dataPointsFromKV(receivedDataPoints);
+            if (changed) {
               mapController.move(
                   LatLng(locationService.lastPos!.latitude,
                       locationService.lastPos!.longitude),
