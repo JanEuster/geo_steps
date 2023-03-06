@@ -12,7 +12,7 @@ import 'package:pedometer/pedometer.dart';
 
 class LocationService {
   late Directory appDir;
-  DateTime lastDate = DateTime.now().toUtc();
+  DateTime lastDate = DateTime.now().toLocal();
 
   List<LocationDataPoint> dataPoints = [];
   List<TripSegment> segmentedData = [];
@@ -328,6 +328,7 @@ class LocationService {
     log("${posList.length} positions read from file");
     if (setPos) {
       dataPoints = posList;
+      log("first dp in file: ${dataPoints[0]}");
     }
     return posList;
   }
@@ -431,7 +432,7 @@ class LocationService {
   Future<void> exportGpx() async {
     String downloadsPath = await ExternalPath.getExternalStoragePublicDirectory(
         ExternalPath.DIRECTORY_DOWNLOADS);
-    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
+    String date = DateTime.now().toLocal().toIso8601String().split("T").first;
 
     var gpxDir = Directory(downloadsPath);
     if (!(await gpxDir.exists())) {
@@ -450,7 +451,7 @@ class LocationService {
 
 
   Future<void> loadToday() async {
-    String date = DateTime.now().toUtc().toIso8601String().split("T").first;
+    String date = DateTime.now().toLocal().toIso8601String().split("T").first;
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxFilePath = "$gpxDirPath/$date.gpx";
     var gpxFile = File(gpxFilePath);
@@ -466,7 +467,7 @@ class LocationService {
     if (dataPoints.isNotEmpty) {
       optimizeCapturedData();
 
-      var now = DateTime.now().toUtc();
+      var now = DateTime.now().toLocal();
       // check if its a new day and if so, remove all data from previous day
       // necessary because a new gpx file is created for every day -> no overlay in data
       // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
@@ -475,7 +476,7 @@ class LocationService {
             dataPoints.where((p) => p.timestamp!.day == now.day).toList();
         lastDate = now;
       }
-      String date = lastDate.toIso8601String().split("T").first;
+      String date = lastDate.toLocal().toIso8601String().split("T").first;
 
       var gpxDirPath = "${appDir.path}/gpxData";
       var gpxDir = Directory(gpxDirPath);
@@ -615,6 +616,11 @@ class LocationDataPoint {
 
     steps = stepCount;
     pedStatus = ped;
+  }
+
+  @override
+  String toString() {
+    return "LocationDataPoint at $timestamp { lat: $latitude lon: $longitude alt: $altitude dir: $heading° spe: $speed m/s with status: $pedStatus - $steps steps }";
   }
 
   bool get isStopped {
