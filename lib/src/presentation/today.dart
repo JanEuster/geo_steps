@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
 
 class TodayPage extends StatefulWidget {
- TodayPage({super.key});
+ const TodayPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _TodayPageState();

@@ -2,23 +2,26 @@
 import 'dart:developer';
 import 'dart:math' as math;
 import 'dart:ui';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
-import 'package:geo_steps/src/presentation/components/icons.dart';
-import 'package:geo_steps/src/presentation/components/lines.dart';
-import 'package:geo_steps/src/utils/map.dart';
-import 'package:geo_steps/src/utils/sizing.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
 // local imports
 import 'package:geo_steps/src/application/location.dart';
+import 'package:geo_steps/src/application/preferences.dart';
+import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/presentation/components/lines.dart';
+import 'package:geo_steps/src/utils/map.dart';
+import 'package:geo_steps/src/utils/sizing.dart';
 
 class MapPreview extends StatefulWidget {
-  List<Position> data = [];
+  List<LocationDataPoint> data = [];
   late double zoomMultiplier;
 
   MapPreview({super.key, required this.data, this.zoomMultiplier = 1});
@@ -37,8 +40,8 @@ class _MapPreviewState extends State<MapPreview> {
     Future.delayed(
         const Duration(seconds: 1),
         () => setState(() {
-              var coordRange = LocationService.getCoordRange(widget.data);
-              mapController.move(LocationService.getCoordCenter(coordRange),
+              var coordRange = getCoordRange(widget.data);
+              mapController.move(getCoordCenter(coordRange),
                   widget.zoomMultiplier * getZoomLevel(coordRange));
             }));
   }
@@ -77,7 +80,7 @@ class _MapPreviewState extends State<MapPreview> {
             polylineCulling: false,
             polylines: [
               Polyline(
-                points: LocationService.positionsToLonLat(widget.data),
+                points: widget.data.toLatLng(),
                 color: Colors.white,
                 strokeWidth: 2,
               ),
@@ -133,13 +136,33 @@ class _SimpleMapState extends State<SimpleMap>
     locationService
         .init()
         .whenComplete(() => locationService.loadToday().then((wasLoaded) {
-              if (wasLoaded) {
+              if (wasLoaded && locationService.hasPositions) {
                 setState(() => mapController.move(
-                    LatLng(locationService.lastPos.latitude,
-                        locationService.lastPos.longitude),
+                    LatLng(locationService.lastPos!.latitude,
+                        locationService.lastPos!.longitude),
                     12.8));
               }
             }));
+
+    AppSettings().trackingLocation.get().then((isTrackingLocation) {
+      if (isTrackingLocation != null && isTrackingLocation) {
+        FlutterBackgroundService().on("sendTrackingData").listen((event) {
+          setState(() {
+            List<dynamic> receivedDataPoints = event!["trackingData"];
+            var changed = locationService.dataPointsFromKV(receivedDataPoints);
+            if (changed) {
+              mapController.move(
+                  LatLng(locationService.lastPos!.latitude,
+                      locationService.lastPos!.longitude),
+                  14.5);
+            }
+          });
+        });
+        Timer.periodic(const Duration(seconds: 10), (timer) {
+          FlutterBackgroundService().invoke("requestTrackingData");
+        });
+      }
+    });
 
     // locationService.record(onReady: (p) {
     //   mapController.move(
@@ -233,8 +256,8 @@ class _SimpleMapState extends State<SimpleMap>
                       MarkerLayer(
                         markers: [
                           Marker(
-                              point: LatLng(locationService.lastPos.latitude,
-                                  locationService.lastPos.longitude),
+                              point: LatLng(locationService.lastPos!.latitude,
+                                  locationService.lastPos!.longitude),
                               builder: (context) => const FlutterLogo())
                         ],
                       )

@@ -32,7 +32,7 @@ extension OverviewCategoryExtension on OverviewCategory {
 }
 
 class OverviewPage extends StatefulWidget {
-  OverviewPage({super.key});
+  const OverviewPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _OverviewPageState();
@@ -44,15 +44,15 @@ class _OverviewPageState extends State<OverviewPage> {
   late DateTime endDate;
   bool showCalenderModal = false;
   bool startDateSet = false;
-  LocationService? data;
+  LocationService? locationService;
 
   @override
   void initState() {
     super.initState();
     startDate = DateTime.now();
     endDate = startDate;
-    data = LocationService();
-    data!.init().whenComplete(() {
+    locationService = LocationService();
+    locationService!.init().whenComplete(() {
       setData();
     });
   }
@@ -61,12 +61,12 @@ class _OverviewPageState extends State<OverviewPage> {
     // TODO: get data for any date / range
     if (selectedCategory == OverviewCategory.Day &&
         startDate.isSameDate(DateTime.now())) {
-      await data!.loadToday();
+      await locationService!.loadToday();
       setState(() {});
     } else {
-      data?.clearData();
+      locationService?.clearData();
     }
-    log("$data");
+    log("$locationService");
   }
 
   void changeCategory(OverviewCategory cat) {
@@ -196,21 +196,21 @@ class _OverviewPageState extends State<OverviewPage> {
             ),
         ]),
       ),
-      if (data != null && data!.posCount > 0)
-        ActivityMap(positions: data!.positions),
+      if (locationService != null && locationService!.hasPositions)
+        ActivityMap(data: locationService!.dataPoints),
     ]);
   }
 }
 
 class ActivityMap extends StatelessWidget {
-  List<Position> positions = [];
+  List<LocationDataPoint> data = [];
 
-  ActivityMap({super.key, required this.positions});
+  ActivityMap({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
-    log("positions: ${positions.length}");
+    log("positions: ${data.length}");
     return GestureDetector(
       onTap: () => null,
       child: SizedBox(
@@ -221,7 +221,7 @@ class ActivityMap extends StatelessWidget {
                 width: sizer.width,
                 decoration:
                     BoxDecoration(border: Border.all(color: Colors.black)),
-                child: positions.isNotEmpty
+                child: data.isNotEmpty
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +236,7 @@ class ActivityMap extends StatelessWidget {
                             decoration: const BoxDecoration(
                                 border: Border(left: BorderSide(width: 1))),
                             width: sizer.width / 5 * 3,
-                            child: MapPreview(data: positions, zoomMultiplier: 0.95),
+                            child: MapPreview(data: data, zoomMultiplier: 0.95),
                           )
                         ],
                       )

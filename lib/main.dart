@@ -2,10 +2,10 @@ import 'dart:async';
 import "dart:developer";
 
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
-as nl;
-import 'package:workmanager/workmanager.dart';
+    as nl;
 import 'package:awesome_notifications/awesome_notifications.dart';
 import "package:flutter_activity_recognition/flutter_activity_recognition.dart";
 
@@ -25,41 +25,43 @@ import 'package:geo_steps/src/application/preferences.dart';
 const String APP_TITLE = "geo_steps";
 const String SPLASH_SCREEN = "spash_screen";
 
-// define the handler for ui
-void onData(nl.NotificationEvent event) {
-  log(event.toString());
-}
-
-Future<void> initPlatformState() async {
-  nl.NotificationsListener.initialize();
-  // register you event handler in the ui logic.
-  nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
-}
-
-void startListeningToNotifications() async {
-  log("start listening");
-  var hasPermission = await nl.NotificationsListener.hasPermission;
-  if (!hasPermission!) {
-    log("no permission, so open settings");
-    nl.NotificationsListener.openPermissionSettings();
-    return;
-  }
-
-  var isR = await nl.NotificationsListener.isRunning;
-
-  if (!isR!) {
-    await nl.NotificationsListener.startService(
-        foreground: false,
-        // use false will not promote to foreground and without a notification
-        title: "Change the title",
-        description: "Change the text");
-  }
-}
+// // define the handler for ui
+// void onData(nl.NotificationEvent event) {
+//   log(event.toString());
+// }
+//
+// Future<void> initPlatformState() async {
+//   nl.NotificationsListener.initialize();
+//   // register you event handler in the ui logic.
+//   nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
+// }
+//
+// void startListeningToNotifications() async {
+//   log("start listening");
+//   var hasPermission = await nl.NotificationsListener.hasPermission;
+//   if (!hasPermission!) {
+//     log("no permission, so open settings");
+//     nl.NotificationsListener.openPermissionSettings();
+//     return;
+//   }
+//
+//   var isR = await nl.NotificationsListener.isRunning;
+//
+//   if (!isR!) {
+//     await nl.NotificationsListener.startService(
+//         foreground: false,
+//         // use false will not promote to foreground and without a notification
+//         title: "Change the title",
+//         description: "Change the text");
+//   }
+// }
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   AwesomeNotifications().initialize(
-    // set the icon to null if you want to use the default app icon
-      null, // default icon
+      // set the icon to null if you want to use the default app icon
+      "resource://drawable/res_notifications_icon", // default icon
       [
         NotificationChannel(
           channelGroupKey: 'basic_channel_group',
@@ -89,15 +91,18 @@ void main() async {
       channelGroups: [
         NotificationChannelGroup(
             channelGroupKey: 'basic_channel_group',
-            channelGroupName: 'Basic group')
+            channelGroupName: 'geo_steps')
       ],
-      debug: true);
+      debug: false);
 
-  Workmanager().initialize(
-      callbackDispatcher, // The top level function, aka callbackDispatcher
-      isInDebugMode:
-      true // If enabled it will post a notification whenever the task is running. Handy for debugging tasks
-  );
+  await initializeBackgroundService();
+
+  var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
+  log("isTrackingLocation: $isTrackingLocation");
+  if (isTrackingLocation!) {
+    await FlutterBackgroundService().startService();
+    // FlutterBackgroundService().invoke("startTracking");
+  }
 
   // set initial values for app settings if not already set
   // before the app is built
@@ -110,24 +115,22 @@ class AppRoute {
   String title;
   String route;
   IconData icon;
-  StatelessWidget page;
+  Widget page;
 
   AppRoute(this.title, this.route, this.icon, this.page);
 }
 
 class MyWidgetsApp extends StatefulWidget {
   final Map<String, AppRoute> routes = {
-    "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1,
-        Container(child: const MyHomePage())),
-    "/today": AppRoute(
-        "today", "/today", Icomoon.stats_1, Container(child: TodayPage())),
-    "/overviews": AppRoute("overviews", "/overviews", Icomoon.stats_2,
-        Container(child: OverviewPage())),
-    "/places": AppRoute("home⋅points", "/places", Icomoon.homepin_1,
-        Container(child: HomepointsPage())),
+    "/": AppRoute(APP_TITLE, "/", Icomoon.walking_1, const MyHomePage()),
+    "/today": AppRoute("today", "/today", Icomoon.stats_1, const TodayPage()),
+    "/overviews": AppRoute(
+        "overviews", "/overviews", Icomoon.stats_2, const OverviewPage()),
+    "/places": AppRoute(
+        "home⋅points", "/places", Icomoon.homepin_1, const HomepointsPage()),
   };
   static final GlobalKey<NavigatorState> navigatorKey =
-  GlobalKey<NavigatorState>();
+      GlobalKey<NavigatorState>();
 
   MyWidgetsApp({super.key});
 
@@ -157,53 +160,20 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
   final _activityStreamController = StreamController<Activity>();
   StreamSubscription<Activity>? _activityStreamSubscription;
 
-  void _onActivityReceive(Activity activity) {
-    log('Activity Detected >> ${activity.toJson()}');
-    _activityStreamController.sink.add(activity);
-  }
-
-  void _handleError(dynamic error) {
-    log('Catch Error >> $error');
-  }
-
   @override
   void initState() {
     super.initState();
     requestAllNecessaryPermissions();
 
-
-    // startListeningToNotifications();
-    // WidgetsBinding.instance.addPostFrameCallback((_) async {
-    //   final activityRecognition = FlutterActivityRecognition.instance;
-    //
-    //   // Check if the user has granted permission. If not, request permission.
-    //   PermissionRequestResult reqResult;
-    //   reqResult = await activityRecognition.checkPermission();
-    //   if (reqResult == PermissionRequestResult.PERMANENTLY_DENIED) {
-    //     log('Permission is permanently denied.');
-    //     return;
-    //   } else if (reqResult == PermissionRequestResult.DENIED) {
-    //     reqResult = await activityRecognition.requestPermission();
-    //     if (reqResult != PermissionRequestResult.GRANTED) {
-    //       log('Permission is denied.');
-    //       return;
-    //     }
-    //   }
-    //   // Subscribe to the activity stream.
-    //   _activityStreamSubscription = activityRecognition.activityStream
-    //       .handleError(_handleError)
-    //       .listen(_onActivityReceive);
-    // });
-
     // Only after at least the action method is set, the notification events are delivered
     AwesomeNotifications().setListeners(
         onActionReceivedMethod: NotificationController.onActionReceivedMethod,
         onNotificationCreatedMethod:
-        NotificationController.onNotificationCreatedMethod,
+            NotificationController.onNotificationCreatedMethod,
         onNotificationDisplayedMethod:
-        NotificationController.onNotificationDisplayedMethod,
+            NotificationController.onNotificationDisplayedMethod,
         onDismissActionReceivedMethod:
-        NotificationController.onDismissActionReceivedMethod);
+            NotificationController.onDismissActionReceivedMethod);
   }
 
   @override
@@ -278,6 +248,35 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
           ),
         );
       });
+    } else if (settings.name == "/notification-page") {
+      // redirect to today page from notification
+      var c = context;
+      // SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      //   Navigator.of(c).pushNamed("/today");
+      // });
+      // page = PageWithNav(title: "Notification Page", navItems: widget.routes.values.toList(), child: const Text("redirecting to relevant page"),) as Route;
+
+      var route = widget.routes["/today"]!;
+      page = PageRouteBuilder(pageBuilder: (BuildContext context,
+          Animation<double> animation, Animation<double> secondaryAnimation) {
+        // EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        // EdgeInsets padding = MediaQuery.of(context).viewPadding;
+
+        return PageWithNav(
+            title: route.title,
+            color: const Color(0xFFFFFFFF),
+            navItems: widget.routes.values.toList(),
+            child: route.page);
+      }, transitionsBuilder: (_, Animation<double> animation,
+          Animation<double> second, Widget child) {
+        return FadeTransition(
+          opacity: animation,
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
+            child: child,
+          ),
+        );
+      });
     } else {
       page = unKnownRoute(settings);
     }
@@ -303,6 +302,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
                     onTap: () => Navigator.of(context).pop(),
                     child: Column(
                       children: [
+                        Text(settings.name ?? ""),
                         Container(
                           padding: const EdgeInsets.all(10.0),
                           color: const Color(0xFFAAAAFF),
@@ -331,9 +331,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
 
   @override
   Widget build(BuildContext context) {
-    log("target: ${Theme
-        .of(context)
-        .platform}");
+    log("target: ${Theme.of(context).platform}");
     return WidgetsApp(
       navigatorKey: MyWidgetsApp.navigatorKey,
       onGenerateRoute: generate,
