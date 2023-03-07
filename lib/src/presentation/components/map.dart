@@ -39,7 +39,8 @@ class _MapPreviewState extends State<MapPreview> {
 
     Future.delayed(
         const Duration(seconds: 1),
-        () => setState(() {
+            () =>
+            setState(() {
               var coordRange = getCoordRange(widget.data);
               mapController.move(getCoordCenter(coordRange),
                   widget.zoomMultiplier * getZoomLevel(coordRange));
@@ -61,12 +62,12 @@ class _MapPreviewState extends State<MapPreview> {
             maxZoom: 19.0,
             keepAlive: true,
             interactiveFlags: // all interactions except rotation
-                InteractiveFlag.none),
+            InteractiveFlag.none),
         nonRotatedChildren: [
           CustomAttributionWidget.defaultWidget(
             source: 'geo_steps',
             sourceTextStyle:
-                const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+            const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
             onSourceTapped: () {},
           ),
         ],
@@ -134,14 +135,16 @@ class _SimpleMapState extends State<SimpleMap>
     locationService = LocationService();
     locationService
         .init()
-        .whenComplete(() => locationService.loadToday().then((wasLoaded) {
-              if (wasLoaded && locationService.hasPositions) {
-                setState(() => mapController.move(
+        .whenComplete(() =>
+        locationService.loadToday().then((wasLoaded) {
+          if (wasLoaded && locationService.hasPositions) {
+            setState(() =>
+                mapController.move(
                     LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
                     12.8));
-              }
-            }));
+          }
+        }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
       if (isTrackingLocation != null && isTrackingLocation) {
@@ -171,8 +174,8 @@ class _SimpleMapState extends State<SimpleMap>
     detailsController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
     detailsAnimation = Tween<double>(
-            begin: mapHeightDetails + 58,
-            end: SizeHelper().heightWithoutNav - 200)
+        begin: mapHeightDetails + 58,
+        end: SizeHelper().heightWithoutNav - 200)
         .animate(detailsController)
       ..addListener(() {
         setState(() {});
@@ -201,7 +204,9 @@ class _SimpleMapState extends State<SimpleMap>
 
   @override
   Widget build(BuildContext context) {
-    defaultTargetPlatform = Theme.of(context).platform;
+    defaultTargetPlatform = Theme
+        .of(context)
+        .platform;
     SizeHelper sizer = SizeHelper();
     return SizedBox(
       height: sizer.heightWithoutNav,
@@ -221,7 +226,7 @@ class _SimpleMapState extends State<SimpleMap>
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
-                          InteractiveFlag.all & ~InteractiveFlag.rotate),
+                      InteractiveFlag.all & ~InteractiveFlag.rotate),
                   nonRotatedChildren: [
                     CustomAttributionWidget.defaultWidget(
                       source: '© OpenStreetMap contributors',
@@ -233,7 +238,7 @@ class _SimpleMapState extends State<SimpleMap>
                   children: [
                     TileLayer(
                       urlTemplate:
-                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                       userAgentPackageName: 'dev.janeuster.geo_steps',
                     ),
                     // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
@@ -259,11 +264,12 @@ class _SimpleMapState extends State<SimpleMap>
                       MarkerLayer(
                         markers: [
                           Marker(
-                            width: 46,
+                              width: 46,
                               height: 46,
                               point: LatLng(locationService.lastPos!.latitude,
                                   locationService.lastPos!.longitude),
-                              builder: (context) => Transform.translate(
+                              builder: (context) =>
+                                  Transform.translate(
                                     offset: const Offset(0, -23),
                                     child: Container(
                                         decoration: const BoxDecoration(
@@ -292,7 +298,10 @@ class _SimpleMapState extends State<SimpleMap>
                           child: Column(
                             children: [
                               Text(
-                                  "show ${showDetails ? "less" : "more"} info for ${DateFormat.yMMMMEEEEd().format(widget.date)}",
+                                  "show ${showDetails
+                                      ? "less"
+                                      : "more"} info for ${DateFormat
+                                      .yMMMMEEEEd().format(widget.date)}",
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold)),
@@ -312,23 +321,23 @@ class _SimpleMapState extends State<SimpleMap>
                     child: !showDetails
                         ? HourlyActivity()
                         : ListView(
-                            children: [
-                              const Padding(
-                                  padding: EdgeInsets.only(bottom: 10)),
-                              HourlyActivity(),
-                              if (showDetails)
-                                Column(
-                                  children: const [
-                                    Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 20, horizontal: 10),
-                                        child: DottedLine(
-                                          height: 2,
-                                        )),
-                                  ],
-                                )
+                      children: [
+                        const Padding(
+                            padding: EdgeInsets.only(bottom: 10)),
+                        HourlyActivity(),
+                        if (showDetails)
+                          Column(
+                            children: const [
+                              Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 20, horizontal: 10),
+                                  child: DottedLine(
+                                    height: 2,
+                                  )),
                             ],
-                          ),
+                          )
+                      ],
+                    ),
                   )
                 ],
               ),
@@ -340,59 +349,122 @@ class _SimpleMapState extends State<SimpleMap>
   }
 }
 
-class HourlyActivity extends StatelessWidget {
+class HourlyActivity extends StatefulWidget {
+  double hourWidth = 50;
+
+  HourlyActivity({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _HourlyActivityState();
+}
+
+class _HourlyActivityState extends State<HourlyActivity> {
+  ScrollController scrollController =
+  ScrollController(initialScrollOffset: 700);
+  bool isScrolling = false;
+  int selectedHourIndex = 0;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollController.addListener(() {
+        if (scrollController.position.pixels == scrollController.position.maxScrollExtent || scrollController.position.pixels == scrollController.position.minScrollExtent) {
+          setSelectedHour();
+        }
+      });
+      scrollController.position.isScrollingNotifier.addListener(() {
+        if (scrollController.positions.isNotEmpty) {
+          var scrollBool = scrollController.position.isScrollingNotifier
+              .value;
+          if (scrollBool != isScrolling) {
+            setState(() {
+              isScrolling = scrollBool;
+            });
+            if (scrollBool == false) {
+              setSelectedHour();
+            }
+          }
+        }
+      });
+    });
+    super.initState();
+  }
+
+  setSelectedHour() {
+    var pixels = scrollController.position.pixels + widget.hourWidth/2;
+    int newIndex = (pixels /
+        scrollController.position.maxScrollExtent * 23).floor();
+    setState(() {
+      selectedHourIndex = newIndex;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
     return SizedBox(
         width: sizer.width,
         height: 120,
-        child: ListView.builder(
-            itemCount: 24,
-            padding: EdgeInsets.symmetric(
-                horizontal: sizer.width / 2 - 25, vertical: 0),
-            scrollDirection: Axis.horizontal,
-            controller: ScrollController(initialScrollOffset: 700),
-            itemBuilder: (BuildContext context, int index) {
-              List<double> hours = [
-                0,
-                0,
-                0,
-                0,
-                0,
-                .1,
-                .4,
-                .6,
-                0,
-                0,
-                .1,
-                0,
-                .3,
-                1,
-                .5,
-                0,
-                .1,
-                .3,
-                .2,
-                0,
-                0,
-                0,
-                0,
-                0
-              ]; // TODO: use real data
-              return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+          child: ListView.builder(
+              itemCount: 24,
+              padding: EdgeInsets.symmetric(
+                  horizontal: sizer.width / 2 - 25, vertical: 0),
+              scrollDirection: Axis.horizontal,
+              controller: scrollController,
+              itemBuilder: (BuildContext context, int index) {
+                List<double> hours = [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  .1,
+                  .4,
+                  .6,
+                  0,
+                  0,
+                  .1,
+                  0,
+                  .3,
+                  1,
+                  .5,
+                  1,
+                  .1,
+                  .3,
+                  .2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]; // TODO: use real data
+                return Padding(
+                  padding: index < 23
+                      ? const EdgeInsets.only(right: 5)
+                      : const EdgeInsets.all(0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      Expanded(
+                          child: Container(
+                            width: widget.hourWidth,
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.black,
+                                    width: index == selectedHourIndex ? 3 : 1)),
+                          )),
                       Container(
-                          width: 50,
-                          height: 100 * hours[index],
+                          width: widget.hourWidth,
+                          height: 90 * hours[index],
                           color: Colors.black),
-                      Text("${index}")
+                      Text("$index")
                     ],
-                  ));
-            }));
+                  ),
+                );
+              }),
+        ));
   }
 }
 
