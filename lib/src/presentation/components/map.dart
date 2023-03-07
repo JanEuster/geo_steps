@@ -313,15 +313,12 @@ class _SimpleMapState extends State<SimpleMap>
                         ? const HourlyActivity()
                         : ListView(
                             children: [
-                              const Padding(
-                                  padding: EdgeInsets.only(bottom: 10)),
                               const HourlyActivity(),
-                              if (showDetails)
                                 Column(
                                   children: const [
                                     Padding(
                                         padding: EdgeInsets.symmetric(
-                                            vertical: 20, horizontal: 10),
+                                            vertical: 16, horizontal: 10),
                                         child: DottedLine(
                                           height: 2,
                                         )),
@@ -398,7 +395,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
     var sizer = SizeHelper();
     return SizedBox(
         width: sizer.width,
-        height: 120,
+        height: 139,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
           child: ListView.builder(
@@ -408,7 +405,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {
-                List<double> hours = [
+                List<double> hoursPercent = [
                   0,
                   0,
                   0,
@@ -438,33 +435,37 @@ class _HourlyActivityState extends State<HourlyActivity> {
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
                       : const EdgeInsets.all(0),
+                  height: 139,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
+                      const Padding(padding: EdgeInsets.only(bottom: 5)),
                       Container(color: index == selectedHourIndex ? Colors.black : Colors.white, width: widget.hourWidth, height: 3),
-                      Expanded(
-                          child: Container(
-                        width: widget.hourWidth,
-                        decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black, width: 1)),
-                      )),
-                      Container(
-                          width: widget.hourWidth,
-                          height: 90 * hours[index],
-                          color:
-                              index == selectedHourIndex ? null : Colors.black,
-                          decoration: index == selectedHourIndex
-                              ? BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.black, width: 1),
-                                  image: const DecorationImage(
-                                      fit: BoxFit.none,
-                                      scale: 2.5,
-                                      image:
-                                          AssetImage("assets/line_pattern.jpg"),
-                                      repeat: ImageRepeat.repeat))
-                              : null),
-                      Text("$index")
+                      SizedBox(height: 105, child: Column(children: [
+                        Expanded(
+                            child: Container(
+                              width: widget.hourWidth,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black, width: 1)),
+                            )),
+                        Container(
+                            width: widget.hourWidth,
+                            height: 105 * hoursPercent[index],
+                            color:
+                            index == selectedHourIndex ? null : Colors.black,
+                            decoration: index == selectedHourIndex
+                                ? BoxDecoration(
+                                border:
+                                Border.all(color: Colors.black, width: 1),
+                                image: const DecorationImage(
+                                    fit: BoxFit.none,
+                                    scale: 2.5,
+                                    image:
+                                    AssetImage("assets/line_pattern.jpg"),
+                                    repeat: ImageRepeat.repeat))
+                                : null),
+                      ])),
+                      SizedBox(height: 16, child: Text("$index"))
                     ],
                   ),
                 );
