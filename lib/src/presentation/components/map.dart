@@ -61,12 +61,12 @@ class _MapPreviewState extends State<MapPreview> {
             maxZoom: 19.0,
             keepAlive: true,
             interactiveFlags: // all interactions except rotation
-            InteractiveFlag.none),
+                InteractiveFlag.none),
         nonRotatedChildren: [
           CustomAttributionWidget.defaultWidget(
             source: 'geo_steps',
             sourceTextStyle:
-            const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
+                const TextStyle(fontSize: 12, color: Color(0xFF0078a8)),
             onSourceTapped: () {},
           ),
         ],
@@ -134,16 +134,14 @@ class _SimpleMapState extends State<SimpleMap>
     locationService = LocationService();
     locationService
         .init()
-        .whenComplete(() =>
-        locationService.loadToday().then((wasLoaded) {
-          if (wasLoaded && locationService.hasPositions) {
-            setState(() =>
-                mapController.move(
+        .whenComplete(() => locationService.loadToday().then((wasLoaded) {
+              if (wasLoaded && locationService.hasPositions) {
+                setState(() => mapController.move(
                     LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
                     12.8));
-          }
-        }));
+              }
+            }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
       if (isTrackingLocation != null && isTrackingLocation) {
@@ -173,8 +171,8 @@ class _SimpleMapState extends State<SimpleMap>
     detailsController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
     detailsAnimation = Tween<double>(
-        begin: mapHeightDetails + 58,
-        end: SizeHelper().heightWithoutNav - 200)
+            begin: mapHeightDetails + 58,
+            end: SizeHelper().heightWithoutNav - 200)
         .animate(detailsController)
       ..addListener(() {
         setState(() {});
@@ -203,9 +201,7 @@ class _SimpleMapState extends State<SimpleMap>
 
   @override
   Widget build(BuildContext context) {
-    defaultTargetPlatform = Theme
-        .of(context)
-        .platform;
+    defaultTargetPlatform = Theme.of(context).platform;
     SizeHelper sizer = SizeHelper();
     return SizedBox(
       height: sizer.heightWithoutNav,
@@ -225,7 +221,7 @@ class _SimpleMapState extends State<SimpleMap>
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
-                      InteractiveFlag.all & ~InteractiveFlag.rotate),
+                          InteractiveFlag.all & ~InteractiveFlag.rotate),
                   nonRotatedChildren: [
                     CustomAttributionWidget.defaultWidget(
                       source: '© OpenStreetMap contributors',
@@ -237,7 +233,7 @@ class _SimpleMapState extends State<SimpleMap>
                   children: [
                     TileLayer(
                       urlTemplate:
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                       userAgentPackageName: 'dev.janeuster.geo_steps',
                     ),
                     // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
@@ -267,8 +263,7 @@ class _SimpleMapState extends State<SimpleMap>
                               height: 46,
                               point: LatLng(locationService.lastPos!.latitude,
                                   locationService.lastPos!.longitude),
-                              builder: (context) =>
-                                  Transform.translate(
+                              builder: (context) => Transform.translate(
                                     offset: const Offset(0, -23),
                                     child: Container(
                                         decoration: const BoxDecoration(
@@ -297,10 +292,7 @@ class _SimpleMapState extends State<SimpleMap>
                           child: Column(
                             children: [
                               Text(
-                                  "show ${showDetails
-                                      ? "less"
-                                      : "more"} info for ${DateFormat
-                                      .yMMMMEEEEd().format(widget.date)}",
+                                  "show ${showDetails ? "less" : "more"} info for ${DateFormat.yMMMMEEEEd().format(widget.date)}",
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold)),
@@ -320,23 +312,23 @@ class _SimpleMapState extends State<SimpleMap>
                     child: !showDetails
                         ? const HourlyActivity()
                         : ListView(
-                      children: [
-                        const Padding(
-                            padding: EdgeInsets.only(bottom: 10)),
-                        const HourlyActivity(),
-                        if (showDetails)
-                          Column(
-                            children: const [
-                              Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 20, horizontal: 10),
-                                  child: DottedLine(
-                                    height: 2,
-                                  )),
+                            children: [
+                              const Padding(
+                                  padding: EdgeInsets.only(bottom: 10)),
+                              const HourlyActivity(),
+                              if (showDetails)
+                                Column(
+                                  children: const [
+                                    Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 20, horizontal: 10),
+                                        child: DottedLine(
+                                          height: 2,
+                                        )),
+                                  ],
+                                )
                             ],
-                          )
-                      ],
-                    ),
+                          ),
                   )
                 ],
               ),
@@ -359,7 +351,7 @@ class HourlyActivity extends StatefulWidget {
 
 class _HourlyActivityState extends State<HourlyActivity> {
   ScrollController scrollController =
-  ScrollController(initialScrollOffset: 700);
+      ScrollController(initialScrollOffset: 715);
   bool isScrolling = false;
   int selectedHourIndex = 0;
 
@@ -367,14 +359,16 @@ class _HourlyActivityState extends State<HourlyActivity> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollController.addListener(() {
-        if (scrollController.position.pixels == scrollController.position.maxScrollExtent || scrollController.position.pixels == scrollController.position.minScrollExtent) {
+        if (scrollController.position.pixels ==
+                scrollController.position.maxScrollExtent ||
+            scrollController.position.pixels ==
+                scrollController.position.minScrollExtent) {
           setSelectedHour();
         }
       });
       scrollController.position.isScrollingNotifier.addListener(() {
         if (scrollController.positions.isNotEmpty) {
-          var scrollBool = scrollController.position.isScrollingNotifier
-              .value;
+          var scrollBool = scrollController.position.isScrollingNotifier.value;
           if (scrollBool != isScrolling) {
             setState(() {
               isScrolling = scrollBool;
@@ -385,14 +379,15 @@ class _HourlyActivityState extends State<HourlyActivity> {
           }
         }
       });
+      setSelectedHour();
     });
     super.initState();
   }
 
   setSelectedHour() {
-    var pixels = scrollController.position.pixels + widget.hourWidth/2;
-    int newIndex = (pixels /
-        scrollController.position.maxScrollExtent * 23).floor();
+    var pixels = scrollController.position.pixels + widget.hourWidth / 2;
+    int newIndex =
+        (pixels / scrollController.position.maxScrollExtent * 23).floor();
     setState(() {
       selectedHourIndex = newIndex;
     });
@@ -439,25 +434,36 @@ class _HourlyActivityState extends State<HourlyActivity> {
                   0,
                   0
                 ]; // TODO: use real data
-                return Padding(
+                return Container(
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
                       : const EdgeInsets.all(0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      Container(color: index == selectedHourIndex ? Colors.black : Colors.white, width: widget.hourWidth, height: 3),
                       Expanded(
                           child: Container(
-                            width: widget.hourWidth,
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.black,
-                                    width: index == selectedHourIndex ? 3 : 1)),
-                          )),
+                        width: widget.hourWidth,
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black, width: 1)),
+                      )),
                       Container(
                           width: widget.hourWidth,
                           height: 90 * hours[index],
-                          color: Colors.black),
+                          color:
+                              index == selectedHourIndex ? null : Colors.black,
+                          decoration: index == selectedHourIndex
+                              ? BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.black, width: 1),
+                                  image: const DecorationImage(
+                                      fit: BoxFit.none,
+                                      scale: 2.5,
+                                      image:
+                                          AssetImage("assets/line_pattern.jpg"),
+                                      repeat: ImageRepeat.repeat))
+                              : null),
                       Text("$index")
                     ],
                   ),
