@@ -37,14 +37,13 @@ class _MapPreviewState extends State<MapPreview> {
   void initState() {
     super.initState();
 
-    Future.delayed(
-        const Duration(seconds: 1),
-            () =>
-            setState(() {
-              var coordRange = getCoordRange(widget.data);
-              mapController.move(getCoordCenter(coordRange),
-                  widget.zoomMultiplier * getZoomLevel(coordRange));
-            }));
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      setState(() {
+        var coordRange = getCoordRange(widget.data);
+        mapController.move(getCoordCenter(coordRange),
+            widget.zoomMultiplier * getZoomLevel(coordRange));
+      });
+    });
   }
 
   @override
@@ -293,7 +292,7 @@ class _SimpleMapState extends State<SimpleMap>
                       child: Container(
                           width: sizer.width,
                           height: 58,
-                          padding: EdgeInsets.all(5),
+                          padding: const EdgeInsets.all(5),
                           color: Colors.black,
                           child: Column(
                             children: [
@@ -319,12 +318,12 @@ class _SimpleMapState extends State<SimpleMap>
                     width: sizer.width,
                     height: detailsAnimation.value - 58,
                     child: !showDetails
-                        ? HourlyActivity()
+                        ? const HourlyActivity()
                         : ListView(
                       children: [
                         const Padding(
                             padding: EdgeInsets.only(bottom: 10)),
-                        HourlyActivity(),
+                        const HourlyActivity(),
                         if (showDetails)
                           Column(
                             children: const [
@@ -350,9 +349,9 @@ class _SimpleMapState extends State<SimpleMap>
 }
 
 class HourlyActivity extends StatefulWidget {
-  double hourWidth = 50;
+  final double hourWidth = 50;
 
-  HourlyActivity({super.key});
+  const HourlyActivity({super.key});
 
   @override
   State<StatefulWidget> createState() => _HourlyActivityState();
@@ -406,7 +405,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
         width: sizer.width,
         height: 120,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
           child: ListView.builder(
               itemCount: 24,
               padding: EdgeInsets.symmetric(
