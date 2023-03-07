@@ -84,7 +84,6 @@ class _MapPreviewState extends State<MapPreview> {
                 color: Colors.white,
                 strokeWidth: 2,
               ),
-              Polyline(points: [LatLng(42.4311972, -71.1088649)])
             ],
           ),
           // if (locationService.hasPositions)
@@ -246,19 +245,32 @@ class _SimpleMapState extends State<SimpleMap>
                       polylines: [
                         Polyline(
                           points: locationService.latLngList,
-                          color: Colors.blue,
+                          color: Colors.black,
+                          strokeWidth: 8,
+                        ),
+                        Polyline(
+                          points: locationService.latLngList,
+                          color: Colors.white,
                           strokeWidth: 4,
                         ),
-                        Polyline(points: [LatLng(42.4311972, -71.1088649)])
                       ],
                     ),
                     if (locationService.hasPositions)
                       MarkerLayer(
                         markers: [
                           Marker(
+                            width: 46,
+                              height: 46,
                               point: LatLng(locationService.lastPos!.latitude,
                                   locationService.lastPos!.longitude),
-                              builder: (context) => const FlutterLogo())
+                              builder: (context) => Transform.translate(
+                                    offset: const Offset(0, -23),
+                                    child: Container(
+                                        decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                                image: AssetImage(
+                                                    "assets/map_pin.png")))),
+                                  ))
                         ],
                       )
                   ],
