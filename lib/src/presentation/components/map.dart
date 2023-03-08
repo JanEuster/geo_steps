@@ -17,6 +17,7 @@ import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
+import 'package:geo_steps/src/presentation/components/overview_stats.dart';
 import 'package:geo_steps/src/utils/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
@@ -101,10 +102,10 @@ class _MapPreviewState extends State<MapPreview> {
   }
 }
 
-class SimpleMap extends StatefulWidget {
+class TodaysMap extends StatefulWidget {
   late DateTime date;
 
-  SimpleMap({super.key, showDate}) {
+  TodaysMap({super.key, showDate}) {
     if (showDate != null) {
       date = showDate;
     } else {
@@ -113,10 +114,10 @@ class SimpleMap extends StatefulWidget {
   }
 
   @override
-  State<StatefulWidget> createState() => _SimpleMapState();
+  State<StatefulWidget> createState() => _TodaysMapState();
 }
 
-class _SimpleMapState extends State<SimpleMap>
+class _TodaysMapState extends State<TodaysMap>
     with SingleTickerProviderStateMixin {
   late Animation<double> detailsAnimation;
   late AnimationController detailsController;
@@ -313,17 +314,29 @@ class _SimpleMapState extends State<SimpleMap>
                         ? const HourlyActivity()
                         : ListView(
                             children: [
-                              const HourlyActivity(),
-                                Column(
-                                  children: const [
-                                    Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 16, horizontal: 10),
-                                        child: DottedLine(
-                                          height: 2,
-                                        )),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, bottom: 15),
+                                child: Row(
+                                  children: [
+                                    OverviewTotals(timeFrameString: "Today", totalSteps: 6929, totalDistance: 4200,),
+                                    Expanded(child: Container()),
                                   ],
-                                )
+                                ),
+                              ),
+                              const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 16, horizontal: 10),
+                                  child: DottedLine(
+                                    height: 2,
+                                  )),
+                              const HourlyActivity(),
+                              const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 16, horizontal: 10),
+                                  child: DottedLine(
+                                    height: 2,
+                                  )),
                             ],
                           ),
                   )
@@ -440,31 +453,40 @@ class _HourlyActivityState extends State<HourlyActivity> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       const Padding(padding: EdgeInsets.only(bottom: 5)),
-                      Container(color: index == selectedHourIndex ? Colors.black : Colors.white, width: widget.hourWidth, height: 3),
-                      SizedBox(height: 105, child: Column(children: [
-                        Expanded(
-                            child: Container(
+                      Container(
+                          color: index == selectedHourIndex
+                              ? Colors.black
+                              : Colors.white,
+                          width: widget.hourWidth,
+                          height: 3),
+                      SizedBox(
+                          height: 105,
+                          child: Column(children: [
+                            Expanded(
+                                child: Container(
                               width: widget.hourWidth,
                               decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black, width: 1)),
+                                  border: Border.all(
+                                      color: Colors.black, width: 1)),
                             )),
-                        Container(
-                            width: widget.hourWidth,
-                            height: 105 * hoursPercent[index],
-                            color:
-                            index == selectedHourIndex ? null : Colors.black,
-                            decoration: index == selectedHourIndex
-                                ? BoxDecoration(
-                                border:
-                                Border.all(color: Colors.black, width: 1),
-                                image: const DecorationImage(
-                                    fit: BoxFit.none,
-                                    scale: 2.5,
-                                    image:
-                                    AssetImage("assets/line_pattern.jpg"),
-                                    repeat: ImageRepeat.repeat))
-                                : null),
-                      ])),
+                            Container(
+                                width: widget.hourWidth,
+                                height: 105 * hoursPercent[index],
+                                color: index == selectedHourIndex
+                                    ? null
+                                    : Colors.black,
+                                decoration: index == selectedHourIndex
+                                    ? BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.black, width: 1),
+                                        image: const DecorationImage(
+                                            fit: BoxFit.none,
+                                            scale: 2.5,
+                                            image: AssetImage(
+                                                "assets/line_pattern.jpg"),
+                                            repeat: ImageRepeat.repeat))
+                                    : null),
+                          ])),
                       SizedBox(height: 16, child: Text("$index"))
                     ],
                   ),

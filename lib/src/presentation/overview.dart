@@ -6,6 +6,7 @@ import 'package:geo_steps/src/presentation/components/calender.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
+import 'package:geo_steps/src/presentation/components/overview_stats.dart';
 import 'package:geo_steps/src/utils/datetime.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 import 'package:geolocator/geolocator.dart';
@@ -109,6 +110,9 @@ class _OverviewPageState extends State<OverviewPage> {
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
+    var timeFrameString = startDate != endDate
+        ? "${DateFormat.yMMMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMMMEd().format(endDate).replaceAll("/", ".")}"
+        : DateFormat.yMEd().format(startDate).replaceAll("/", ".");
     return ListView(padding: EdgeInsets.zero, children: [
       SizedBox(
         height: showCalenderModal ? 580 : null,
@@ -155,11 +159,7 @@ class _OverviewPageState extends State<OverviewPage> {
                 padding:
                     const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                 child: Text(
-                  startDate != endDate
-                      ? "${DateFormat.yMMMEd().format(startDate).replaceAll("/", ".")} — ${DateFormat.yMMMEd().format(endDate).replaceAll("/", ".")}"
-                      : DateFormat.yMEd()
-                          .format(startDate)
-                          .replaceAll("/", "."),
+                  timeFrameString,
                   style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -197,7 +197,24 @@ class _OverviewPageState extends State<OverviewPage> {
         ]),
       ),
       if (locationService != null && locationService!.hasPositions)
-        ActivityMap(data: locationService!.dataPoints),
+      Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 10, bottom: 15),
+            child: Row(
+              children: [
+                OverviewTotals(
+                  timeFrameString: timeFrameString,
+                  totalSteps: 6929,
+                  totalDistance: 4200,
+                ),
+                Expanded(child: Container()),
+              ],
+            ),
+          ),
+          ActivityMap(data: locationService!.dataPoints),
+        ],
+      )
     ]);
   }
 }

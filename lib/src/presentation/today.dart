@@ -15,7 +15,7 @@ class _TodayPageState extends State<TodayPage> {
     return ListView(
       padding: EdgeInsets.zero,
         children: [
-      SimpleMap(),
+      TodaysMap(),
     ]);
   }
 
