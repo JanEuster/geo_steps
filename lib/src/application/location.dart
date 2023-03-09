@@ -745,12 +745,31 @@ class MinMax<T> {
   T max;
 
   MinMax(this.min, this.max);
+  static fromList(List<double> list) {
+    double min = list.first;
+    double max = list.first;
+    for (var e in list) {
+      if (e > max) {
+        max = e;
+      } else if (e < min) {
+        min = e;
+      }
+    }
+    return MinMax(min, max);
+  }
 
   @override
   String toString() {
     return "[min] $min [max] $max";
   }
 }
+
+extension Double on MinMax<double> {
+  double get diff {
+    return max - min;
+  }
+}
+
 
 class LonLat {
   double longitude;

@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 import 'dart:async';
 
@@ -18,7 +17,7 @@ import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
 class TodayPage extends StatefulWidget {
- const TodayPage({super.key});
+  const TodayPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _TodayPageState();
@@ -27,13 +26,10 @@ class TodayPage extends StatefulWidget {
 class _TodayPageState extends State<TodayPage> {
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.zero,
-        children: [
+    return ListView(padding: EdgeInsets.zero, children: [
       TodaysMap(),
     ]);
   }
-
 }
 
 class TodaysMap extends StatefulWidget {
@@ -70,13 +66,13 @@ class _TodaysMapState extends State<TodaysMap>
     locationService
         .init()
         .whenComplete(() => locationService.loadToday().then((wasLoaded) {
-      if (wasLoaded && locationService.hasPositions) {
-        setState(() => mapController.move(
-            LatLng(locationService.lastPos!.latitude,
-                locationService.lastPos!.longitude),
-            12.8));
-      }
-    }));
+              if (wasLoaded && locationService.hasPositions) {
+                setState(() => mapController.move(
+                    LatLng(locationService.lastPos!.latitude,
+                        locationService.lastPos!.longitude),
+                    12.8));
+              }
+            }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
       if (isTrackingLocation != null && isTrackingLocation) {
@@ -106,8 +102,8 @@ class _TodaysMapState extends State<TodaysMap>
     detailsController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
     detailsAnimation = Tween<double>(
-        begin: mapHeightDetails + 58,
-        end: SizeHelper().heightWithoutNav - 200)
+            begin: mapHeightDetails + 58,
+            end: SizeHelper().heightWithoutNav - 200)
         .animate(detailsController)
       ..addListener(() {
         setState(() {});
@@ -156,7 +152,7 @@ class _TodaysMapState extends State<TodaysMap>
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
-                      InteractiveFlag.all & ~InteractiveFlag.rotate),
+                          InteractiveFlag.all & ~InteractiveFlag.rotate),
                   nonRotatedChildren: [
                     CustomAttributionWidget.defaultWidget(
                       source: '© OpenStreetMap contributors',
@@ -168,7 +164,7 @@ class _TodaysMapState extends State<TodaysMap>
                   children: [
                     TileLayer(
                       urlTemplate:
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                       userAgentPackageName: 'dev.janeuster.geo_steps',
                     ),
                     // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
@@ -199,13 +195,13 @@ class _TodaysMapState extends State<TodaysMap>
                               point: LatLng(locationService.lastPos!.latitude,
                                   locationService.lastPos!.longitude),
                               builder: (context) => Transform.translate(
-                                offset: const Offset(0, -23),
-                                child: Container(
-                                    decoration: const BoxDecoration(
-                                        image: DecorationImage(
-                                            image: AssetImage(
-                                                "assets/map_pin.png")))),
-                              ))
+                                    offset: const Offset(0, -23),
+                                    child: Container(
+                                        decoration: const BoxDecoration(
+                                            image: DecorationImage(
+                                                image: AssetImage(
+                                                    "assets/map_pin.png")))),
+                                  ))
                         ],
                       )
                   ],
@@ -247,32 +243,54 @@ class _TodaysMapState extends State<TodaysMap>
                     child: !showDetails
                         ? const HourlyActivity()
                         : ListView(
-                      children: [
-                        Padding(
-                          padding:
-                          const EdgeInsets.only(left: 10, bottom: 15),
-                          child: Row(
                             children: [
-                              OverviewTotals(timeFrameString: "Today", totalSteps: 6929, totalDistance: 4200,),
-                              Expanded(child: Container()),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 10, bottom: 15),
+                                child: Row(
+                                  children: [
+                                    OverviewTotals(
+                                      timeFrameString: "Today",
+                                      totalSteps: 6929,
+                                      totalDistance: 4200,
+                                    ),
+                                    Expanded(child: Container()),
+                                  ],
+                                ),
+                              ),
+                              const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 16, horizontal: 10),
+                                  child: DottedLine(
+                                    height: 2,
+                                  )),
+                              const HourlyActivity(),
+                              const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 16, horizontal: 10),
+                                  child: DottedLine(
+                                    height: 2,
+                                  )),
+                              Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: OverviewBarGraph(data: [
+                                    1,
+                                    2,
+                                    6,
+                                    2,
+                                    3,
+                                    1,
+                                    12,
+                                    42,
+                                    10,
+                                    1,
+                                    1,
+                                    3,
+                                    95,
+                                    32
+                                  ])),
                             ],
                           ),
-                        ),
-                        const Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 10),
-                            child: DottedLine(
-                              height: 2,
-                            )),
-                        const HourlyActivity(),
-                        const Padding(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 10),
-                            child: DottedLine(
-                              height: 2,
-                            )),
-                      ],
-                    ),
                   )
                 ],
               ),

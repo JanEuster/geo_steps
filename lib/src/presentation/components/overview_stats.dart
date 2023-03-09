@@ -1,14 +1,22 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
 class OverviewTotals extends StatelessWidget {
   final String timeFrameString;
   final int totalSteps;
+
   /// total distance in meters
   final double totalDistance;
 
-  OverviewTotals({super.key, required this.timeFrameString, required this.totalSteps, required this.totalDistance});
+  OverviewTotals(
+      {super.key,
+      required this.timeFrameString,
+      required this.totalSteps,
+      required this.totalDistance});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +46,7 @@ class OverviewTotals extends StatelessWidget {
                 style: textStyle,
               ),
               Text(
-                "${(totalDistance/1000).toStringAsFixed(1)} km",
+                "${(totalDistance / 1000).toStringAsFixed(1)} km",
                 style: textStyle,
               ),
             ]),
@@ -47,6 +55,149 @@ class OverviewTotals extends StatelessWidget {
   }
 }
 
+class OverviewBarGraph extends StatefulWidget {
+  final String title;
+  final double height;
+  final bool scrollable;
+
+  /// only takes effect when scrollable=true
+  final double scrollWidth;
+  final List<double> data;
+  late MinMax<double> valuesMinMax;
+
+  OverviewBarGraph(
+      {super.key,
+      required this.data,
+      this.title = "geo_steps stats",
+      this.scrollable = false,
+      this.scrollWidth = 600,
+      this.height = 150}) {
+    valuesMinMax = MinMax.fromList(data);
+  }
+
+  @override
+  State<StatefulWidget> createState() => _OverviewBarGraphState();
+}
+
+class _OverviewBarGraphState extends State<OverviewBarGraph> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var textStyleOnWhite = const TextStyle(
+        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+    var textStyleOnBlack =
+        const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
+    var sizer = SizeHelper();
+    return SizedBox(
+      height: widget.height,
+      child: SizedBox(
+        child: Column(
+          children: [
+            Expanded(
+                child: Padding(
+                    padding:
+                        const EdgeInsets.only(bottom: 10, left: 4, right: 0),
+                    child: SizedBox(
+                      child: Row(
+                        children: [
+                          Column(
+                            verticalDirection: VerticalDirection.up,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: List.generate(4, (i) {
+                              String value;
+                              if (i == 0) {
+                                value =
+                                    widget.valuesMinMax.min.toStringAsFixed(1);
+                              } else if (i == 3) {
+                                value =
+                                    widget.valuesMinMax.max.toStringAsFixed(1);
+                              } else {
+                                value = (widget.valuesMinMax.diff / 3 * i)
+                                    .toStringAsFixed(1);
+                              }
+                              return Text(
+                                value,
+                                style: textStyleOnBlack,
+                              );
+                            }),
+                          ),
+                          widget.scrollable
+                              ? Expanded(
+                                  child: ListView(
+                                    scrollDirection: Axis.horizontal,
+                                    children: [
+                                      SizedBox(
+                                          width: widget.scrollWidth,
+                                          child: BarChart(data: widget.data)),
+                                    ],
+                                  ),
+                                )
+                              : Expanded(child: BarChart(data: widget.data))
+                        ],
+                      ),
+                    ))),
+            Container(
+              height: 18,
+              color: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(widget.title, style: textStyleOnWhite),
+                  Text("${widget.data.length} bars", style: textStyleOnWhite)
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BarChart extends StatelessWidget {
+  final List<double> data;
+  late MinMax<double> valuesMinMax;
+
+  BarChart({super.key, required this.data}) {
+    valuesMinMax = MinMax.fromList(data);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: data.map((e) {
+        var heightFactor = (((e - valuesMinMax.min) / valuesMinMax.max) * 100)
+                .roundToDouble() /
+            100;
+        if (heightFactor < 0.013) {
+          heightFactor = 0.013;
+        }
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 3),
+            child: FractionallySizedBox(
+              heightFactor: heightFactor,
+              child: Container(
+                constraints: const BoxConstraints(
+                    minHeight: 1, minWidth: 1, maxWidth: 40),
+                color: Colors.black,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
 
 class HourlyActivity extends StatefulWidget {
   final double hourWidth = 50;
@@ -59,7 +210,7 @@ class HourlyActivity extends StatefulWidget {
 
 class _HourlyActivityState extends State<HourlyActivity> {
   ScrollController scrollController =
-  ScrollController(initialScrollOffset: 715);
+      ScrollController(initialScrollOffset: 715);
   bool isScrolling = false;
   int selectedHourIndex = 0;
 
@@ -68,7 +219,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollController.addListener(() {
         if (scrollController.position.pixels ==
-            scrollController.position.maxScrollExtent ||
+                scrollController.position.maxScrollExtent ||
             scrollController.position.pixels ==
                 scrollController.position.minScrollExtent) {
           setSelectedHour();
@@ -95,7 +246,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
   setSelectedHour() {
     var pixels = scrollController.position.pixels + widget.hourWidth / 2;
     int newIndex =
-    (pixels / scrollController.position.maxScrollExtent * 23).floor();
+        (pixels / scrollController.position.maxScrollExtent * 23).floor();
     setState(() {
       selectedHourIndex = newIndex;
     });
@@ -162,11 +313,11 @@ class _HourlyActivityState extends State<HourlyActivity> {
                           child: Column(children: [
                             Expanded(
                                 child: Container(
-                                  width: widget.hourWidth,
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.black, width: 1)),
-                                )),
+                              width: widget.hourWidth,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.black, width: 1)),
+                            )),
                             Container(
                                 width: widget.hourWidth,
                                 height: 105 * hoursPercent[index],
@@ -175,14 +326,14 @@ class _HourlyActivityState extends State<HourlyActivity> {
                                     : Colors.black,
                                 decoration: index == selectedHourIndex
                                     ? BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.black, width: 1),
-                                    image: const DecorationImage(
-                                        fit: BoxFit.none,
-                                        scale: 2.5,
-                                        image: AssetImage(
-                                            "assets/line_pattern.jpg"),
-                                        repeat: ImageRepeat.repeat))
+                                        border: Border.all(
+                                            color: Colors.black, width: 1),
+                                        image: const DecorationImage(
+                                            fit: BoxFit.none,
+                                            scale: 2.5,
+                                            image: AssetImage(
+                                                "assets/line_pattern.jpg"),
+                                            repeat: ImageRepeat.repeat))
                                     : null),
                           ])),
                       SizedBox(height: 16, child: Text("$index"))

@@ -197,24 +197,29 @@ class _OverviewPageState extends State<OverviewPage> {
         ]),
       ),
       if (locationService != null && locationService!.hasPositions)
-      Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 10, bottom: 15),
-            child: Row(
-              children: [
-                OverviewTotals(
-                  timeFrameString: timeFrameString,
-                  totalSteps: 6929,
-                  totalDistance: 4200,
-                ),
-                Expanded(child: Container()),
-              ],
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 10, bottom: 15),
+              child: Row(
+                children: [
+                  OverviewTotals(
+                    timeFrameString: timeFrameString,
+                    totalSteps: 6929,
+                    totalDistance: 4200,
+                  ),
+                  Expanded(child: Container()),
+                ],
+              ),
             ),
-          ),
-          ActivityMap(data: locationService!.dataPoints),
-        ],
-      )
+            ActivityMap(data: locationService!.dataPoints),
+            Padding(
+                padding: const EdgeInsets.all(10),
+                child: OverviewBarGraph(
+                    scrollable: true,
+                    data: [1, 2, 6, 2, 3, 1, 12, 42, 10, 1, 1, 3, 95, 32])),
+          ],
+        )
     ]);
   }
 }
