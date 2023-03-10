@@ -123,11 +123,9 @@ class _TodaysMapState extends State<TodaysMap>
     } else {
       detailsController.reverse();
     }
-    log("before $showDetails");
     setState(() {
       showDetails = !showDetails;
     });
-    log("after $showDetails");
   }
 
   @override
@@ -243,6 +241,7 @@ class _TodaysMapState extends State<TodaysMap>
                     child: !showDetails
                         ? const HourlyActivity()
                         : ListView(
+                          padding: const EdgeInsets.only(top: 10),
                             children: [
                               Padding(
                                 padding:
