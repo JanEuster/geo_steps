@@ -1,7 +1,12 @@
 import 'dart:developer';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+
+// local imports
 import 'package:geo_steps/src/application/homepoints.dart';
 import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
@@ -9,8 +14,6 @@ import 'package:geo_steps/src/presentation/components/inputs.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 
 class HomepointsPage extends StatefulWidget {
   const HomepointsPage({super.key});
@@ -20,7 +23,7 @@ class HomepointsPage extends StatefulWidget {
 }
 
 class _HomepointsPageState extends State<HomepointsPage> {
-  bool addingPoint = true;
+  bool addingPoint = false;
   bool editingPoint = false;
 
   @override
@@ -76,7 +79,16 @@ class _HomepointsPageState extends State<HomepointsPage> {
           top: 50 + 2,
           left: 10,
           child: AddHomepointModal(
-              onClose: (Homepoint point) {},
+              onClose: (Homepoint? point) {
+                log("close modal");
+                log("with data $point");
+                if (point != null) {
+                  setState(() {
+                    addingPoint = false;
+                    editingPoint = false;
+                  });
+                }
+              },
               confirmText:
                   addingPoint ? "Add" : (editingPoint ? "Update" : null)),
         ),
@@ -85,7 +97,7 @@ class _HomepointsPageState extends State<HomepointsPage> {
 }
 
 class AddHomepointModal extends StatefulWidget {
-  Function(Homepoint) onClose;
+  Function(Homepoint?) onClose;
   String? confirmText;
 
   AddHomepointModal({super.key, required this.onClose, this.confirmText});
@@ -96,10 +108,11 @@ class AddHomepointModal extends StatefulWidget {
 
 class _AddHomepointModalState extends State<AddHomepointModal> {
   late MapController mapController;
-  String name = "";
+  String name = "homepoint 1";
   double radius = 80;
   LatLng? point;
   final GlobalKey _mapKey = GlobalKey();
+  bool failedToSubmit = false;
 
   @override
   void initState() {
@@ -114,6 +127,18 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
     });
   }
 
+  void submit() {
+    widget.onClose(Homepoint(name, point!));
+
+    // reset
+    setState(() {
+      name = "homepoint 1";
+      failedToSubmit = false;
+      point = null;
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
     var sizer = SizeHelper();
@@ -125,32 +150,29 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
         decoration:
             BoxDecoration(color: Colors.white, border: Border.all(width: 2)),
         child: Column(children: [
-          Expanded(
-              child: Padding(
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: CustomInputField(
-              initialValue: "homepoint 1",
-              label: "name",
-              onChange: (newValue) => setState(() => name = newValue),
+          initialValue: name,
+          label: "name",
+          onChange: (newValue) => setState(() => name = newValue),
             ),
-          )),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CustomSliderInput(
-                label: "radius",
-                range: MinMax(15, 500),
-                onChange: (newValue) {},
-                initValue: radius,
-                width: width - 16,
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CustomSliderInput(
+              label: "radius",
+              range: MinMax(15, 500),
+              onChange: (newValue) => setState(() => radius = newValue),
+              initValue: radius,
+              width: width - 16,
             ),
           ),
           const Line(
             height: 2,
           ),
           Expanded(
-            flex: 4,
+            flex: 3,
             child: GestureDetector(
               // onTapDown: (details) {
               //   final size = _mapKey.currentContext!.size;
@@ -254,14 +276,51 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
               ),
             ),
           ),
-          Container(
+          if (failedToSubmit)
+            Container(height: 30,color: Colors.red, child: const Center(child: Text("select a position for your homepoint on the map", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),),
+          SizedBox(
             height: 60,
-            color: Colors.black,
-            child: Center(
-                child: Text(
-              widget.confirmText ?? "Save",
-              style: TextStyle(fontSize: 24, color: Colors.white),
-            )),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => widget.onClose(null),
+                    child: Container(
+                        decoration: const BoxDecoration(
+                            color: Colors.white,
+                            border: Border(top: BorderSide(width: 2))),
+                        child: Center(
+                          child: Transform.rotate(
+                              angle: math.pi / 4,
+                              child: const Icon(Icomoon.plus, size: 40)),
+                        )),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (point != null) {
+                        submit();
+                      } else {
+                        setState(() {
+                          failedToSubmit = true;
+                        });
+                      }
+                    },
+                    child: Container(
+                      color: Colors.black,
+                      child: Center(
+                          child: Text(
+                        widget.confirmText ?? "Save",
+                        style:
+                            const TextStyle(fontSize: 24, color: Colors.white),
+                      )),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           )
         ]));
   }
