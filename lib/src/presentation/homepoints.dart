@@ -24,11 +24,17 @@ class HomepointsPage extends StatefulWidget {
 
 class _HomepointsPageState extends State<HomepointsPage> {
   bool addingPoint = false;
-  bool editingPoint = false;
+  MapEntry<String, Homepoint>? editingPoint;
+  HomepointManager? homepointManager;
 
   @override
   void initState() {
     super.initState();
+
+    homepointManager = HomepointManager();
+    homepointManager!.init().then((value) async {
+      setState(() {});
+    });
   }
 
   @override
@@ -47,11 +53,51 @@ class _HomepointsPageState extends State<HomepointsPage> {
           const Line(
             height: 4,
           ),
-          Column(
-            children: []
-            // List.generate(length, (index) => null).toList()
-            ,
-          )
+          if (homepointManager != null)
+            Column(
+              children:
+                  List.generate(homepointManager!.homepoints.length, (index) {
+                final point =
+                    homepointManager!.homepoints.entries.toList()[index];
+                log("$point");
+                return SizedBox(
+                  height: 50,
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: Center(
+                        child: Text(point.value.name),
+                      )),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            editingPoint = point;
+                            log("editing $editingPoint");
+                          });
+                        },
+                        child: const SizedBox(
+                          width: 50,
+                          child: Icon(Icomoon.edit),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            homepointManager!.removePoint(point.key);
+                          });
+                        },
+                        child: const SizedBox(
+                          width: 50,
+                          child: Icon(Icomoon.trash),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              })
+              // List.generate(length, (index) => null).toList()
+              ,
+            )
         ]),
       ),
       if (!addingPoint)
@@ -69,28 +115,42 @@ class _HomepointsPageState extends State<HomepointsPage> {
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.black,
                       borderRadius: const BorderRadius.all(Radius.circular(30)),
                       border: Border.all(width: 4)),
-                  child: const Icon(size: 36, Icomoon.plus),
+                  child: const Icon(
+                    size: 36,
+                    Icomoon.plus,
+                    color: Colors.white,
+                  ),
                 ))),
-      if (addingPoint)
+      if (addingPoint || editingPoint != null)
         Positioned(
           top: 50 + 2,
           left: 10,
           child: AddHomepointModal(
+              basedOn: editingPoint != null ? editingPoint!.value : null,
               onClose: (Homepoint? point) {
                 log("close modal");
                 log("with data $point");
+
                 if (point != null) {
                   setState(() {
-                    addingPoint = false;
-                    editingPoint = false;
+                    if (editingPoint != null) {
+                      homepointManager!.updatePoint(editingPoint!.key, point);
+                    } else {
+                      homepointManager!.addPoint(point);
+                    }
                   });
                 }
+                setState(() {
+                  addingPoint = false;
+                  editingPoint = null;
+                });
               },
-              confirmText:
-                  addingPoint ? "Add" : (editingPoint ? "Update" : null)),
+              confirmText: addingPoint
+                  ? "Add"
+                  : (editingPoint != null ? "Update" : null)),
         ),
     ]);
   }
@@ -99,8 +159,10 @@ class _HomepointsPageState extends State<HomepointsPage> {
 class AddHomepointModal extends StatefulWidget {
   Function(Homepoint?) onClose;
   String? confirmText;
+  Homepoint? basedOn;
 
-  AddHomepointModal({super.key, required this.onClose, this.confirmText});
+  AddHomepointModal(
+      {super.key, required this.onClose, this.confirmText, this.basedOn});
 
   @override
   State<StatefulWidget> createState() => _AddHomepointModalState();
@@ -118,6 +180,14 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
   void initState() {
     super.initState();
 
+    if (widget.basedOn != null) {
+      setState(() {
+        name = widget.basedOn!.name;
+        radius = widget.basedOn!.radius;
+        point = widget.basedOn!.position;
+      });
+    }
+
     mapController = MapController();
     Geolocator.getLastKnownPosition().then((pos) {
       mapController.move(LatLng(pos!.latitude, pos!.longitude), 14);
@@ -128,7 +198,7 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
   }
 
   void submit() {
-    widget.onClose(Homepoint(name, point!));
+    widget.onClose(Homepoint(name, point!, radius: radius));
 
     // reset
     setState(() {
@@ -136,7 +206,6 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
       failedToSubmit = false;
       point = null;
     });
-
   }
 
   @override
@@ -153,9 +222,9 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CustomInputField(
-          initialValue: name,
-          label: "name",
-          onChange: (newValue) => setState(() => name = newValue),
+              initialValue: name,
+              label: "name",
+              onChange: (newValue) => setState(() => name = newValue),
             ),
           ),
           Padding(
@@ -277,7 +346,16 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
             ),
           ),
           if (failedToSubmit)
-            Container(height: 30,color: Colors.red, child: const Center(child: Text("select a position for your homepoint on the map", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),),
+            Container(
+              height: 30,
+              color: Colors.red,
+              child: const Center(
+                  child: Text("select a position for your homepoint on the map",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold))),
+            ),
           SizedBox(
             height: 60,
             child: Row(

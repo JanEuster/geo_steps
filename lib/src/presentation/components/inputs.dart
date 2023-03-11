@@ -103,7 +103,8 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
   void initState() {
     setState(() {
       // percentage = widget.initialValue/widget.range.diff;
-      percentage = 0.2;
+      percentage = widget.initialValue/widget.width;
+      value = widget.initialValue;
     });
 
     super.initState();
