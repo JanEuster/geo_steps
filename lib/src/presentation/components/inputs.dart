@@ -17,12 +17,10 @@ class CustomInputField extends StatefulWidget {
       {super.key, required this.onChange, this.initialValue = "", this.label});
 
   @override
-  State<StatefulWidget> createState() =>
-      _CustomInputFieldState();
+  State<StatefulWidget> createState() => _CustomInputFieldState();
 }
 
 class _CustomInputFieldState extends State<CustomInputField> {
-
   _CustomInputFieldState();
 
   TextEditingController controller = TextEditingController();
@@ -72,7 +70,12 @@ class CustomSliderInput extends StatefulWidget {
   final MinMax<double> range;
   final String? label;
   final Function(double) onChange;
+
   final double width;
+  final double borderWidth = 3;
+  final double cursorSize = 28;
+  final double sideOffset = 30;
+  late double sliderWidth;
 
   CustomSliderInput(
       {super.key,
@@ -86,11 +89,11 @@ class CustomSliderInput extends StatefulWidget {
     } else {
       initialValue = range.min;
     }
+    sliderWidth = width - 66;
   }
 
   @override
-  State<StatefulWidget> createState() =>
-      _CustomSliderInputState();
+  State<StatefulWidget> createState() => _CustomSliderInputState();
 }
 
 class _CustomSliderInputState extends State<CustomSliderInput> {
@@ -102,23 +105,25 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
   @override
   void initState() {
     setState(() {
-      // percentage = widget.initialValue/widget.range.diff;
-      percentage = widget.initialValue/widget.width;
+      percentage = widget.initialValue /
+          widget.range.diff *
+          ((widget.sliderWidth - widget.cursorSize / 2) / widget.sliderWidth);
       value = widget.initialValue;
     });
 
     super.initState();
   }
 
-  void setSliderPosition(double pos, double sliderWidth, double cursorSize) {
+  void setSliderPosition(double pos) {
     log("$pos");
     setState(() {
-      if (pos < cursorSize/2) {
+      if (pos < widget.cursorSize / 2) {
         percentage = 0;
-      } else if (pos > sliderWidth - cursorSize/2) {
+      } else if (pos > widget.sliderWidth - widget.cursorSize / 2) {
         percentage = 1;
       } else {
-        percentage = (pos - cursorSize / 2) / (sliderWidth-cursorSize);
+        percentage = (pos - widget.cursorSize / 2) /
+            (widget.sliderWidth - widget.cursorSize);
       }
       value = ((widget.range.min + widget.range.diff * percentage) * 10)
               .roundToDouble() /
@@ -129,11 +134,8 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
 
   @override
   Widget build(BuildContext context) {
-    double borderWidth = 3;
-    double cursorSize = 28;
-    double sideOffset = 30;
-    var sliderWidth = widget.width - 66;
-    double sliderPosition = (sliderWidth-cursorSize) * percentage;
+    double sliderPosition =
+        (widget.sliderWidth - widget.cursorSize) * percentage;
 
     return Column(
       children: [
@@ -160,19 +162,19 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
                           fontSize: 10, fontWeight: FontWeight.w700))),
               Positioned(
                   top: 28,
-                  left: sideOffset + cursorSize/2,
+                  left: widget.sideOffset + widget.cursorSize / 2,
                   child: Container(
-                    width: sliderWidth - cursorSize,
+                    width: widget.sliderWidth - widget.cursorSize,
                     height: 16,
                     decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(width: borderWidth),
+                        border: Border.all(width: widget.borderWidth),
                         borderRadius: BorderRadius.circular(8)),
                   )),
               Positioned(
-                  left: sideOffset + sliderPosition - 3,
+                  left: widget.sideOffset + sliderPosition - 3,
                   child: SizedBox(
-                    width: sliderWidth,
+                    width: widget.sliderWidth,
                     height: 50,
                     child: Stack(
                       children: [
@@ -180,11 +182,11 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
                             top: 22,
                             left: 3,
                             child: Container(
-                              width: cursorSize,
-                              height: cursorSize,
+                              width: widget.cursorSize,
+                              height: widget.cursorSize,
                               decoration: BoxDecoration(
                                   color: Colors.black,
-                                  border: Border.all(width: borderWidth),
+                                  border: Border.all(width: widget.borderWidth),
                                   borderRadius: BorderRadius.circular(15)),
                             )),
                         if (value != null)
@@ -200,18 +202,16 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
                   )),
               Positioned(
                 top: 20,
-                left: sideOffset,
+                left: widget.sideOffset,
                 child: GestureDetector(
                     onTapDown: (details) {
-                      setSliderPosition(
-                          details.localPosition.dx, sliderWidth, cursorSize);
+                      setSliderPosition(details.localPosition.dx);
                     },
                     onHorizontalDragUpdate: (details) {
-                      setSliderPosition(
-                          details.localPosition.dx, sliderWidth, cursorSize);
+                      setSliderPosition(details.localPosition.dx);
                     },
                     child: Container(
-                      width: sliderWidth,
+                      width: widget.sliderWidth,
                       height: 32,
                       decoration: const BoxDecoration(),
                     )),
