@@ -100,7 +100,7 @@ class _HomepointsPageState extends State<HomepointsPage> {
             )
         ]),
       ),
-      if (!addingPoint)
+      if (!addingPoint && editingPoint == null)
         Positioned(
             bottom: 40,
             right: 25,
