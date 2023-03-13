@@ -77,7 +77,7 @@ class Homepoint {
   static fromJson(Map<String, dynamic> json) {
     var position =
         LatLng(json["position"]["lat"] as double, json["position"]["lng"]);
-    return Homepoint(json["name"], position);
+    return Homepoint(json["name"], position, radius: json["radius"] as double);
   }
 
   Map<String, dynamic> toJson() {

@@ -180,6 +180,7 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
   void initState() {
     super.initState();
 
+    log("r before ${radius}");
     if (widget.basedOn != null) {
       setState(() {
         name = widget.basedOn!.name;
@@ -187,6 +188,7 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
         point = widget.basedOn!.position;
       });
     }
+    log("r after ${radius}, ${widget.basedOn}");
 
     mapController = MapController();
     Geolocator.getLastKnownPosition().then((pos) {
