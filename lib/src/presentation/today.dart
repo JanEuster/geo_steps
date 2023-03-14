@@ -12,7 +12,7 @@ import 'package:geo_steps/src/application/location.dart';
 import 'package:geo_steps/src/application/preferences.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
 import 'package:geo_steps/src/presentation/components/lines.dart';
-import 'package:geo_steps/src/presentation/components/overview_stats.dart';
+import 'package:geo_steps/src/presentation/components/stats.dart';
 import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
