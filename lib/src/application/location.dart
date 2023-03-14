@@ -745,7 +745,7 @@ class MinMax<T> {
   T max;
 
   MinMax(this.min, this.max);
-  static fromList(List<double> list) {
+  static MinMax<double> fromList(List<double> list) {
     double min = list.first;
     double max = list.first;
     for (var e in list) {

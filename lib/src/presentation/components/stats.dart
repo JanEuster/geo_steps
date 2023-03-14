@@ -55,7 +55,110 @@ class OverviewTotals extends StatelessWidget {
   }
 }
 
-class OverviewBarGraph extends StatefulWidget {
+class NamedBarGraph extends StatelessWidget {
+  final String title;
+  final double height;
+  final bool scrollable;
+
+  /// only takes effect when scrollable=true
+  final List<MapEntry<String, int>> data;
+  late List<String> dataKeys;
+  late List<int> dataValues;
+  late double max;
+
+  NamedBarGraph(
+      {super.key,
+      required this.data,
+      this.title = "geo_steps stats",
+      this.scrollable = false,
+      this.height = 150}) {
+    dataKeys = data.map((e) => e.key).toList();
+    dataValues = data.map((e) => e.value).toList();
+    max = MinMax.fromList(dataValues.map((e) => e.toDouble()).toList()).max;
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    var textStyleOnWhite = const TextStyle(
+        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+    var textStyleOnBlack =
+        const TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
+
+    final double rowHeight = 28;
+    var sizer = SizeHelper();
+    return SizedBox(
+      height: height,
+      child: SizedBox(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, right: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(
+                      data.length,
+                      (index) => Container(
+                          alignment: Alignment.center,
+                          height: rowHeight,
+                          child: Text(dataKeys[index], style: textStyleOnBlack,)),
+                    ),
+                  ),
+                ),
+                Expanded(
+                    child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: List.generate(
+                      data.length,
+                      (index) => FractionallySizedBox(
+                            widthFactor: dataValues[index] / max,
+                            child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Container(
+                                  height: rowHeight - 8,
+                                  decoration:
+                                      const BoxDecoration(color: Colors.black),
+                                )),
+                          )),
+                )),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(
+                      data.length,
+                      (index) => Container(
+                          alignment: Alignment.center,
+                          height: rowHeight,
+                          child: Text(dataValues[index].toString(), style: textStyleOnBlack)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              height: 18,
+              color: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: textStyleOnWhite),
+                  Text("${data.length} bars", style: textStyleOnWhite)
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class OverviewBarGraph extends StatelessWidget {
   final String title;
   final double height;
   final bool scrollable;
@@ -76,16 +179,6 @@ class OverviewBarGraph extends StatefulWidget {
   }
 
   @override
-  State<StatefulWidget> createState() => _OverviewBarGraphState();
-}
-
-class _OverviewBarGraphState extends State<OverviewBarGraph> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
         color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
@@ -93,7 +186,7 @@ class _OverviewBarGraphState extends State<OverviewBarGraph> {
         const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
     var sizer = SizeHelper();
     return SizedBox(
-      height: widget.height,
+      height: height,
       child: SizedBox(
         child: Column(
           children: [
@@ -112,12 +205,12 @@ class _OverviewBarGraphState extends State<OverviewBarGraph> {
                               String value;
                               if (i == 0) {
                                 value =
-                                    widget.valuesMinMax.min.toStringAsFixed(1);
+                                    valuesMinMax.min.toStringAsFixed(1);
                               } else if (i == 3) {
                                 value =
-                                    widget.valuesMinMax.max.toStringAsFixed(1);
+                                    valuesMinMax.max.toStringAsFixed(1);
                               } else {
-                                value = (widget.valuesMinMax.diff / 3 * i)
+                                value = (valuesMinMax.diff / 3 * i)
                                     .toStringAsFixed(1);
                               }
                               return Text(
@@ -126,18 +219,18 @@ class _OverviewBarGraphState extends State<OverviewBarGraph> {
                               );
                             }),
                           ),
-                          widget.scrollable
+                          scrollable
                               ? Expanded(
                                   child: ListView(
                                     scrollDirection: Axis.horizontal,
                                     children: [
                                       SizedBox(
-                                          width: widget.scrollWidth,
-                                          child: BarChart(data: widget.data)),
+                                          width: scrollWidth,
+                                          child: BarChart(data: data)),
                                     ],
                                   ),
                                 )
-                              : Expanded(child: BarChart(data: widget.data))
+                              : Expanded(child: BarChart(data: data))
                         ],
                       ),
                     ))),
@@ -148,8 +241,8 @@ class _OverviewBarGraphState extends State<OverviewBarGraph> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(widget.title, style: textStyleOnWhite),
-                  Text("${widget.data.length} bars", style: textStyleOnWhite)
+                  Text(title, style: textStyleOnWhite),
+                  Text("${data.length} bars", style: textStyleOnWhite)
                 ],
               ),
             )

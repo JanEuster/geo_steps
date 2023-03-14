@@ -287,7 +287,11 @@ class _TodaysMapState extends State<TodaysMap>
                                     3,
                                     95,
                                     32
-                                  ])),
+                                  ], title: "stat 1")),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: NamedBarGraph(data: {"home": 4, "a" : 1, "b": 2}.entries.toList(), title: "stat 2"),
+                              ),
                             ],
                           ),
                   )
