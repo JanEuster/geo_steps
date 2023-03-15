@@ -238,62 +238,73 @@ class _TodaysMapState extends State<TodaysMap>
                   SizedBox(
                     width: sizer.width,
                     height: detailsAnimation.value - 58,
-                    child: !showDetails
-                        ? const HourlyActivity()
-                        : ListView(
-                          padding: const EdgeInsets.only(top: 10),
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 10, bottom: 15),
-                                child: Row(
-                                  children: [
+                    child: ListView(
+                      padding: const EdgeInsets.only(top: 10),
+                      children: [
+                        Padding(
+                          padding: !showDetails
+                              ? EdgeInsets.zero
+                              : const EdgeInsets.only(left: 10, bottom: 15),
+                          child: Row(
+                            children: showDetails
+                                ? [
                                     OverviewTotals(
                                       timeFrameString: "Today",
                                       totalSteps: 6929,
                                       totalDistance: 4200,
                                     ),
                                     Expanded(child: Container()),
-                                  ],
-                                ),
-                              ),
-                              const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 16, horizontal: 10),
-                                  child: DottedLine(
-                                    height: 2,
-                                  )),
-                              const HourlyActivity(),
-                              const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 16, horizontal: 10),
-                                  child: DottedLine(
-                                    height: 2,
-                                  )),
-                              Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: OverviewBarGraph(data: [
-                                    1,
-                                    2,
-                                    6,
-                                    2,
-                                    3,
-                                    1,
-                                    12,
-                                    42,
-                                    10,
-                                    1,
-                                    1,
-                                    3,
-                                    95,
-                                    32
-                                  ], title: "stat 1")),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: NamedBarGraph(data: {"home": 4, "a" : 1, "b": 2}.entries.toList(), title: "stat 2"),
-                              ),
-                            ],
+                                  ]
+                                : [],
                           ),
+                        ),
+                        Padding(
+                            padding: !showDetails
+                                ? EdgeInsets.zero
+                                : const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 10),
+                            child: showDetails
+                                ? const DottedLine(
+                                    height: 2,
+                                  )
+                                : null),
+                        const HourlyActivity(),
+                        if (showDetails) ...[
+                          const Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 16, horizontal: 10),
+                              child: DottedLine(
+                                height: 2,
+                              )),
+                          Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: OverviewBarGraph(data: const [
+                                1,
+                                2,
+                                6,
+                                2,
+                                3,
+                                1,
+                                12,
+                                42,
+                                10,
+                                1,
+                                1,
+                                3,
+                                95,
+                                32
+                              ], title: "stat 1")),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: NamedBarGraph(
+                                data: {"home": 4, "a": 1, "b": 2}
+                                    .entries
+                                    .toList(),
+                                title: "stat 2"),
+                          ),
+                        ],
+                      ],
+                    ),
                   )
                 ],
               ),
