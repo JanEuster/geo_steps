@@ -82,6 +82,44 @@ class LocationService {
     return _initialized;
   }
 
+  /// total steps
+  ///
+  /// from last measured steps count - first measured steps count
+  int get stepsTotal {
+    if (hasPositions) {
+      var stepsStart = 0;
+      var stepsEnd = 0;
+      for (final p in dataPoints) {
+        if (p.steps != null) {
+          stepsStart = p.steps!;
+          stepsEnd = p.steps!;
+          break;
+        }
+      }
+      for (final p in dataPoints.reversed) {
+        if (p.steps != null) {
+          stepsEnd = p.steps!;
+          break;
+        }
+      }
+      return stepsEnd - stepsStart;
+    } else {
+      return 0;
+    }
+  }
+
+  /// total distance in meters
+  /// TODO: more accurate distance calculation
+  double get distanceTotal {
+    double dist = 0;
+    for (var i = 0; i<dataPoints.length-1; i++) {
+      final p1 = dataPoints[i];
+      final p2 = dataPoints[i+1];
+      dist += const Distance().distance(LatLng(p1.latitude, p1.longitude), LatLng(p2.latitude, p2.longitude));
+    }
+    return dist;
+  }
+
 
   Future<void> record({Function(Position)? onReady}) async {
     log("start recording position data");
@@ -307,9 +345,7 @@ class LocationService {
           }
           if (ext["speed"] != null) speed = double.parse(ext["speed"] ?? "0");
           if (ext["steps"] != null) {
-            steps = gpxDesc["steps"] != "null"
-                ? int.parse(gpxDesc["steps"] ?? "0")
-                : null;
+            steps = int.tryParse(ext["steps"]!);
           }
 
           posList.add(LocationDataPoint(

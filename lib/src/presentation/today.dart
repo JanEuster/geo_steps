@@ -250,8 +250,8 @@ class _TodaysMapState extends State<TodaysMap>
                                 ? [
                                     OverviewTotals(
                                       timeFrameString: "Today",
-                                      totalSteps: 6929,
-                                      totalDistance: 4200,
+                                      totalSteps: locationService.stepsTotal,
+                                      totalDistance: locationService.distanceTotal,
                                     ),
                                     Expanded(child: Container()),
                                   ]

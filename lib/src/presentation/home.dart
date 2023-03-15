@@ -32,10 +32,9 @@ class _MyHomePageState extends State<MyHomePage> {
     locationService = LocationService();
 
     AppSettings.instance.trackingLocation.get().then((value) {
-      setState(() {
-        isTrackingLocation = value;
-        locationService.init().then((value) => locationService.loadToday());
-      });
+      isTrackingLocation = value;
+      locationService.init().then((value) =>
+          locationService.loadToday().then((value) => setState(() {})));
     });
   }
 
@@ -51,13 +50,14 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
-                  Text("3.742",
-                      style:
-                          TextStyle(fontSize: 75, fontWeight: FontWeight.w900)),
-                  Text("10,2 km",
-                      style:
-                          TextStyle(fontSize: 40, fontWeight: FontWeight.w700)),
+                children: [
+                  Text(locationService.stepsTotal.toString(),
+                      style: const TextStyle(
+                          fontSize: 75, fontWeight: FontWeight.w900)),
+                  Text(
+                      "${(locationService.distanceTotal / 1000).toStringAsFixed(1)} km",
+                      style: const TextStyle(
+                          fontSize: 40, fontWeight: FontWeight.w700)),
                 ],
               ),
               Container(
@@ -187,7 +187,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                 ],
               ))),
-      if (locationService.isInitialized) ActivityMap(locationService: locationService),
+      if (locationService.isInitialized)
+        ActivityMap(locationService: locationService),
       const Padding(padding: EdgeInsets.only(bottom: 50)),
     ]);
   }
