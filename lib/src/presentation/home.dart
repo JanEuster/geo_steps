@@ -95,34 +95,42 @@ class _MyHomePageState extends State<MyHomePage> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700)),
                           const Padding(padding: EdgeInsets.only(top: 12)),
-                          Row(
-                            children: const [
-                              Text("24 ",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700)),
-                              Text("days",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400)),
-                            ],
-                          ),
-                          const Padding(padding: EdgeInsets.only(top: 6)),
-                          Row(
-                            children: const [
-                              Text("154.00 ",
+                          (isTrackingLocation != true)
+                              ? const Text("tracking currently stopped",
                                   textAlign: TextAlign.left,
                                   style: TextStyle(
                                       fontSize: 24,
-                                      fontWeight: FontWeight.w700)),
-                              Text("steps",
-                                  textAlign: TextAlign.left,
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.w400)),
-                            ],
-                          ),
+                                      fontWeight: FontWeight.w400))
+                              : Row(
+                                  children: const [
+                                    Text("24 ",
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w700)),
+                                    Text("days",
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w400)),
+                                  ],
+                                ),
+                          if (isTrackingLocation == true)
+                            const Padding(padding: EdgeInsets.only(top: 6)),
+                          if (isTrackingLocation == true)
+                            Row(
+                              children: const [
+                                Text("154.00 ",
+                                    textAlign: TextAlign.left,
+                                    style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700)),
+                                Text("steps",
+                                    textAlign: TextAlign.left,
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w400)),
+                              ],
+                            ),
                           SizedBox(
                               height: 40,
                               child: Row(
