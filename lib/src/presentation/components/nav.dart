@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:geo_steps/main.dart';
 import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/presentation/components/lines.dart';
+import 'package:geo_steps/src/utils/sizing.dart';
 
 class PageWithNav extends StatelessWidget {
   const PageWithNav(
@@ -18,20 +20,20 @@ class PageWithNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
-    EdgeInsets padding = media.viewPadding;
+    var sizer = SizeHelper();
+    EdgeInsets padding = sizer.pad;
     return Stack(children: [
       Positioned(
-          top: padding.top + 46,
-          width: media.size.width,
-          height: media.size.height - 46 - padding.vertical,
+          top: sizer.padTopWithNav,
+          width: sizer.width,
+          height: sizer.heightWithoutNav,
           child: Container(
             color: color,
             child: child,
           )),
       Positioned(
           top: padding.top,
-          width: media.size.width,
+          width: sizer.width,
           child: Navbar(
             title: title,
             navItems: navItems,
@@ -39,6 +41,79 @@ class PageWithNav extends StatelessWidget {
     ]);
   }
 }
+
+class PageWithBackNav extends StatelessWidget {
+  String title;
+  String backRoute;
+  Widget? child;
+  Color? color;
+
+  PageWithBackNav({super.key,
+    this.title = "modal", this.backRoute = "/", this.color, this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    var sizer = SizeHelper();
+    EdgeInsets padding = sizer.pad;
+    return Stack(children: [
+      Positioned(
+          top: sizer.padTopWithNav,
+          width: sizer.width,
+          height: sizer.heightWithoutNav,
+          child: Container(
+            color: color,
+            child: child,
+          )),
+      Positioned(
+          top: padding.top,
+          width: sizer.width,
+          child: BackNav(backRoute,
+              title
+          )),
+    ]);
+  }
+}
+
+class BackNav extends StatelessWidget {
+  String backRoute;
+  String title;
+
+  BackNav(this.backRoute, this.title, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Container(
+          color: Colors.white,
+          height: SizeHelper.navHeight - 1,
+          //-1 for separate border bottom container
+          padding: const EdgeInsets.only(left: 10.0, right: 10.0),
+          child:
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Row(
+              children: [
+                GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(backRoute);
+                    },
+                    child: const Icon(Icons.menu, size: 26)),
+                Container(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Text(
+                    title,
+                    style: const TextStyle(),
+                  ),
+                ),
+              ],
+            ),
+            GestureDetector(
+                onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
+          ])),
+      const Line()
+    ]);
+  }
+}
+
 
 class Navbar extends StatefulWidget {
   const Navbar({super.key, this.title = "", this.navItems = const <AppRoute>[]});
@@ -70,17 +145,18 @@ class _NavbarState extends State<Navbar> {
     return Column(children: [
       Container(
           color: Colors.white,
-          height: 45,
+          height: SizeHelper.navHeight - 1,
+          //-1 for separate border bottom container
           padding: const EdgeInsets.only(left: 10.0, right: 10.0),
           child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Row(
               children: [
                 GestureDetector(
                     onTap: () {
-                        setMenu(menuOpen ? false : true);
+                      setMenu(menuOpen ? false : true);
                     },
-                    child: const Icon(Icons.menu)),
+                    child: const Icon(Icons.menu, size: 26)),
                 Container(
                   padding: const EdgeInsets.all(10.0),
                   child: Text(
@@ -90,9 +166,10 @@ class _NavbarState extends State<Navbar> {
                 ),
               ],
             ),
-            GestureDetector(onTap: () {}, child: const Icon(Icomoon.settings)),
+            GestureDetector(
+                onTap: () {}, child: const Icon(Icomoon.settings, size: 26)),
           ])),
-      Container(height: 1, color: Colors.black),
+      const Line(),
       if (menuOpen) NavMenu(setMenu, navItems: widget.navItems),
     ]);
   }
@@ -106,13 +183,13 @@ class NavMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
+    var sizer = SizeHelper();
     return SizedBox(
-        height: media.size.height - media.viewPadding.vertical,
+        height: sizer.size.height - sizer.pad.vertical,
         child: Column(
           children: [
             Container(
-                width: media.size.width,
+                width: sizer.width,
                 // color: const Color(0xFFFFFFFF),
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
@@ -138,7 +215,9 @@ class NavMenu extends StatelessWidget {
                     })
                   ],
                 )),
-            Expanded(child: GestureDetector(onTap: () {setMenu(false);},child: Container(color: Colors.white.withAlpha(125))))
+            Expanded(child: GestureDetector(onTap: () {
+              setMenu(false);
+            }, child: Container(color: Colors.white.withAlpha(125))))
           ],
         ));
   }
@@ -162,7 +241,10 @@ class NavMenuItem extends StatelessWidget {
           Navigator.pushNamed(context, route);
         },
         child: Container(
-            width: MediaQuery.of(context).size.width,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
             alignment: Alignment.centerLeft,
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),

@@ -11,6 +11,7 @@ import 'package:external_path/external_path.dart';
 import 'package:pedometer/pedometer.dart';
 
 class LocationService {
+  bool _initialized = false;
   late Directory appDir;
   DateTime lastDate = DateTime.now().toLocal();
 
@@ -46,6 +47,7 @@ class LocationService {
     appDir.create();
 
     log("location service initialized");
+    _initialized = true;
   }
 
   List<Position> get positions {
@@ -69,11 +71,15 @@ class LocationService {
   }
 
   MinMax<LatLng> get range {
-    return getCoordRange(positions);
+    return getCoordRange(dataPoints);
   }
 
   List<LatLng> get latLngList {
     return positions.map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
+
+  bool get isInitialized {
+    return _initialized;
   }
 
 
@@ -121,10 +127,6 @@ class LocationService {
     positionStream?.cancel();
     stepCountStream?.cancel();
     pedestrianStatusStream?.cancel();
-    // if (defaultTargetPlatform == TargetPlatform.android) {
-    //   log("stop recording activity data");
-    // activityStream?.cancel();
-    // }
   }
 
   /// determines whether the dataPoint.last is at a defined homepoint
@@ -328,7 +330,6 @@ class LocationService {
     log("${posList.length} positions read from file");
     if (setPos) {
       dataPoints = posList;
-      log("first dp in file: ${dataPoints[0]}");
     }
     return posList;
   }
@@ -394,8 +395,8 @@ class LocationService {
               .toList(),
           extensions: {
             "duration": "${seg.duration().inSeconds}s",
-            "startTime": seg.startTime.toString() ?? "",
-            "endTime": seg.endTime.toString() ?? "",
+            "startTime": seg.startTime != null ? seg.startTime.toString() : "",
+            "endTime": seg.endTime != null ? seg.endTime.toString() : "",
           }));
     }
 
@@ -450,7 +451,7 @@ class LocationService {
 
 
 
-  Future<void> loadToday() async {
+  Future<bool> loadToday() async {
     String date = DateTime.now().toLocal().toIso8601String().split("T").first;
     var gpxDirPath = "${appDir.path}/gpxData";
     var gpxFilePath = "$gpxDirPath/$date.gpx";
@@ -460,7 +461,9 @@ class LocationService {
       log("todays gpx file exists");
       var xml = await gpxFile.readAsString();
       fromGPX(xml);
+      return true;
     }
+    return false;
   }
 
   Future<void> saveToday() async {
@@ -493,6 +496,10 @@ class LocationService {
     } else {
       log("no dataPoint to save");
     }
+  }
+
+  void clearData() {
+    dataPoints = [];
   }
 
 
@@ -559,7 +566,7 @@ class LocationService {
   }
 }
 
-MinMax<LatLng> getCoordRange(List<Position> positions) {
+MinMax<LatLng> getCoordRange(List<LocationDataPoint> positions) {
   double minLon = positions.first.longitude;
   double minLat = positions.first.latitude;
   double maxLon = positions.first.longitude;
@@ -684,6 +691,12 @@ extension ToLocationDataPoints on List<dynamic> {
   }
 }
 
+extension ToLatLng on List<LocationDataPoint> {
+  List<LatLng> toLatLng() {
+    return map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
+}
+
 abstract class TripSegment {
   final int startIndex;
   final int endIndex;
@@ -727,12 +740,31 @@ class MinMax<T> {
   T max;
 
   MinMax(this.min, this.max);
+  static MinMax<double> fromList(List<double> list) {
+    double min = list.first;
+    double max = list.first;
+    for (var e in list) {
+      if (e > max) {
+        max = e;
+      } else if (e < min) {
+        min = e;
+      }
+    }
+    return MinMax(min, max);
+  }
 
   @override
   String toString() {
     return "[min] $min [max] $max";
   }
 }
+
+extension Double on MinMax<double> {
+  double get diff {
+    return max - min;
+  }
+}
+
 
 class LonLat {
   double longitude;
@@ -743,5 +775,14 @@ class LonLat {
   @override
   String toString() {
     return "long: $longitude, lat: $latitude";
+  }
+}
+
+extension Range on MinMax<LatLng> {
+  double get latRange {
+    return max.latitude-min.latitude;
+  }
+  double get lngRange {
+    return max.longitude-min.longitude;
   }
 }

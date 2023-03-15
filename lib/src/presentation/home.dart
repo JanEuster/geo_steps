@@ -4,10 +4,15 @@ import 'dart:developer';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:geo_steps/src/application/location.dart';
-import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geolocator/geolocator.dart';
 
+import 'package:geo_steps/src/presentation/components/icons.dart';
+import 'package:geo_steps/src/presentation/components/map.dart';
 import 'package:geo_steps/src/application/preferences.dart';
+import 'package:geo_steps/src/application/location.dart';
+import 'package:geo_steps/src/application/background_tasks.dart';
+
+import '../utils/sizing.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -18,24 +23,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool? isTrackingLocation;
-  LocationService? locationService;
+  late LocationService locationService;
 
   @override
   void initState() {
     super.initState();
 
+    locationService = LocationService();
+
     AppSettings.instance.trackingLocation.get().then((value) {
       setState(() {
         isTrackingLocation = value;
-        locationService = LocationService();
-        locationService!.init().then((value) => locationService!.loadToday());
+        locationService.init().then((value) => locationService.loadToday());
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
+    var sizer = SizeHelper();
     return ListView(children: [
       Padding(
           padding: const EdgeInsets.only(left: 20, right: 20),
@@ -72,13 +78,13 @@ class _MyHomePageState extends State<MyHomePage> {
       Padding(
           padding: const EdgeInsets.all(30),
           child: Container(
-              width: media.size.width,
+              width: sizer.width,
               decoration:
                   BoxDecoration(border: Border.all(color: Colors.black)),
               child: Column(
                 children: [
                   Container(
-                      width: media.size.width,
+                      width: sizer.width,
                       padding: const EdgeInsets.symmetric(
                           vertical: 5, horizontal: 10),
                       child: Column(
@@ -139,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ],
                       )),
                   Container(
-                      width: media.size.width,
+                      width: sizer.width,
                       height: 40,
                       decoration: const BoxDecoration(
                           image: DecorationImage(
@@ -156,7 +162,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               .set(isTrackingLocation!);
 
                           log("isTrackingLocation: $isTrackingLocation");
-                          log("${isTrackingLocation == true}");
                           if (isTrackingLocation == true) {
                             log("startTracking");
                             FlutterBackgroundService().startService();
@@ -168,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       },
                       child: Container(
-                          width: media.size.width,
+                          width: sizer.width,
                           height: 40,
                           color: Colors.white,
                           child: Center(
@@ -180,66 +185,73 @@ class _MyHomePageState extends State<MyHomePage> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500)))),
                     ),
-                  // GestureDetector(
-                  //   onTap: () async {
-                  //     // locationService!.loadToday();
-                  //     // FlutterBackgroundService().invoke("requestTrackingData");
-                  //     // FlutterBackgroundService().on("sendTrackingData").listen((event) async {
-                  //     //   locationService!.dataPointsFromKV(event!["trackingData"]);
-                  //     //   log("${locationService!.dataPoints.length}");
-                  //     //   log("${locationService!.dataPoints.map((e) => e.heading)}");
-                  //     //   await locationService!.saveToday();
-                  //     //   await locationService!.loadToday();
-                  //     // });
-                  //     await locationService!.loadToday();
-                  //     log("dp len: ${locationService!.dataPoints.length}");
-                  //     // locationService!.saveToday();
-                  //   },
-                  //   child: Container(
-                  //       width: media.size.width,
-                  //       height: 40,
-                  //       color: Colors.white,
-                  //       child: const Center(
-                  //           child: Text("test data",
-                  //               style: TextStyle(
-                  //                   fontSize: 20,
-                  //                   fontWeight: FontWeight.w500)))),
-                  // )
                 ],
               ))),
-      const ActivityMap()
+      if (locationService.isInitialized) ActivityMap(locationService: locationService),
+      const Padding(padding: EdgeInsets.only(bottom: 50)),
     ]);
   }
 }
 
-class ActivityMap extends StatelessWidget {
-  const ActivityMap({super.key});
+class ActivityMap extends StatefulWidget {
+  final LocationService locationService;
+
+  ActivityMap({super.key, required this.locationService});
+
+  @override
+  State<StatefulWidget> createState() => _ActivityMapState();
+}
+
+class _ActivityMapState extends State<ActivityMap> {
+  List<LocationDataPoint> dataToday = [];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.locationService.loadToday().then((wasLoaded) {
+      if (wasLoaded) {
+        setState(() {
+          dataToday = widget.locationService.dataPoints;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData media = MediaQuery.of(context);
-    return SizedBox(
-        height: 380,
-        child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Container(
-                width: media.size.width,
+    var sizer = SizeHelper();
+    log("positions: ${dataToday.length}");
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed("/today"),
+      child: SizedBox(
+          height: 320,
+          child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                width: sizer.width,
                 decoration:
                     BoxDecoration(border: Border.all(color: Colors.black)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        padding: const EdgeInsets.all(8),
-                        child: const Text("todays map",
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w500))),
-                    Container(
-                        color: Colors.black,
-                        width: media.size.width / 5 * 3,
-                        height: 380)
-                  ],
-                ))));
+                child: dataToday.isNotEmpty
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(8),
+                              child: const Text("todays map",
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500))),
+                          Container(
+                            decoration: const BoxDecoration(
+                                border: Border(left: BorderSide(width: 1))),
+                            width: sizer.width / 5 * 3,
+                            child: MapPreview(data: dataToday),
+                          )
+                        ],
+                      )
+                    : const Text("no data for today"),
+              ))),
+    );
   }
 }

@@ -92,7 +92,6 @@ Future<void> initializeBackgroundService() async {
 
 void updateTrackingNotification(LocationService locationService, Timer timer) {
   if (locationService.hasPositions) {
-    // log("background pos: ${locationService.lastPos}");
 
     // channel key and notifiction id are those used by geolocator
     // for the foreground notifiction that keeps location tracking alive

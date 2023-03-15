@@ -3,6 +3,7 @@ import "dart:developer";
 
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_notification_listener/flutter_notification_listener.dart'
     as nl;
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -22,37 +23,8 @@ import 'package:geo_steps/src/application/preferences.dart';
 
 // ignore: constant_identifier_names
 const String APP_TITLE = "geo_steps";
+const String SPLASH_SCREEN = "spash_screen";
 
-// // define the handler for ui
-// void onData(nl.NotificationEvent event) {
-//   log(event.toString());
-// }
-//
-// Future<void> initPlatformState() async {
-//   nl.NotificationsListener.initialize();
-//   // register you event handler in the ui logic.
-//   nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
-// }
-//
-// void startListeningToNotifications() async {
-//   log("start listening");
-//   var hasPermission = await nl.NotificationsListener.hasPermission;
-//   if (!hasPermission!) {
-//     log("no permission, so open settings");
-//     nl.NotificationsListener.openPermissionSettings();
-//     return;
-//   }
-//
-//   var isR = await nl.NotificationsListener.isRunning;
-//
-//   if (!isR!) {
-//     await nl.NotificationsListener.startService(
-//         foreground: false,
-//         // use false will not promote to foreground and without a notification
-//         title: "Change the title",
-//         description: "Change the text");
-//   }
-// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -136,6 +108,24 @@ class MyWidgetsApp extends StatefulWidget {
   State<StatefulWidget> createState() => _MyWidgetsAppState();
 }
 
+class LoadingAnimation extends StatelessWidget {
+  double? width;
+  double? height;
+
+  LoadingAnimation({super.key, this.width, this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        width: width,
+        height: height,
+        decoration: const BoxDecoration(
+            image: DecorationImage(
+                image: AssetImage("assets/loading.gif"),
+                repeat: ImageRepeat.repeat)));
+  }
+}
+
 class _MyWidgetsAppState extends State<MyWidgetsApp> {
   final _activityStreamController = StreamController<Activity>();
   StreamSubscription<Activity>? _activityStreamSubscription;
@@ -177,6 +167,47 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
             color: const Color(0xFFFFFFFF),
             navItems: widget.routes.values.toList(),
             child: widget.routes[settings.name]?.page);
+      }, transitionsBuilder: (_, Animation<double> animation,
+          Animation<double> second, Widget child) {
+        return FadeTransition(
+          opacity: animation,
+          child: FadeTransition(
+            opacity: Tween<double>(begin: 1.0, end: 0.0).animate(second),
+            child: child,
+          ),
+        );
+      });
+    } else if (settings.name == SPLASH_SCREEN) {
+      page = PageRouteBuilder(
+        pageBuilder: (BuildContext context, Animation<double> animation,
+            Animation<double> secondaryAnimation) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Future.delayed(const Duration(seconds: 3), () {
+              Navigator.of(context).pushReplacementNamed("/");
+            });
+          });
+          return Container(color: Colors.white,child: Center(child: LoadingAnimation(width: 80, height: 80)));
+        },
+      );
+    } else if (settings.name == "/notification-page") {
+      // redirect to today page from notification
+      var c = context;
+      // SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      //   Navigator.of(c).pushNamed("/today");
+      // });
+      // page = PageWithNav(title: "Notification Page", navItems: widget.routes.values.toList(), child: const Text("redirecting to relevant page"),) as Route;
+
+      var route = widget.routes["/today"]!;
+      page = PageRouteBuilder(pageBuilder: (BuildContext context,
+          Animation<double> animation, Animation<double> secondaryAnimation) {
+        // EdgeInsets insets = MediaQuery.of(context).viewInsets;
+        // EdgeInsets padding = MediaQuery.of(context).viewPadding;
+
+        return PageWithNav(
+            title: route.title,
+            color: const Color(0xFFFFFFFF),
+            navItems: widget.routes.values.toList(),
+            child: route.page);
       }, transitionsBuilder: (_, Animation<double> animation,
           Animation<double> second, Widget child) {
         return FadeTransition(
@@ -277,7 +308,7 @@ class _MyWidgetsAppState extends State<MyWidgetsApp> {
       onUnknownRoute: unKnownRoute,
       textStyle: const TextStyle(
           fontSize: 16, fontWeight: FontWeight.w400, color: Colors.black),
-      initialRoute: "/",
+      initialRoute: SPLASH_SCREEN,
       color: const Color.fromRGBO(255, 0, 0, 1.0),
       title: APP_TITLE,
     );
