@@ -127,10 +127,6 @@ class LocationService {
     positionStream?.cancel();
     stepCountStream?.cancel();
     pedestrianStatusStream?.cancel();
-    // if (defaultTargetPlatform == TargetPlatform.android) {
-    //   log("stop recording activity data");
-    // activityStream?.cancel();
-    // }
   }
 
   /// determines whether the dataPoint.last is at a defined homepoint
@@ -334,7 +330,6 @@ class LocationService {
     log("${posList.length} positions read from file");
     if (setPos) {
       dataPoints = posList;
-      log("first dp in file: ${dataPoints[0]}");
     }
     return posList;
   }

@@ -180,7 +180,6 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
   void initState() {
     super.initState();
 
-    log("r before ${radius}");
     if (widget.basedOn != null) {
       setState(() {
         name = widget.basedOn!.name;
@@ -188,7 +187,6 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
         point = widget.basedOn!.position;
       });
     }
-    log("r after ${radius}, ${widget.basedOn}");
 
     mapController = MapController();
     Geolocator.getLastKnownPosition().then((pos) {
@@ -245,39 +243,6 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
           Expanded(
             flex: 3,
             child: GestureDetector(
-              // onTapDown: (details) {
-              //   final size = _mapKey.currentContext!.size;
-              //   final mapWidth = size!.width;
-              //   final mapHeight = size!.height;
-              //   final clickX = details.localPosition.dx;
-              //   final clickY = details.localPosition.dy;
-              //
-              //   final xPercent = clickX/mapWidth;
-              //   final yPercent = 1-clickY/mapHeight;
-              //   log("x ${xPercent*100}% y ${yPercent*100}%");
-              //
-              //   final mapWest = mapController.bounds!.west;
-              //   final mapEast = mapController.bounds!.east;
-              //   final mapNorth = mapController.bounds!.north;
-              //   final mapSouth = mapController.bounds!.south;
-              //
-              //   final mapLatDiff = getCoordDiff(mapEast, mapWest);
-              //   final mapLngDiff = getCoordDiff(mapNorth, mapSouth);
-              //
-              //   // log("lat $mapLatDiff lng $mapLngDiff");
-              //   log("map: ${mapController.center}");
-              //   log("n $mapNorth");
-              //   log("s $mapSouth");
-              //   log("w $mapWest");
-              //   log("e $mapEast");
-              //
-              //   double latitude = mapSouth + mapLatDiff * yPercent;
-              //   double longitude = mapWest + mapLngDiff * xPercent;
-              //   setState(() {
-              //     point = LatLng(latitude, longitude);
-              //   });
-              //   log("$point");
-              // },
               child: FlutterMap(
                 key: _mapKey,
                 mapController: mapController,
@@ -292,7 +257,7 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
                     }),
                     zoom: 13.0,
                     maxZoom: 19.0,
-                    keepAlive: true,
+                    keepAlive: false,
                     interactiveFlags: // all interactions except rotation
                         InteractiveFlag.all & ~InteractiveFlag.rotate),
                 nonRotatedChildren: [

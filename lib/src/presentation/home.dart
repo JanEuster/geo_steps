@@ -162,7 +162,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               .set(isTrackingLocation!);
 
                           log("isTrackingLocation: $isTrackingLocation");
-                          log("${isTrackingLocation == true}");
                           if (isTrackingLocation == true) {
                             log("startTracking");
                             FlutterBackgroundService().startService();
@@ -186,31 +185,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.w500)))),
                     ),
-                  // GestureDetector(
-                  //   onTap: () async {
-                  //     // locationService!.loadToday();
-                  //     // FlutterBackgroundService().invoke("requestTrackingData");
-                  //     // FlutterBackgroundService().on("sendTrackingData").listen((event) async {
-                  //     //   locationService!.dataPointsFromKV(event!["trackingData"]);
-                  //     //   log("${locationService!.dataPoints.length}");
-                  //     //   log("${locationService!.dataPoints.map((e) => e.heading)}");
-                  //     //   await locationService!.saveToday();
-                  //     //   await locationService!.loadToday();
-                  //     // });
-                  //     await locationService!.loadToday();
-                  //     log("dp len: ${locationService!.dataPoints.length}");
-                  //     // locationService!.saveToday();
-                  //   },
-                  //   child: Container(
-                  //       width: media.size.width,
-                  //       height: 40,
-                  //       color: Colors.white,
-                  //       child: const Center(
-                  //           child: Text("test data",
-                  //               style: TextStyle(
-                  //                   fontSize: 20,
-                  //                   fontWeight: FontWeight.w500)))),
-                  // )
                 ],
               ))),
       if (locationService.isInitialized) ActivityMap(locationService: locationService),
@@ -237,7 +211,6 @@ class _ActivityMapState extends State<ActivityMap> {
     widget.locationService.loadToday().then((wasLoaded) {
       if (wasLoaded) {
         setState(() {
-          log("${widget.locationService.dataPoints.length}");
           dataToday = widget.locationService.dataPoints;
         });
       }

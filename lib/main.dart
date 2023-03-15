@@ -25,36 +25,6 @@ import 'package:geo_steps/src/application/preferences.dart';
 const String APP_TITLE = "geo_steps";
 const String SPLASH_SCREEN = "spash_screen";
 
-// // define the handler for ui
-// void onData(nl.NotificationEvent event) {
-//   log(event.toString());
-// }
-//
-// Future<void> initPlatformState() async {
-//   nl.NotificationsListener.initialize();
-//   // register you event handler in the ui logic.
-//   nl.NotificationsListener.receivePort?.listen((evt) => onData(evt));
-// }
-//
-// void startListeningToNotifications() async {
-//   log("start listening");
-//   var hasPermission = await nl.NotificationsListener.hasPermission;
-//   if (!hasPermission!) {
-//     log("no permission, so open settings");
-//     nl.NotificationsListener.openPermissionSettings();
-//     return;
-//   }
-//
-//   var isR = await nl.NotificationsListener.isRunning;
-//
-//   if (!isR!) {
-//     await nl.NotificationsListener.startService(
-//         foreground: false,
-//         // use false will not promote to foreground and without a notification
-//         title: "Change the title",
-//         description: "Change the text");
-//   }
-// }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

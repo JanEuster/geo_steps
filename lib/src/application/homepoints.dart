@@ -52,7 +52,6 @@ class HomepointManager {
 
   addPoint(Homepoint point) {
     _homepoints.putIfAbsent(_uuid.v4(), () => point);
-    log("$_homepoints");
     save();
   }
 

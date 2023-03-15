@@ -115,7 +115,6 @@ class _CustomSliderInputState extends State<CustomSliderInput> {
   }
 
   void setSliderPosition(double pos) {
-    log("$pos");
     setState(() {
       if (pos < widget.cursorSize / 2) {
         percentage = 0;
