@@ -268,7 +268,7 @@ class _TodaysMapState extends State<TodaysMap>
                                     height: 2,
                                   )
                                 : null),
-                        const HourlyActivity(),
+                        HourlyActivity(data: locationService.hourlyStepsTotal),
                         if (showDetails) ...[
                           const Padding(
                               padding: EdgeInsets.symmetric(

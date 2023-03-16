@@ -82,20 +82,22 @@ class LocationService {
     return _initialized;
   }
 
+  int get stepsMin {
+    for (final p in dataPoints) {
+      if (p.steps != null) {
+        return p.steps!;
+      }
+    }
+    return 0;
+  }
+
   /// total steps
   ///
   /// from last measured steps count - first measured steps count
   int get stepsTotal {
     if (hasPositions) {
-      var stepsStart = 0;
-      var stepsEnd = 0;
-      for (final p in dataPoints) {
-        if (p.steps != null) {
-          stepsStart = p.steps!;
-          stepsEnd = p.steps!;
-          break;
-        }
-      }
+      var stepsStart = stepsMin;
+      var stepsEnd = stepsMin;
       for (final p in dataPoints.reversed) {
         if (p.steps != null) {
           stepsEnd = p.steps!;
@@ -108,18 +110,36 @@ class LocationService {
     }
   }
 
+  List<double> get hourlyStepsTotal {
+    List<double> hours = List.generate(24, (index) => 0);
+    var stepsBefore = stepsMin;
+    for (final p in dataPoints) {
+      if (p.timestamp != null) {
+        var i = p.timestamp!.toLocal().hour;
+        if (p.steps != null && p.steps! > stepsBefore) {
+          log("${p.steps! - stepsBefore}");
+          hours[i] += p.steps! - stepsBefore;
+          stepsBefore = p.steps!;
+        }
+
+      }
+    }
+    log("hourly steps $hours");
+    return hours;
+  }
+
   /// total distance in meters
   /// TODO: more accurate distance calculation
   double get distanceTotal {
     double dist = 0;
-    for (var i = 0; i<dataPoints.length-1; i++) {
+    for (var i = 0; i < dataPoints.length - 1; i++) {
       final p1 = dataPoints[i];
-      final p2 = dataPoints[i+1];
-      dist += const Distance().distance(LatLng(p1.latitude, p1.longitude), LatLng(p2.latitude, p2.longitude));
+      final p2 = dataPoints[i + 1];
+      dist += const Distance().distance(
+          LatLng(p1.latitude, p1.longitude), LatLng(p2.latitude, p2.longitude));
     }
     return dist;
   }
-
 
   Future<void> record({Function(Position)? onReady}) async {
     log("start recording position data");
@@ -210,15 +230,12 @@ class LocationService {
     return false;
   }
 
-
   void addPosition(Position position) {
     // LocationDataPoint can only have steps > 0 if ped status is not stopped
     // -> detecting stops clearer?
     log("$position $_newSteps $_newPedStatus");
     dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
   }
-
-
 
   void optimizeCapturedData() {
     // remove redundant data points from positions list
@@ -323,9 +340,6 @@ class LocationService {
     segmentedData = segments;
   }
 
-
-
-
   List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
     List<LocationDataPoint> posList = [];
@@ -415,19 +429,19 @@ class LocationService {
       trksegs.add(Trkseg(
           trkpts: seg.dataPoints
               .map((p) => Wpt(
-              ele: p.altitude,
-              lat: p.latitude,
-              lon: p.longitude,
-              time: p.timestamp,
-              type: typeBasedOnSpeed(p.pedStatus, p.speed),
-              desc:
-              "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
-              extensions: {
-                "pedStatus": p.pedStatus,
-                "steps": p.steps.toString(),
-                "heading": p.heading.toStringAsFixed(2),
-                "speed": p.speed.toStringAsFixed(2),
-              }))
+                      ele: p.altitude,
+                      lat: p.latitude,
+                      lon: p.longitude,
+                      time: p.timestamp,
+                      type: typeBasedOnSpeed(p.pedStatus, p.speed),
+                      desc:
+                          "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
+                      extensions: {
+                        "pedStatus": p.pedStatus,
+                        "steps": p.steps.toString(),
+                        "heading": p.heading.toStringAsFixed(2),
+                        "speed": p.speed.toStringAsFixed(2),
+                      }))
               .toList(),
           extensions: {
             "duration": "${seg.duration().inSeconds}s",
@@ -484,9 +498,6 @@ class LocationService {
     log("gpx file exported to $gpxFilePath");
   }
 
-
-
-
   Future<bool> loadToday() async {
     String date = DateTime.now().toLocal().toIso8601String().split("T").first;
     var gpxDirPath = "${appDir.path}/gpxData";
@@ -537,7 +548,6 @@ class LocationService {
   void clearData() {
     dataPoints = [];
   }
-
 
   StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
     late LocationSettings locationSettings;
@@ -776,6 +786,7 @@ class MinMax<T> {
   T max;
 
   MinMax(this.min, this.max);
+
   static MinMax<double> fromList(List<double> list) {
     double min = list.first;
     double max = list.first;
@@ -801,7 +812,6 @@ extension Double on MinMax<double> {
   }
 }
 
-
 class LonLat {
   double longitude;
   double latitude;
@@ -816,9 +826,10 @@ class LonLat {
 
 extension Range on MinMax<LatLng> {
   double get latRange {
-    return max.latitude-min.latitude;
+    return max.latitude - min.latitude;
   }
+
   double get lngRange {
-    return max.longitude-min.longitude;
+    return max.longitude - min.longitude;
   }
 }

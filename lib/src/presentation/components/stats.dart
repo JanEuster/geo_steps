@@ -294,8 +294,12 @@ class BarChart extends StatelessWidget {
 
 class HourlyActivity extends StatefulWidget {
   final double hourWidth = 50;
+  final List<double> data;
+  late double max;
 
-  const HourlyActivity({super.key});
+  HourlyActivity({super.key, required this.data}) {
+    max = MinMax.fromList(data).max;
+  }
 
   @override
   State<StatefulWidget> createState() => _HourlyActivityState();
@@ -360,32 +364,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {
-                List<double> hoursPercent = [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  .1,
-                  .4,
-                  .6,
-                  0,
-                  0,
-                  .1,
-                  0,
-                  .3,
-                  1,
-                  .5,
-                  1,
-                  .1,
-                  .3,
-                  .2,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
-                ]; // TODO: use real data
+                List<double> hoursPercent = widget.data.map((h) => h/widget.max).toList();
                 return Container(
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
@@ -414,6 +393,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
                             Container(
                                 width: widget.hourWidth,
                                 height: 105 * hoursPercent[index],
+                                constraints: const BoxConstraints(minHeight: 0, maxHeight: 105),
                                 color: index == selectedHourIndex
                                     ? null
                                     : Colors.black,
