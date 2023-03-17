@@ -283,6 +283,7 @@ class BarChart extends StatelessWidget {
 
 class HourlyActivity extends StatefulWidget {
   final double hourWidth = 50;
+  final double hourPad = 5;
   final List<double> data;
   late double max;
 
@@ -330,9 +331,9 @@ class _HourlyActivityState extends State<HourlyActivity> {
   }
 
   setSelectedHour() {
-    var pixels = scrollController.position.pixels + widget.hourWidth / 2;
+    var pixels = scrollController.position.pixels;
     int newIndex =
-        (pixels / scrollController.position.maxScrollExtent * 23).floor();
+        (pixels / (scrollController.position.maxScrollExtent + widget.hourPad/2) * 24).floor();
     setState(() {
       selectedHourIndex = newIndex;
     });
@@ -345,11 +346,11 @@ class _HourlyActivityState extends State<HourlyActivity> {
         width: sizer.width,
         height: 139,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+          padding: EdgeInsets.symmetric(vertical: widget.hourPad, horizontal: 0),
           child: ListView.builder(
               itemCount: 24,
               padding: EdgeInsets.symmetric(
-                  horizontal: sizer.width / 2 - 25, vertical: 0),
+                  horizontal: sizer.width / 2, vertical: 0),
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {

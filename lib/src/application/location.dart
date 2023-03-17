@@ -117,7 +117,6 @@ class LocationService {
       if (p.timestamp != null) {
         var i = p.timestamp!.toLocal().hour;
         if (p.steps != null && p.steps! > stepsBefore) {
-          log("${p.steps! - stepsBefore}");
           hours[i] += p.steps! - stepsBefore;
           stepsBefore = p.steps!;
         }
