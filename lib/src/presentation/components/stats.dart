@@ -364,7 +364,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {
-                List<double> hoursPercent = widget.data.map((h) => h/widget.max).toList();
+                List<double> hoursPercent = widget.data.map((h) =>  widget.max == 0 ? 0.0 : h/widget.max).toList();
                 return Container(
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
