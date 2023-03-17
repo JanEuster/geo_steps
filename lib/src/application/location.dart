@@ -521,9 +521,9 @@ class LocationService {
       // check if its a new day and if so, remove all data from previous day
       // necessary because a new gpx file is created for every day -> no overlay in data
       // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
-      if (lastDate.day != now.day) {
+      if (lastDate.toLocal().day != now.toLocal().day) {
         dataPoints =
-            dataPoints.where((p) => p.timestamp!.day == now.day).toList();
+            dataPoints.where((p) => p.timestamp!.toLocal().day == now.toLocal().day).toList();
         lastDate = now;
       }
       String date = lastDate.toLocal().toIso8601String().split("T").first;
