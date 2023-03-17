@@ -249,7 +249,6 @@ class _TodaysMapState extends State<TodaysMap>
                             children: showDetails
                                 ? [
                                     OverviewTotals(
-                                      timeFrameString: "Today",
                                       totalSteps: locationService.stepsTotal,
                                       totalDistance: locationService.distanceTotal,
                                     ),

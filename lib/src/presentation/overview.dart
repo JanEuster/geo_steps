@@ -204,9 +204,8 @@ class _OverviewPageState extends State<OverviewPage> {
               child: Row(
                 children: [
                   OverviewTotals(
-                    timeFrameString: timeFrameString,
-                    totalSteps: 6929,
-                    totalDistance: 4200,
+                    totalSteps: locationService!.stepsTotal,
+                    totalDistance: locationService!.distanceTotal,
                   ),
                   Expanded(child: Container()),
                 ],
