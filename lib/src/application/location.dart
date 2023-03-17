@@ -120,7 +120,6 @@ class LocationService {
           hours[i] += p.steps! - stepsBefore;
           stepsBefore = p.steps!;
         }
-
       }
     }
     log("hourly steps $hours");
@@ -138,6 +137,74 @@ class LocationService {
           LatLng(p1.latitude, p1.longitude), LatLng(p2.latitude, p2.longitude));
     }
     return dist;
+  }
+
+  LocationDataPoint dataPointClosestTo(DateTime time) {
+    int? smallestDiff;
+    int smallestDiffI = 0;
+    var timeMillis = time.dayInMillis();
+
+    var i = 0;
+    while (i < dataPoints.length) {
+      final p = dataPoints[i];
+      if (p.timestamp != null) {
+        var pMillis = p.timestamp!.dayInMillis();
+        final diff = (timeMillis - pMillis).abs();
+
+        if (smallestDiff == null) {
+          smallestDiff = diff;
+          smallestDiffI = 0;
+        }
+
+        log("$i - $diff");
+        if (smallestDiff != null && diff < smallestDiff!) {
+          log("index: $i");
+          smallestDiffI = i;
+          smallestDiff = diff;
+        }
+        i++;
+      } else {
+        i++;
+      }
+    }
+    log("--- index $smallestDiffI ---");
+    return dataPoints[smallestDiffI];
+  }
+
+  /// list of closest datapoint for every minute of the day
+  ///
+  /// dataPointPerMinute.length = 24 * 60 = 1440
+  List<LocationDataPoint> get dataPointPerMinute {
+    List<LocationDataPoint?> minutesNullable = List.generate(1440, (index) => null);
+    for (final p in dataPoints) {
+      final pMinute = p.timestamp!.dayInMinutes();
+      if (minutesNullable[pMinute] == null) {
+        minutesNullable[pMinute] = p;
+      } else {
+        // add up miutes of datapoints in the same minute
+        if (minutesNullable[pMinute]!.steps != null) {
+          minutesNullable[pMinute]!.steps =
+              (minutesNullable[pMinute]!.steps ?? 0) + (p.steps ?? 0);
+        }
+        // set pedStatus if its unknown on the current datapoint
+        if (minutesNullable[pMinute]!.pedStatus == LocationDataPoint.STATUS_UNKNOWN &&
+            p.pedStatus != LocationDataPoint.STATUS_UNKNOWN) {
+          minutesNullable[pMinute]!.pedStatus == p.pedStatus;
+        }
+      }
+    }
+    List<LocationDataPoint> minutes = [];
+    for (var i = 0; i < minutesNullable.length - 1; i++) {
+      var p = minutesNullable[i];
+      if (p == null) {
+        var closestI = minutesNullable.closestNonNull(i);
+        if (closestI != null) {
+          p = minutesNullable[closestI];
+        }
+      }
+      minutes.add(p ?? dataPoints.first);
+    }
+    return minutes;
   }
 
   Future<void> record({Function(Position)? onReady}) async {
@@ -445,7 +512,8 @@ class LocationService {
           extensions: {
             "duration": "${seg.duration().inSeconds}s",
             "startTime": seg.startTime != null ? seg.startTime.toString() : "",
-            "endTime": seg.endTime != null ? seg.endTime.toString() : "",
+            "endTime":
+                seg.endTime != null ? seg.endTime.toString() : "",
           }));
     }
 
@@ -521,8 +589,9 @@ class LocationService {
       // necessary because a new gpx file is created for every day -> no overlay in data
       // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
       if (lastDate.toLocal().day != now.toLocal().day) {
-        dataPoints =
-            dataPoints.where((p) => p.timestamp!.toLocal().day == now.toLocal().day).toList();
+        dataPoints = dataPoints
+            .where((p) => p.timestamp!.toLocal().day == now.toLocal().day)
+            .toList();
         lastDate = now;
       }
       String date = lastDate.toLocal().toIso8601String().split("T").first;
@@ -830,5 +899,43 @@ extension Range on MinMax<LatLng> {
 
   double get lngRange {
     return max.longitude - min.longitude;
+  }
+}
+
+extension DayIn on DateTime {
+  /// minutes from start of day
+  int dayInMinutes() {
+    return (hour * 60) + minute;
+  }
+
+  /// milliseconds from start of day
+  int dayInMillis() {
+    return (hour * 3600 * 1000) +
+        (minute * 60 * 1000) +
+        (second * 1000) +
+        millisecond;
+  }
+}
+
+extension NullableList<T> on List<T?> {
+  /// find index of closest list entry that is not null
+  int? closestNonNull(int fromI) {
+    var walkedDistance = 1;
+    while (true) {
+      // negative/down walk index
+      var mI = fromI - walkedDistance;
+      // positive/up walk index
+      var pI = fromI + walkedDistance;
+      if (mI >= 0 && this[mI] != null) {
+        return mI;
+      } else if (pI < length && this[pI] != null) {
+        return pI;
+      } else {
+        walkedDistance++;
+      }
+      if (mI < 0 && pI >= length) {
+        return null;
+      }
+    }
   }
 }

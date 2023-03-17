@@ -287,7 +287,9 @@ class HourlyActivity extends StatefulWidget {
   final List<double> data;
   late double max;
 
-  HourlyActivity({super.key, required this.data}) {
+  Function(double)? onScroll = (percentage) {};
+
+  HourlyActivity({super.key, required this.data, this.onScroll}) {
     max = MinMax.fromList(data).max;
   }
 
@@ -305,6 +307,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollController.addListener(() {
+        onScroll();
         if (scrollController.position.pixels ==
                 scrollController.position.maxScrollExtent ||
             scrollController.position.pixels ==
@@ -315,6 +318,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
       scrollController.position.isScrollingNotifier.addListener(() {
         if (scrollController.positions.isNotEmpty) {
           var scrollBool = scrollController.position.isScrollingNotifier.value;
+
           if (scrollBool != isScrolling) {
             setState(() {
               isScrolling = scrollBool;
@@ -330,10 +334,17 @@ class _HourlyActivityState extends State<HourlyActivity> {
     super.initState();
   }
 
+  onScroll() {
+    final pixels = scrollController.position.pixels;
+    final percentage = pixels / (scrollController.position.maxScrollExtent+0.1); // +0.1 so its never 24
+    widget.onScroll!(percentage);
+  }
+
   setSelectedHour() {
-    var pixels = scrollController.position.pixels;
+    final pixels = scrollController.position.pixels;
     int newIndex =
         (pixels / (scrollController.position.maxScrollExtent + widget.hourPad/2) * 24).floor();
+
     setState(() {
       selectedHourIndex = newIndex;
     });

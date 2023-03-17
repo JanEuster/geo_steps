@@ -58,6 +58,9 @@ class _TodaysMapState extends State<TodaysMap>
   bool showDetails = false;
   static const double mapHeightDetails = 150;
 
+  LatLng markerPosition = LatLng(0, 0);
+  List<LocationDataPoint>? minutes;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,10 @@ class _TodaysMapState extends State<TodaysMap>
                     LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
                     12.8));
+                minutes = locationService.dataPointPerMinute;
+
+                final firstP = locationService.dataPoints.first;
+                markerPosition = LatLng(firstP.latitude, firstP.longitude);
               }
             }));
 
@@ -190,8 +197,7 @@ class _TodaysMapState extends State<TodaysMap>
                           Marker(
                               width: 46,
                               height: 46,
-                              point: LatLng(locationService.lastPos!.latitude,
-                                  locationService.lastPos!.longitude),
+                              point: markerPosition,
                               builder: (context) => Transform.translate(
                                     offset: const Offset(0, -23),
                                     child: Container(
@@ -267,7 +273,26 @@ class _TodaysMapState extends State<TodaysMap>
                                     height: 2,
                                   )
                                 : null),
-                        HourlyActivity(data: locationService.hourlyStepsTotal),
+                        HourlyActivity(data: locationService.hourlyStepsTotal, onScroll: (percentage)  {
+                          var thisDate = DateTime.now();
+                          final millisecondsToday = (percentage * 24 * 60 * 60 * 1000).round();
+                          final minutesToday = (percentage * 24 * 60).round();
+                          thisDate = DateTime(thisDate.year, thisDate.month, thisDate.day);
+                          thisDate = DateTime.fromMillisecondsSinceEpoch(thisDate.millisecondsSinceEpoch + millisecondsToday);
+
+                          if (locationService.hasPositions) {
+                            // log("$minutes");
+                            // var newPos = locationService.dataPointClosestTo(thisDate.toLocal());
+                            // log("$newPos");
+                            if (minutes != null) {
+                              var newPos = minutes![minutesToday];
+                              setState(() {
+                                markerPosition = LatLng(newPos.latitude, newPos.longitude);
+                                mapController.move(markerPosition, 13.5);
+                              });
+                            }
+                          }
+                        },),
                         if (showDetails) ...[
                           const Padding(
                               padding: EdgeInsets.symmetric(
