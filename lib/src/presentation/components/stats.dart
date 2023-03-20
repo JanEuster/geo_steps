@@ -12,13 +12,12 @@ class OverviewTotals extends StatelessWidget {
   final double totalDistance;
 
   OverviewTotals(
-      {super.key,
-      required this.totalSteps,
-      required this.totalDistance});
+      {super.key, required this.totalSteps, required this.totalDistance});
 
   @override
   Widget build(BuildContext context) {
-    var textStyle = const TextStyle(fontWeight: FontWeight.w500, fontSize: 24, color: Colors.white);
+    var textStyle = const TextStyle(
+        fontWeight: FontWeight.w500, fontSize: 24, color: Colors.white);
     return Container(
         decoration: BoxDecoration(
           color: Colors.black,
@@ -66,7 +65,6 @@ class NamedBarGraph extends StatelessWidget {
     max = MinMax.fromList(dataValues.map((e) => e.toDouble()).toList()).max;
   }
 
-
   @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
@@ -92,7 +90,10 @@ class NamedBarGraph extends StatelessWidget {
                       (index) => Container(
                           alignment: Alignment.center,
                           height: rowHeight,
-                          child: Text(dataKeys[index], style: textStyleOnBlack,)),
+                          child: Text(
+                            dataKeys[index],
+                            style: textStyleOnBlack,
+                          )),
                     ),
                   ),
                 ),
@@ -122,7 +123,8 @@ class NamedBarGraph extends StatelessWidget {
                       (index) => Container(
                           alignment: Alignment.center,
                           height: rowHeight,
-                          child: Text(dataValues[index].toString(), style: textStyleOnBlack)),
+                          child: Text(dataValues[index].toString(),
+                              style: textStyleOnBlack)),
                     ),
                   ),
                 ),
@@ -193,11 +195,9 @@ class OverviewBarGraph extends StatelessWidget {
                             children: List.generate(4, (i) {
                               String value;
                               if (i == 0) {
-                                value =
-                                    valuesMinMax.min.toStringAsFixed(1);
+                                value = valuesMinMax.min.toStringAsFixed(1);
                               } else if (i == 3) {
-                                value =
-                                    valuesMinMax.max.toStringAsFixed(1);
+                                value = valuesMinMax.max.toStringAsFixed(1);
                               } else {
                                 value = (valuesMinMax.diff / 3 * i)
                                     .toStringAsFixed(1);
@@ -282,7 +282,7 @@ class BarChart extends StatelessWidget {
 }
 
 class HourlyActivity extends StatefulWidget {
-  final double hourWidth = 50;
+  final double hourWidth = 60;
   final double hourPad = 5;
   final List<double> data;
   late double max;
@@ -336,14 +336,18 @@ class _HourlyActivityState extends State<HourlyActivity> {
 
   onScroll() {
     final pixels = scrollController.position.pixels;
-    final percentage = pixels / (scrollController.position.maxScrollExtent+0.1); // +0.1 so its never 24
+    final percentage = pixels /
+        (scrollController.position.maxScrollExtent +
+            0.1); // +0.1 so its never 24
     widget.onScroll!(percentage);
   }
 
   setSelectedHour() {
     final pixels = scrollController.position.pixels;
-    int newIndex =
-        (pixels / (scrollController.position.maxScrollExtent + widget.hourPad/2) * 24).floor();
+    int newIndex = (pixels /
+            (scrollController.position.maxScrollExtent + widget.hourPad / 2) *
+            24)
+        .floor();
 
     setState(() {
       selectedHourIndex = newIndex;
@@ -357,7 +361,8 @@ class _HourlyActivityState extends State<HourlyActivity> {
         width: sizer.width,
         height: 139,
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: widget.hourPad, horizontal: 0),
+          padding:
+              EdgeInsets.symmetric(vertical: widget.hourPad, horizontal: 0),
           child: ListView.builder(
               itemCount: 24,
               padding: EdgeInsets.symmetric(
@@ -365,7 +370,9 @@ class _HourlyActivityState extends State<HourlyActivity> {
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {
-                List<double> hoursPercent = widget.data.map((h) =>  widget.max == 0 ? 0.0 : h/widget.max).toList();
+                List<double> hoursPercent = widget.data
+                    .map((h) => widget.max == 0 ? 0.0 : h / widget.max)
+                    .toList();
                 return Container(
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
@@ -383,33 +390,51 @@ class _HourlyActivityState extends State<HourlyActivity> {
                           height: 3),
                       SizedBox(
                           height: 105,
-                          child: Column(children: [
-                            Expanded(
-                                child: Container(
-                              width: widget.hourWidth,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.black, width: 1)),
-                            )),
-                            Container(
-                                width: widget.hourWidth,
-                                height: 105 * hoursPercent[index],
-                                constraints: const BoxConstraints(minHeight: 0, maxHeight: 105),
-                                color: index == selectedHourIndex
-                                    ? null
-                                    : Colors.black,
-                                decoration: index == selectedHourIndex
-                                    ? BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.black, width: 1),
-                                        image: const DecorationImage(
-                                            fit: BoxFit.none,
-                                            scale: 2.5,
-                                            image: AssetImage(
-                                                "assets/line_pattern.jpg"),
-                                            repeat: ImageRepeat.repeat))
-                                    : null),
-                          ])),
+                          child: Stack(
+                            children: [
+                              Column(children: [
+                                Expanded(
+                                    child: Container(
+                                  width: widget.hourWidth,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.black, width: 1)),
+                                )),
+                                Container(
+                                    width: widget.hourWidth,
+                                    height: 105 * hoursPercent[index],
+                                    constraints: const BoxConstraints(
+                                        minHeight: 0, maxHeight: 105),
+                                    color: index == selectedHourIndex
+                                        ? null
+                                        : Colors.black,
+                                    decoration: index == selectedHourIndex
+                                        ? BoxDecoration(
+                                            border: Border.all(
+                                                color: Colors.black, width: 1),
+                                            image: const DecorationImage(
+                                                fit: BoxFit.none,
+                                                scale: 2.5,
+                                                image: AssetImage(
+                                                    "assets/line_pattern.jpg"),
+                                                repeat: ImageRepeat.repeat))
+                                        : null),
+                              ]),
+                              Positioned(
+                                  top: 80 * (1-hoursPercent[index]),
+                                  child: SizedBox(
+                                      width: widget.hourWidth,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: Container(
+                                          height: 16,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border.all(),
+                                          ), child: Center(child: Text(widget.data[index].toStringAsFixed(0), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),))),
+                                      ))),
+                            ],
+                          )),
                       SizedBox(height: 16, child: Text("$index"))
                     ],
                   ),

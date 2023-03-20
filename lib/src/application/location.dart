@@ -122,7 +122,6 @@ class LocationService {
         }
       }
     }
-    log("hourly steps $hours");
     return hours;
   }
 
@@ -175,11 +174,12 @@ class LocationService {
   ///
   /// dataPointPerMinute.length = 24 * 60 = 1440
   List<LocationDataPoint> get dataPointPerMinute {
-    List<LocationDataPoint?> minutesNullable = List.generate(1440, (index) => null);
+    List<LocationDataPoint?> minutesNullable =
+        List.generate(1440, (index) => null);
     for (final p in dataPoints) {
       final pMinute = p.timestamp!.dayInMinutes();
       if (minutesNullable[pMinute] == null) {
-        minutesNullable[pMinute] = p;
+        minutesNullable[pMinute] = p.clone();
       } else {
         // add up miutes of datapoints in the same minute
         if (minutesNullable[pMinute]!.steps != null) {
@@ -187,7 +187,8 @@ class LocationService {
               (minutesNullable[pMinute]!.steps ?? 0) + (p.steps ?? 0);
         }
         // set pedStatus if its unknown on the current datapoint
-        if (minutesNullable[pMinute]!.pedStatus == LocationDataPoint.STATUS_UNKNOWN &&
+        if (minutesNullable[pMinute]!.pedStatus ==
+                LocationDataPoint.STATUS_UNKNOWN &&
             p.pedStatus != LocationDataPoint.STATUS_UNKNOWN) {
           minutesNullable[pMinute]!.pedStatus == p.pedStatus;
         }
@@ -432,7 +433,7 @@ class LocationService {
               Position(
                   longitude: trkpt.lon!,
                   latitude: trkpt.lat!,
-                  timestamp: trkpt.time,
+                  timestamp: trkpt.time?.toLocal(),
                   accuracy: 0,
                   altitude: trkpt.ele!,
                   heading: heading,
@@ -512,8 +513,7 @@ class LocationService {
           extensions: {
             "duration": "${seg.duration().inSeconds}s",
             "startTime": seg.startTime != null ? seg.startTime.toString() : "",
-            "endTime":
-                seg.endTime != null ? seg.endTime.toString() : "",
+            "endTime": seg.endTime != null ? seg.endTime.toString() : "",
           }));
     }
 
@@ -737,6 +737,21 @@ class LocationDataPoint {
 
     steps = stepCount;
     pedStatus = ped;
+  }
+
+  LocationDataPoint clone() {
+    return LocationDataPoint(
+        Position(
+            longitude: longitude,
+            latitude: latitude,
+            timestamp: timestamp,
+            accuracy: 0,
+            altitude: altitude,
+            heading: heading,
+            speed: speed,
+            speedAccuracy: 0),
+        steps,
+        pedStatus);
   }
 
   @override
