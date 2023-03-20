@@ -276,7 +276,7 @@ class _TodaysMapState extends State<TodaysMap>
                         HourlyActivity(data: locationService.hourlyStepsTotal, onScroll: (percentage)  {
                           var thisDate = DateTime.now();
                           final millisecondsToday = (percentage * 24 * 60 * 60 * 1000).round();
-                          final minutesToday = (percentage * 24 * 60).round();
+                          final minutesToday = (percentage * ((24 * 60)-1)).round();
                           thisDate = DateTime(thisDate.year, thisDate.month, thisDate.day);
                           thisDate = DateTime.fromMillisecondsSinceEpoch(thisDate.millisecondsSinceEpoch + millisecondsToday);
 

@@ -194,7 +194,7 @@ class LocationService {
       }
     }
     List<LocationDataPoint> minutes = [];
-    for (var i = 0; i < minutesNullable.length - 1; i++) {
+    for (var i = 0; i < minutesNullable.length; i++) {
       var p = minutesNullable[i];
       if (p == null) {
         var closestI = minutesNullable.closestNonNull(i);
