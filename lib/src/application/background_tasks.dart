@@ -49,7 +49,7 @@ FutureOr<bool> onStart(ServiceInstance service) async {
   });
   service.on("saveTrackingData").listen((event) async {
     var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
-    if (isTrackingLocation != null && isTrackingLocation) {
+    if (isTrackingLocation == true) {
       await locationService.saveToday();
     }
   });

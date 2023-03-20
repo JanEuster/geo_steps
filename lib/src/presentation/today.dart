@@ -87,7 +87,7 @@ class _TodaysMapState extends State<TodaysMap>
             }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
-      if (isTrackingLocation != null && isTrackingLocation) {
+      if (isTrackingLocation != true) {
         FlutterBackgroundService().on("sendTrackingData").listen((event) {
           setState(() {
             List<dynamic> receivedDataPoints = event!["trackingData"];
