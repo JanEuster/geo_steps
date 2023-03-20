@@ -176,15 +176,23 @@ class LocationService {
   List<LocationDataPoint> get dataPointPerMinute {
     List<LocationDataPoint?> minutesNullable =
         List.generate(1440, (index) => null);
-    for (final p in dataPoints) {
+    for (var i = 0; i < dataPoints.length; i++) {
+      var beforeP = i > 0 ? dataPoints[i - 1] : dataPoints[i];
+      var p = dataPoints[i];
+
       final pMinute = p.timestamp!.dayInMinutes();
       if (minutesNullable[pMinute] == null) {
         minutesNullable[pMinute] = p.clone();
+        if (minutesNullable[pMinute]!.steps != null) {
+          minutesNullable[pMinute]!.steps = minutesNullable[pMinute]!.steps! -
+              (minutesNullable[pMinute]!.steps ?? 0);
+        }
       } else {
         // add up miutes of datapoints in the same minute
         if (minutesNullable[pMinute]!.steps != null) {
           minutesNullable[pMinute]!.steps =
-              (minutesNullable[pMinute]!.steps ?? 0) + (p.steps ?? 0);
+              (minutesNullable[pMinute]!.steps ?? 0) +
+                  (p.steps != null ? (p.steps! - (beforeP.steps ?? 0)) : 0);
         }
         // set pedStatus if its unknown on the current datapoint
         if (minutesNullable[pMinute]!.pedStatus ==
