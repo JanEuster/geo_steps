@@ -383,22 +383,7 @@ class _TodaysMapState extends State<TodaysMap>
                               )),
                           Padding(
                               padding: const EdgeInsets.all(10),
-                              child: OverviewBarGraph(data: const [
-                                1,
-                                2,
-                                6,
-                                2,
-                                3,
-                                1,
-                                12,
-                                42,
-                                10,
-                                1,
-                                1,
-                                3,
-                                95,
-                                32
-                              ], title: "stat 1")),
+                              child: OverviewBarGraph(data: locationService.hourlyDistanceTotal.map((e) => e/1000).toList(), title: "km/h")),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: NamedBarGraph(

@@ -138,6 +138,22 @@ class LocationService {
     return dist;
   }
 
+  List<double> get hourlyDistanceTotal {
+    List<double> hours = List.generate(24, (index) => 0);
+    for (var i = 1; i < dataPoints.length; i++) {
+      var beforeP = dataPoints[i - 1];
+      var p = dataPoints[i];
+
+      if (p.timestamp != null && beforeP.timestamp != null) {
+        var i = p.timestamp!.toLocal().hour;
+        hours[i] += Distance().distance(
+            LatLng(beforeP.latitude, beforeP.longitude),
+            LatLng(p.latitude, p.longitude));
+      }
+    }
+    return hours;
+  }
+
   LocationDataPoint dataPointClosestTo(DateTime time) {
     int? smallestDiff;
     int smallestDiffI = 0;
