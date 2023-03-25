@@ -130,7 +130,9 @@ class NamedBarChart extends StatelessWidget {
                 ),
               ],
             ),
-            ChartLegend(left: Text(title, style: textStyleOnWhite), right: Text("${data.length} bars", style: textStyleOnWhite)),
+            ChartLegend(
+                left: Text(title, style: textStyleOnWhite),
+                right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
@@ -141,6 +143,7 @@ class NamedBarChart extends StatelessWidget {
 class ChartLegend extends StatelessWidget {
   Widget left;
   Widget right;
+
   ChartLegend({super.key, required this.left, required this.right});
 
   @override
@@ -153,24 +156,27 @@ class ChartLegend extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           left,
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 6),
-                child: Container(decoration: const BoxDecoration(
-                  border: Border.symmetric(vertical: BorderSide(color: Colors.white, width: 3),),
-                    image: DecorationImage(fit: BoxFit.none,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 6),
+              child: Container(
+                decoration: const BoxDecoration(
+                    border: Border.symmetric(
+                      vertical: BorderSide(color: Colors.white, width: 3),
+                    ),
+                    image: DecorationImage(
+                        fit: BoxFit.none,
                         scale: 4,
                         image: AssetImage("assets/line_pattern.jpg"),
-                        repeat: ImageRepeat.repeat)),),
+                        repeat: ImageRepeat.repeat)),
               ),
             ),
-
+          ),
           right,
         ],
       ),
     );
   }
-
 }
 
 class OverviewBarChart extends StatelessWidget {
@@ -247,7 +253,9 @@ class OverviewBarChart extends StatelessWidget {
                         ],
                       ),
                     ))),
-            ChartLegend(left: Text(title, style: textStyleOnWhite), right: Text("${data.length} bars", style: textStyleOnWhite)),
+            ChartLegend(
+                left: Text(title, style: textStyleOnWhite),
+                right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
@@ -299,10 +307,12 @@ class HourlyActivity extends StatefulWidget {
   final double hourPad = 5;
   final List<double> data;
   late double max;
+  final int initialHour;
 
   Function(double)? onScroll = (percentage) {};
 
-  HourlyActivity({super.key, required this.data, this.onScroll}) {
+  HourlyActivity(
+      {super.key, required this.data, this.onScroll, this.initialHour = 12}) {
     max = MinMax.fromList(data).max;
   }
 
@@ -311,14 +321,21 @@ class HourlyActivity extends StatefulWidget {
 }
 
 class _HourlyActivityState extends State<HourlyActivity> {
-  ScrollController scrollController =
-      ScrollController(initialScrollOffset: 715);
+  ScrollController scrollController = ScrollController(initialScrollOffset: 0);
   bool isScrolling = false;
   int selectedHourIndex = 0;
 
   @override
   void initState() {
+    setState(() {
+      selectedHourIndex = widget.initialHour;
+    });
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollController.animateTo(
+          (widget.hourWidth + widget.hourPad) * selectedHourIndex +
+              widget.hourWidth / 2,
+          duration: const Duration(seconds: 1),
+          curve: Curves.decelerate);
       scrollController.addListener(() {
         onScroll();
         if (scrollController.position.pixels ==
@@ -342,7 +359,6 @@ class _HourlyActivityState extends State<HourlyActivity> {
           }
         }
       });
-      setSelectedHour();
     });
     super.initState();
   }
@@ -434,17 +450,25 @@ class _HourlyActivityState extends State<HourlyActivity> {
                                         : null),
                               ]),
                               Positioned(
-                                  top: 80 * (1-hoursPercent[index]),
+                                  top: 80 * (1 - hoursPercent[index]),
                                   child: SizedBox(
                                       width: widget.hourWidth,
                                       child: Padding(
                                         padding: const EdgeInsets.all(4.0),
                                         child: Container(
-                                          height: 16,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            border: Border.all(),
-                                          ), child: Center(child: Text(widget.data[index].toStringAsFixed(0), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),))),
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            child: Center(
+                                                child: Text(
+                                              widget.data[index]
+                                                  .toStringAsFixed(0),
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500),
+                                            ))),
                                       ))),
                             ],
                           )),

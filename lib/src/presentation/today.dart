@@ -66,6 +66,7 @@ class _TodaysMapState extends State<TodaysMap>
 
   latlng.LatLng markerPosition = latlng.LatLng(0, 0);
   List<LocationDataPoint>? minutes;
+  int? initialHourIndex;
 
   @override
   void initState() {
@@ -87,6 +88,9 @@ class _TodaysMapState extends State<TodaysMap>
             final firstP = locationService.dataPoints.first;
             markerPosition =
                 latlng.LatLng(firstP.latitude, firstP.longitude);
+
+            initialHourIndex = locationService.hourlyStepsTotal.indexOf(
+                locationService.hourlyStepsTotal.reduce(math.max));
           }
         }));
 
@@ -371,8 +375,9 @@ class _TodaysMapState extends State<TodaysMap>
                               height: 2,
                             )
                                 : null),
-                        HourlyActivity(
+                        if (initialHourIndex != null) HourlyActivity(
                           data: locationService.hourlyStepsTotal,
+                          initialHour: initialHourIndex!,
                           onScroll: (percentage) {
                             var thisDate = DateTime.now();
                             final millisecondsToday =
@@ -409,13 +414,16 @@ class _TodaysMapState extends State<TodaysMap>
                                 height: 2,
                               )),
                           Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
                               child: OverviewBarChart(
                                   data: locationService.hourlyDistanceTotal
                                       .map((e) => e / 1000).toList(),
                                   title: "hourly average speed in km/h")),
-                          if (homepointManager != null && homepointManager!.visits != null) Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          if (homepointManager != null && homepointManager!
+                              .visits != null) Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8, horizontal: 12),
                             child: NamedBarChart(
                                 data: homepointManager!.visits!,
                                 title: "visited homepoints today"),
