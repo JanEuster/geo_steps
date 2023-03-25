@@ -54,20 +54,21 @@ class _TodaysMapState extends State<TodaysMap>
     with SingleTickerProviderStateMixin {
   late Animation<double> detailsAnimation;
   late AnimationController detailsController;
+  bool showDetails = false;
 
   late LocationService locationService;
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
   HomepointManager? homepointManager;
+
   final mapController = MapController();
+  double zoomLevel = 12.8;
   static const double mapHeightDetails = 150;
-
-  bool showDetails = false;
-  LocationDataPoint? selectedMinute;
-
   latlng.LatLng markerPosition = latlng.LatLng(0, 0);
+  List<CircleMarker> homepointCircles = [];
+
+  LocationDataPoint? selectedMinute;
   List<LocationDataPoint>? minutes;
   int? initialHourIndex;
-  List<CircleMarker> homepointCircles = [];
 
   @override
   void initState() {
@@ -81,7 +82,7 @@ class _TodaysMapState extends State<TodaysMap>
                 setState(() => mapController.move(
                     latlng.LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
-                    12.8));
+                    zoomLevel));
                 minutes = locationService.dataPointPerMinute;
 
                 final firstP = locationService.dataPoints.first;
@@ -135,17 +136,18 @@ class _TodaysMapState extends State<TodaysMap>
               homepointManager!.getVisits(locationService.dataPoints);
 
               homepointManager!.homepoints.forEach((key, point) {
-                homepointCircles.addAll([CircleMarker(
-                  point: point.position,
-                  radius: point.radius,
-                  useRadiusInMeter: true,
-                  color: Colors.white.withOpacity(0.3),
-                  borderColor: Colors.black,
-                  borderStrokeWidth: 2,
-                ),
+                homepointCircles.addAll([
                   CircleMarker(
                     point: point.position,
-                    radius: point.radius/3,
+                    radius: point.radius,
+                    useRadiusInMeter: true,
+                    color: Colors.white.withOpacity(0.3),
+                    borderColor: Colors.black,
+                    borderStrokeWidth: 2,
+                  ),
+                  CircleMarker(
+                    point: point.position,
+                    radius: point.radius / 3,
                     useRadiusInMeter: true,
                     color: Colors.white.withOpacity(0.4),
                   )
@@ -190,7 +192,15 @@ class _TodaysMapState extends State<TodaysMap>
                       onMapReady: () {
                         // set initial position on map
                       },
-                      zoom: 13.0,
+                      onMapEvent: (e) {
+                        // set zoomLevel on change
+                        if (e.runtimeType == MapEventMoveEnd) {
+                          setState(() {
+                            zoomLevel = e.zoom;
+                          });
+                        }
+                      },
+                      zoom: zoomLevel,
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
@@ -349,7 +359,7 @@ class _TodaysMapState extends State<TodaysMap>
                                     markerPosition = latlng.LatLng(
                                         selectedMinute!.latitude,
                                         selectedMinute!.longitude);
-                                    mapController.move(markerPosition, 13.5);
+                                    mapController.move(markerPosition, zoomLevel);
                                   });
                                 }
                               }
