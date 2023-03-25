@@ -169,7 +169,7 @@ class AddHomepointModal extends StatefulWidget {
 }
 
 class _AddHomepointModalState extends State<AddHomepointModal> {
-  late MapController mapController;
+  late MapController mapController = MapController();
   String name = "homepoint 1";
   double radius = 80;
   LatLng? point;
@@ -188,13 +188,15 @@ class _AddHomepointModalState extends State<AddHomepointModal> {
       });
     }
 
-    mapController = MapController();
-    Geolocator.getLastKnownPosition().then((pos) {
-      mapController.move(LatLng(pos!.latitude, pos!.longitude), 14);
-    });
-    Geolocator.getCurrentPosition().then((pos) {
-      mapController.move(LatLng(pos.latitude, pos.longitude), 14);
-    });
+    if (widget.basedOn != null) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        mapController.move(widget.basedOn!.position, 14.75);
+      });
+    } else {
+      Geolocator.getLastKnownPosition().then((pos) {
+        mapController.move(LatLng(pos!.latitude, pos!.longitude), 14);
+      });
+    }
   }
 
   void submit() {

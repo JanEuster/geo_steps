@@ -6,23 +6,21 @@ import 'package:geo_steps/src/presentation/components/lines.dart';
 import 'package:geo_steps/src/utils/sizing.dart';
 
 class OverviewTotals extends StatelessWidget {
-  final String timeFrameString;
   final int totalSteps;
 
   /// total distance in meters
   final double totalDistance;
 
   OverviewTotals(
-      {super.key,
-      required this.timeFrameString,
-      required this.totalSteps,
-      required this.totalDistance});
+      {super.key, required this.totalSteps, required this.totalDistance});
 
   @override
   Widget build(BuildContext context) {
-    var textStyle = const TextStyle(fontWeight: FontWeight.w500, fontSize: 24);
+    var textStyle = const TextStyle(
+        fontWeight: FontWeight.w500, fontSize: 24, color: Colors.white);
     return Container(
         decoration: BoxDecoration(
+          color: Colors.black,
           border: Border.all(color: Colors.black, width: 2),
         ),
         child: Padding(
@@ -31,16 +29,6 @@ class OverviewTotals extends StatelessWidget {
             width: 140,
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(
-                "Totals - $timeFrameString",
-                style:
-                    const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-              ),
-              const Padding(
-                  padding: EdgeInsets.only(top: 5, bottom: 10),
-                  child: Line(
-                    height: 2,
-                  )),
               Text(
                 "$totalSteps steps",
                 style: textStyle,
@@ -55,7 +43,7 @@ class OverviewTotals extends StatelessWidget {
   }
 }
 
-class NamedBarGraph extends StatelessWidget {
+class NamedBarChart extends StatelessWidget {
   final String title;
   final double height;
   final bool scrollable;
@@ -66,7 +54,7 @@ class NamedBarGraph extends StatelessWidget {
   late List<int> dataValues;
   late double max;
 
-  NamedBarGraph(
+  NamedBarChart(
       {super.key,
       required this.data,
       this.title = "geo_steps stats",
@@ -77,11 +65,10 @@ class NamedBarGraph extends StatelessWidget {
     max = MinMax.fromList(dataValues.map((e) => e.toDouble()).toList()).max;
   }
 
-
   @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
-        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+        color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700);
     var textStyleOnBlack =
         const TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
 
@@ -103,7 +90,10 @@ class NamedBarGraph extends StatelessWidget {
                       (index) => Container(
                           alignment: Alignment.center,
                           height: rowHeight,
-                          child: Text(dataKeys[index], style: textStyleOnBlack,)),
+                          child: Text(
+                            dataKeys[index],
+                            style: textStyleOnBlack,
+                          )),
                     ),
                   ),
                 ),
@@ -133,24 +123,16 @@ class NamedBarGraph extends StatelessWidget {
                       (index) => Container(
                           alignment: Alignment.center,
                           height: rowHeight,
-                          child: Text(dataValues[index].toString(), style: textStyleOnBlack)),
+                          child: Text(dataValues[index].toString(),
+                              style: textStyleOnBlack)),
                     ),
                   ),
                 ),
               ],
             ),
-            Container(
-              height: 18,
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: textStyleOnWhite),
-                  Text("${data.length} bars", style: textStyleOnWhite)
-                ],
-              ),
-            )
+            ChartLegend(
+                left: Text(title, style: textStyleOnWhite),
+                right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
@@ -158,7 +140,46 @@ class NamedBarGraph extends StatelessWidget {
   }
 }
 
-class OverviewBarGraph extends StatelessWidget {
+class ChartLegend extends StatelessWidget {
+  Widget left;
+  Widget right;
+
+  ChartLegend({super.key, required this.left, required this.right});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 16,
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          left,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 6),
+              child: Container(
+                decoration: const BoxDecoration(
+                    border: Border.symmetric(
+                      vertical: BorderSide(color: Colors.white, width: 3),
+                    ),
+                    image: DecorationImage(
+                        fit: BoxFit.none,
+                        scale: 4,
+                        image: AssetImage("assets/line_pattern.jpg"),
+                        repeat: ImageRepeat.repeat)),
+              ),
+            ),
+          ),
+          right,
+        ],
+      ),
+    );
+  }
+}
+
+class OverviewBarChart extends StatelessWidget {
   final String title;
   final double height;
   final bool scrollable;
@@ -168,7 +189,7 @@ class OverviewBarGraph extends StatelessWidget {
   final List<double> data;
   late MinMax<double> valuesMinMax;
 
-  OverviewBarGraph(
+  OverviewBarChart(
       {super.key,
       required this.data,
       this.title = "geo_steps stats",
@@ -181,7 +202,7 @@ class OverviewBarGraph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
-        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+        color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700);
     var textStyleOnBlack =
         const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
     var sizer = SizeHelper();
@@ -204,11 +225,9 @@ class OverviewBarGraph extends StatelessWidget {
                             children: List.generate(4, (i) {
                               String value;
                               if (i == 0) {
-                                value =
-                                    valuesMinMax.min.toStringAsFixed(1);
+                                value = valuesMinMax.min.toStringAsFixed(1);
                               } else if (i == 3) {
-                                value =
-                                    valuesMinMax.max.toStringAsFixed(1);
+                                value = valuesMinMax.max.toStringAsFixed(1);
                               } else {
                                 value = (valuesMinMax.diff / 3 * i)
                                     .toStringAsFixed(1);
@@ -234,18 +253,9 @@ class OverviewBarGraph extends StatelessWidget {
                         ],
                       ),
                     ))),
-            Container(
-              height: 18,
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: textStyleOnWhite),
-                  Text("${data.length} bars", style: textStyleOnWhite)
-                ],
-              ),
-            )
+            ChartLegend(
+                left: Text(title, style: textStyleOnWhite),
+                right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
@@ -293,24 +303,41 @@ class BarChart extends StatelessWidget {
 }
 
 class HourlyActivity extends StatefulWidget {
-  final double hourWidth = 50;
+  final double hourWidth = 60;
+  final double hourPad = 5;
+  final List<double> data;
+  late double max;
+  final int initialHour;
 
-  const HourlyActivity({super.key});
+  Function(double)? onScroll = (percentage) {};
+
+  HourlyActivity(
+      {super.key, required this.data, this.onScroll, this.initialHour = 12}) {
+    max = MinMax.fromList(data).max;
+  }
 
   @override
   State<StatefulWidget> createState() => _HourlyActivityState();
 }
 
 class _HourlyActivityState extends State<HourlyActivity> {
-  ScrollController scrollController =
-      ScrollController(initialScrollOffset: 715);
+  ScrollController scrollController = ScrollController(initialScrollOffset: 0);
   bool isScrolling = false;
   int selectedHourIndex = 0;
 
   @override
   void initState() {
+    setState(() {
+      selectedHourIndex = widget.initialHour;
+    });
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollController.animateTo(
+          (widget.hourWidth + widget.hourPad) * selectedHourIndex +
+              widget.hourWidth / 2,
+          duration: const Duration(seconds: 1),
+          curve: Curves.decelerate);
       scrollController.addListener(() {
+        onScroll();
         if (scrollController.position.pixels ==
                 scrollController.position.maxScrollExtent ||
             scrollController.position.pixels ==
@@ -321,6 +348,7 @@ class _HourlyActivityState extends State<HourlyActivity> {
       scrollController.position.isScrollingNotifier.addListener(() {
         if (scrollController.positions.isNotEmpty) {
           var scrollBool = scrollController.position.isScrollingNotifier.value;
+
           if (scrollBool != isScrolling) {
             setState(() {
               isScrolling = scrollBool;
@@ -331,15 +359,25 @@ class _HourlyActivityState extends State<HourlyActivity> {
           }
         }
       });
-      setSelectedHour();
     });
     super.initState();
   }
 
+  onScroll() {
+    final pixels = scrollController.position.pixels;
+    final percentage = pixels /
+        (scrollController.position.maxScrollExtent +
+            0.1); // +0.1 so its never 24
+    widget.onScroll!(percentage);
+  }
+
   setSelectedHour() {
-    var pixels = scrollController.position.pixels + widget.hourWidth / 2;
-    int newIndex =
-        (pixels / scrollController.position.maxScrollExtent * 23).floor();
+    final pixels = scrollController.position.pixels;
+    int newIndex = (pixels /
+            (scrollController.position.maxScrollExtent + widget.hourPad / 2) *
+            24)
+        .floor();
+
     setState(() {
       selectedHourIndex = newIndex;
     });
@@ -352,40 +390,18 @@ class _HourlyActivityState extends State<HourlyActivity> {
         width: sizer.width,
         height: 139,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 0),
+          padding:
+              EdgeInsets.symmetric(vertical: widget.hourPad, horizontal: 0),
           child: ListView.builder(
               itemCount: 24,
               padding: EdgeInsets.symmetric(
-                  horizontal: sizer.width / 2 - 25, vertical: 0),
+                  horizontal: sizer.width / 2, vertical: 0),
               scrollDirection: Axis.horizontal,
               controller: scrollController,
               itemBuilder: (BuildContext context, int index) {
-                List<double> hoursPercent = [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  .1,
-                  .4,
-                  .6,
-                  0,
-                  0,
-                  .1,
-                  0,
-                  .3,
-                  1,
-                  .5,
-                  1,
-                  .1,
-                  .3,
-                  .2,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
-                ]; // TODO: use real data
+                List<double> hoursPercent = widget.data
+                    .map((h) => widget.max == 0 ? 0.0 : h / widget.max)
+                    .toList();
                 return Container(
                   padding: index < 23
                       ? const EdgeInsets.only(right: 5)
@@ -403,32 +419,59 @@ class _HourlyActivityState extends State<HourlyActivity> {
                           height: 3),
                       SizedBox(
                           height: 105,
-                          child: Column(children: [
-                            Expanded(
-                                child: Container(
-                              width: widget.hourWidth,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.black, width: 1)),
-                            )),
-                            Container(
-                                width: widget.hourWidth,
-                                height: 105 * hoursPercent[index],
-                                color: index == selectedHourIndex
-                                    ? null
-                                    : Colors.black,
-                                decoration: index == selectedHourIndex
-                                    ? BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.black, width: 1),
-                                        image: const DecorationImage(
-                                            fit: BoxFit.none,
-                                            scale: 2.5,
-                                            image: AssetImage(
-                                                "assets/line_pattern.jpg"),
-                                            repeat: ImageRepeat.repeat))
-                                    : null),
-                          ])),
+                          child: Stack(
+                            children: [
+                              Column(children: [
+                                Expanded(
+                                    child: Container(
+                                  width: widget.hourWidth,
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: Colors.black, width: 1)),
+                                )),
+                                Container(
+                                    width: widget.hourWidth,
+                                    height: 105 * hoursPercent[index],
+                                    constraints: const BoxConstraints(
+                                        minHeight: 0, maxHeight: 105),
+                                    color: index == selectedHourIndex
+                                        ? null
+                                        : Colors.black,
+                                    decoration: index == selectedHourIndex
+                                        ? BoxDecoration(
+                                            border: Border.all(
+                                                color: Colors.black, width: 1),
+                                            image: const DecorationImage(
+                                                fit: BoxFit.none,
+                                                scale: 2.5,
+                                                image: AssetImage(
+                                                    "assets/line_pattern.jpg"),
+                                                repeat: ImageRepeat.repeat))
+                                        : null),
+                              ]),
+                              Positioned(
+                                  top: 80 * (1 - hoursPercent[index]),
+                                  child: SizedBox(
+                                      width: widget.hourWidth,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: Container(
+                                            height: 16,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              border: Border.all(),
+                                            ),
+                                            child: Center(
+                                                child: Text(
+                                              widget.data[index]
+                                                  .toStringAsFixed(0),
+                                              style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500),
+                                            ))),
+                                      ))),
+                            ],
+                          )),
                       SizedBox(height: 16, child: Text("$index"))
                     ],
                   ),

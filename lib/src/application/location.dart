@@ -82,6 +82,155 @@ class LocationService {
     return _initialized;
   }
 
+  int get stepsMin {
+    for (final p in dataPoints) {
+      if (p.steps != null) {
+        return p.steps!;
+      }
+    }
+    return 0;
+  }
+
+  /// total steps
+  ///
+  /// from last measured steps count - first measured steps count
+  int get stepsTotal {
+    if (hasPositions) {
+      var stepsStart = stepsMin;
+      var stepsEnd = stepsMin;
+      for (final p in dataPoints.reversed) {
+        if (p.steps != null) {
+          stepsEnd = p.steps!;
+          break;
+        }
+      }
+      return stepsEnd - stepsStart;
+    } else {
+      return 0;
+    }
+  }
+
+  List<double> get hourlyStepsTotal {
+    List<double> hours = List.generate(24, (index) => 0);
+    var stepsBefore = stepsMin;
+    for (final p in dataPoints) {
+      if (p.timestamp != null) {
+        var i = p.timestamp!.toLocal().hour;
+        if (p.steps != null && p.steps! > stepsBefore) {
+          hours[i] += p.steps! - stepsBefore;
+          stepsBefore = p.steps!;
+        }
+      }
+    }
+    return hours;
+  }
+
+  /// total distance in meters
+  /// TODO: more accurate distance calculation
+  double get distanceTotal {
+    double dist = 0;
+    for (var i = 0; i < dataPoints.length - 1; i++) {
+      final p1 = dataPoints[i];
+      final p2 = dataPoints[i + 1];
+      dist += const Distance().distance(
+          LatLng(p1.latitude, p1.longitude), LatLng(p2.latitude, p2.longitude));
+    }
+    return dist;
+  }
+
+  List<double> get hourlyDistanceTotal {
+    List<double> hours = List.generate(24, (index) => 0);
+    for (var i = 1; i < dataPoints.length; i++) {
+      var beforeP = dataPoints[i - 1];
+      var p = dataPoints[i];
+
+      if (p.timestamp != null && beforeP.timestamp != null) {
+        var i = p.timestamp!.toLocal().hour;
+        hours[i] += Distance().distance(
+            LatLng(beforeP.latitude, beforeP.longitude),
+            LatLng(p.latitude, p.longitude));
+      }
+    }
+    return hours;
+  }
+
+  LocationDataPoint dataPointClosestTo(DateTime time) {
+    int? smallestDiff;
+    int smallestDiffI = 0;
+    var timeMillis = time.dayInMillis();
+
+    var i = 0;
+    while (i < dataPoints.length) {
+      final p = dataPoints[i];
+      if (p.timestamp != null) {
+        var pMillis = p.timestamp!.dayInMillis();
+        final diff = (timeMillis - pMillis).abs();
+
+        if (smallestDiff == null) {
+          smallestDiff = diff;
+          smallestDiffI = 0;
+        }
+
+        log("$i - $diff");
+        if (smallestDiff != null && diff < smallestDiff!) {
+          log("index: $i");
+          smallestDiffI = i;
+          smallestDiff = diff;
+        }
+        i++;
+      } else {
+        i++;
+      }
+    }
+    log("--- index $smallestDiffI ---");
+    return dataPoints[smallestDiffI];
+  }
+
+  /// list of closest datapoint for every minute of the day
+  ///
+  /// dataPointPerMinute.length = 24 * 60 = 1440
+  List<LocationDataPoint> get dataPointPerMinute {
+    List<LocationDataPoint?> minutesNullable =
+        List.generate(1440, (index) => null);
+    for (var i = 0; i < dataPoints.length; i++) {
+      var beforeP = i > 0 ? dataPoints[i - 1] : dataPoints[i];
+      var p = dataPoints[i];
+
+      final pMinute = p.timestamp!.dayInMinutes();
+      if (minutesNullable[pMinute] == null) {
+        minutesNullable[pMinute] = p.clone();
+        if (minutesNullable[pMinute]!.steps != null) {
+          minutesNullable[pMinute]!.steps = minutesNullable[pMinute]!.steps! -
+              (minutesNullable[pMinute]!.steps ?? 0);
+        }
+      } else {
+        // add up miutes of datapoints in the same minute
+        if (minutesNullable[pMinute]!.steps != null) {
+          minutesNullable[pMinute]!.steps =
+              (minutesNullable[pMinute]!.steps ?? 0) +
+                  (p.steps != null ? (p.steps! - (beforeP.steps ?? 0)) : 0);
+        }
+        // set pedStatus if its unknown on the current datapoint
+        if (minutesNullable[pMinute]!.pedStatus ==
+                LocationDataPoint.STATUS_UNKNOWN &&
+            p.pedStatus != LocationDataPoint.STATUS_UNKNOWN) {
+          minutesNullable[pMinute]!.pedStatus == p.pedStatus;
+        }
+      }
+    }
+    List<LocationDataPoint> minutes = [];
+    for (var i = 0; i < minutesNullable.length; i++) {
+      var p = minutesNullable[i];
+      if (p == null) {
+        var closestI = minutesNullable.closestNonNull(i);
+        if (closestI != null) {
+          p = minutesNullable[closestI];
+        }
+      }
+      minutes.add(p ?? dataPoints.first);
+    }
+    return minutes;
+  }
 
   Future<void> record({Function(Position)? onReady}) async {
     log("start recording position data");
@@ -172,15 +321,12 @@ class LocationService {
     return false;
   }
 
-
   void addPosition(Position position) {
     // LocationDataPoint can only have steps > 0 if ped status is not stopped
     // -> detecting stops clearer?
     log("$position $_newSteps $_newPedStatus");
     dataPoints.add(LocationDataPoint(position, _newSteps, _newPedStatus));
   }
-
-
 
   void optimizeCapturedData() {
     // remove redundant data points from positions list
@@ -285,9 +431,6 @@ class LocationService {
     segmentedData = segments;
   }
 
-
-
-
   List<LocationDataPoint> fromGPX(String xml, {bool setPos = true}) {
     var xmlGpx = GpxReader().fromString(xml);
     List<LocationDataPoint> posList = [];
@@ -307,16 +450,14 @@ class LocationService {
           }
           if (ext["speed"] != null) speed = double.parse(ext["speed"] ?? "0");
           if (ext["steps"] != null) {
-            steps = gpxDesc["steps"] != "null"
-                ? int.parse(gpxDesc["steps"] ?? "0")
-                : null;
+            steps = int.tryParse(ext["steps"]!);
           }
 
           posList.add(LocationDataPoint(
               Position(
                   longitude: trkpt.lon!,
                   latitude: trkpt.lat!,
-                  timestamp: trkpt.time,
+                  timestamp: trkpt.time?.toLocal(),
                   accuracy: 0,
                   altitude: trkpt.ele!,
                   heading: heading,
@@ -379,19 +520,19 @@ class LocationService {
       trksegs.add(Trkseg(
           trkpts: seg.dataPoints
               .map((p) => Wpt(
-              ele: p.altitude,
-              lat: p.latitude,
-              lon: p.longitude,
-              time: p.timestamp,
-              type: typeBasedOnSpeed(p.pedStatus, p.speed),
-              desc:
-              "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
-              extensions: {
-                "pedStatus": p.pedStatus,
-                "steps": p.steps.toString(),
-                "heading": p.heading.toStringAsFixed(2),
-                "speed": p.speed.toStringAsFixed(2),
-              }))
+                      ele: p.altitude,
+                      lat: p.latitude,
+                      lon: p.longitude,
+                      time: p.timestamp,
+                      type: typeBasedOnSpeed(p.pedStatus, p.speed),
+                      desc:
+                          "steps:${p.steps};heading:${p.heading};speed:${p.speed}",
+                      extensions: {
+                        "pedStatus": p.pedStatus,
+                        "steps": p.steps.toString(),
+                        "heading": p.heading.toStringAsFixed(2),
+                        "speed": p.speed.toStringAsFixed(2),
+                      }))
               .toList(),
           extensions: {
             "duration": "${seg.duration().inSeconds}s",
@@ -448,9 +589,6 @@ class LocationService {
     log("gpx file exported to $gpxFilePath");
   }
 
-
-
-
   Future<bool> loadToday() async {
     String date = DateTime.now().toLocal().toIso8601String().split("T").first;
     var gpxDirPath = "${appDir.path}/gpxData";
@@ -474,9 +612,10 @@ class LocationService {
       // check if its a new day and if so, remove all data from previous day
       // necessary because a new gpx file is created for every day -> no overlay in data
       // dates are converted to utc, because gpx stores dates as utc -> gpx files will not start before 0:00 and not end after 23:59
-      if (lastDate.day != now.day) {
-        dataPoints =
-            dataPoints.where((p) => p.timestamp!.day == now.day).toList();
+      if (lastDate.toLocal().day != now.toLocal().day) {
+        dataPoints = dataPoints
+            .where((p) => p.timestamp!.toLocal().day == now.toLocal().day)
+            .toList();
         lastDate = now;
       }
       String date = lastDate.toLocal().toIso8601String().split("T").first;
@@ -501,7 +640,6 @@ class LocationService {
   void clearData() {
     dataPoints = [];
   }
-
 
   StreamSubscription<Position> streamPosition(Function(Position) addPosition) {
     late LocationSettings locationSettings;
@@ -625,6 +763,21 @@ class LocationDataPoint {
     pedStatus = ped;
   }
 
+  LocationDataPoint clone() {
+    return LocationDataPoint(
+        Position(
+            longitude: longitude,
+            latitude: latitude,
+            timestamp: timestamp,
+            accuracy: 0,
+            altitude: altitude,
+            heading: heading,
+            speed: speed,
+            speedAccuracy: 0),
+        steps,
+        pedStatus);
+  }
+
   @override
   String toString() {
     return "LocationDataPoint at $timestamp { lat: $latitude lon: $longitude alt: $altitude dir: $heading° spe: $speed m/s with status: $pedStatus - $steps steps }";
@@ -740,6 +893,7 @@ class MinMax<T> {
   T max;
 
   MinMax(this.min, this.max);
+
   static MinMax<double> fromList(List<double> list) {
     double min = list.first;
     double max = list.first;
@@ -765,7 +919,6 @@ extension Double on MinMax<double> {
   }
 }
 
-
 class LonLat {
   double longitude;
   double latitude;
@@ -780,9 +933,48 @@ class LonLat {
 
 extension Range on MinMax<LatLng> {
   double get latRange {
-    return max.latitude-min.latitude;
+    return max.latitude - min.latitude;
   }
+
   double get lngRange {
-    return max.longitude-min.longitude;
+    return max.longitude - min.longitude;
+  }
+}
+
+extension DayIn on DateTime {
+  /// minutes from start of day
+  int dayInMinutes() {
+    return (hour * 60) + minute;
+  }
+
+  /// milliseconds from start of day
+  int dayInMillis() {
+    return (hour * 3600 * 1000) +
+        (minute * 60 * 1000) +
+        (second * 1000) +
+        millisecond;
+  }
+}
+
+extension NullableList<T> on List<T?> {
+  /// find index of closest list entry that is not null
+  int? closestNonNull(int fromI) {
+    var walkedDistance = 1;
+    while (true) {
+      // negative/down walk index
+      var mI = fromI - walkedDistance;
+      // positive/up walk index
+      var pI = fromI + walkedDistance;
+      if (mI >= 0 && this[mI] != null) {
+        return mI;
+      } else if (pI < length && this[pI] != null) {
+        return pI;
+      } else {
+        walkedDistance++;
+      }
+      if (mI < 0 && pI >= length) {
+        return null;
+      }
+    }
   }
 }

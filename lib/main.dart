@@ -69,7 +69,7 @@ void main() async {
 
   var isTrackingLocation = await AppSettings.instance.trackingLocation.get();
   log("isTrackingLocation: $isTrackingLocation");
-  if (isTrackingLocation!) {
+  if (isTrackingLocation == true) {
     await FlutterBackgroundService().startService();
     // FlutterBackgroundService().invoke("startTracking");
   }

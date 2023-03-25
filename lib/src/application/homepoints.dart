@@ -15,6 +15,8 @@ class HomepointManager {
   late Directory _appDir;
   late File _homepointFile;
 
+  List<MapEntry<String, int>>? visits;
+
   HomepointManager() {}
 
   Map<String, Homepoint> get homepoints {
@@ -48,6 +50,40 @@ class HomepointManager {
     Map<String, dynamic> jsonMap = jsonDecode(json);
     _homepoints =
         jsonMap.map((key, value) => MapEntry(key, Homepoint.fromJson(value)));
+  }
+
+  List<MapEntry<String, int>> getVisits(List<LocationDataPoint> dataPoints) {
+    Map<String, int> visited =
+        Map.fromEntries(homepoints.entries.map((e) => MapEntry(e.key, 0)));
+    for (final h in homepoints.entries) {
+      final homeLatLng = h.value.position;
+
+      var atHP = false;
+      var i = 0;
+      while (i < dataPoints.length) {
+        var dp = dataPoints[i];
+        final dpPos = LatLng(dp.position.latitude, dp.position.longitude);
+        if (const Distance().distance(dpPos, homeLatLng) < h.value.radius) {
+          atHP = true;
+        } else if (atHP) {
+          // true when leaving HP
+          // dataPoint is within homepoint radius
+          visited.update(h.key, (value) => value + 1);
+          atHP = false;
+        }
+        i++;
+      }
+      if (atHP) {
+        // true when last index was atHP
+        // dataPoint is within homepoint radius
+        visited.update(h.key, (value) => value + 1);
+        atHP = false;
+      }
+    }
+    visits = visited.entries
+        .map((e) => MapEntry(homepoints[e.key]!.name, e.value))
+        .toList();
+    return visits!;
   }
 
   addPoint(Homepoint point) {

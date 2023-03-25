@@ -32,10 +32,9 @@ class _MyHomePageState extends State<MyHomePage> {
     locationService = LocationService();
 
     AppSettings.instance.trackingLocation.get().then((value) {
-      setState(() {
-        isTrackingLocation = value;
-        locationService.init().then((value) => locationService.loadToday());
-      });
+      isTrackingLocation = value;
+      locationService.init().then((value) =>
+          locationService.loadToday().then((value) => setState(() {})));
     });
   }
 
@@ -51,13 +50,14 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
-                  Text("3.742",
-                      style:
-                          TextStyle(fontSize: 75, fontWeight: FontWeight.w900)),
-                  Text("10,2 km",
-                      style:
-                          TextStyle(fontSize: 40, fontWeight: FontWeight.w700)),
+                children: [
+                  Text(locationService.stepsTotal.toString(),
+                      style: const TextStyle(
+                          fontSize: 75, fontWeight: FontWeight.w900)),
+                  Text(
+                      "${(locationService.distanceTotal / 1000).toStringAsFixed(1)} km",
+                      style: const TextStyle(
+                          fontSize: 40, fontWeight: FontWeight.w700)),
                 ],
               ),
               Container(
@@ -95,34 +95,42 @@ class _MyHomePageState extends State<MyHomePage> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.w700)),
                           const Padding(padding: EdgeInsets.only(top: 12)),
-                          Row(
-                            children: const [
-                              Text("24 ",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700)),
-                              Text("days",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w400)),
-                            ],
-                          ),
-                          const Padding(padding: EdgeInsets.only(top: 6)),
-                          Row(
-                            children: const [
-                              Text("154.00 ",
+                          (isTrackingLocation != true)
+                              ? const Text("tracking currently stopped",
                                   textAlign: TextAlign.left,
                                   style: TextStyle(
                                       fontSize: 24,
-                                      fontWeight: FontWeight.w700)),
-                              Text("steps",
-                                  textAlign: TextAlign.left,
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.w400)),
-                            ],
-                          ),
+                                      fontWeight: FontWeight.w400))
+                              : Row(
+                                  children: const [
+                                    Text("24 ",
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w700)),
+                                    Text("days",
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w400)),
+                                  ],
+                                ),
+                          if (isTrackingLocation == true)
+                            const Padding(padding: EdgeInsets.only(top: 6)),
+                          if (isTrackingLocation == true)
+                            Row(
+                              children: const [
+                                Text("154.00 ",
+                                    textAlign: TextAlign.left,
+                                    style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700)),
+                                Text("steps",
+                                    textAlign: TextAlign.left,
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w400)),
+                              ],
+                            ),
                           SizedBox(
                               height: 40,
                               child: Row(
@@ -187,7 +195,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                 ],
               ))),
-      if (locationService.isInitialized) ActivityMap(locationService: locationService),
+      if (locationService.isInitialized)
+        ActivityMap(locationService: locationService),
       const Padding(padding: EdgeInsets.only(bottom: 50)),
     ]);
   }
@@ -209,11 +218,13 @@ class _ActivityMapState extends State<ActivityMap> {
   void initState() {
     super.initState();
     widget.locationService.loadToday().then((wasLoaded) {
-      if (wasLoaded) {
-        setState(() {
-          dataToday = widget.locationService.dataPoints;
-        });
-      }
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (wasLoaded) {
+          setState(() {
+            dataToday = widget.locationService.dataPoints;
+          });
+        }
+      });
     });
   }
 
