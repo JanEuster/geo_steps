@@ -409,14 +409,14 @@ class _TodaysMapState extends State<TodaysMap>
                                 height: 2,
                               )),
                           Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: OverviewBarGraph(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              child: OverviewBarChart(
                                   data: locationService.hourlyDistanceTotal
                                       .map((e) => e / 1000).toList(),
                                   title: "hourly average speed in km/h")),
                           if (homepointManager != null && homepointManager!.visits != null) Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: NamedBarGraph(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            child: NamedBarChart(
                                 data: homepointManager!.visits!,
                                 title: "visited homepoints today"),
                           ),

@@ -43,7 +43,7 @@ class OverviewTotals extends StatelessWidget {
   }
 }
 
-class NamedBarGraph extends StatelessWidget {
+class NamedBarChart extends StatelessWidget {
   final String title;
   final double height;
   final bool scrollable;
@@ -54,7 +54,7 @@ class NamedBarGraph extends StatelessWidget {
   late List<int> dataValues;
   late double max;
 
-  NamedBarGraph(
+  NamedBarChart(
       {super.key,
       required this.data,
       this.title = "geo_steps stats",
@@ -68,7 +68,7 @@ class NamedBarGraph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
-        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+        color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700);
     var textStyleOnBlack =
         const TextStyle(fontSize: 14, fontWeight: FontWeight.w600);
 
@@ -130,18 +130,7 @@ class NamedBarGraph extends StatelessWidget {
                 ),
               ],
             ),
-            Container(
-              height: 18,
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: textStyleOnWhite),
-                  Text("${data.length} bars", style: textStyleOnWhite)
-                ],
-              ),
-            )
+            ChartLegend(left: Text(title, style: textStyleOnWhite), right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
@@ -149,7 +138,42 @@ class NamedBarGraph extends StatelessWidget {
   }
 }
 
-class OverviewBarGraph extends StatelessWidget {
+class ChartLegend extends StatelessWidget {
+  Widget left;
+  Widget right;
+  ChartLegend({super.key, required this.left, required this.right});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 16,
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          left,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 6),
+                child: Container(decoration: const BoxDecoration(
+                  border: Border.symmetric(vertical: BorderSide(color: Colors.white, width: 3),),
+                    image: DecorationImage(fit: BoxFit.none,
+                        scale: 4,
+                        image: AssetImage("assets/line_pattern.jpg"),
+                        repeat: ImageRepeat.repeat)),),
+              ),
+            ),
+
+          right,
+        ],
+      ),
+    );
+  }
+
+}
+
+class OverviewBarChart extends StatelessWidget {
   final String title;
   final double height;
   final bool scrollable;
@@ -159,7 +183,7 @@ class OverviewBarGraph extends StatelessWidget {
   final List<double> data;
   late MinMax<double> valuesMinMax;
 
-  OverviewBarGraph(
+  OverviewBarChart(
       {super.key,
       required this.data,
       this.title = "geo_steps stats",
@@ -172,7 +196,7 @@ class OverviewBarGraph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var textStyleOnWhite = const TextStyle(
-        color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500);
+        color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700);
     var textStyleOnBlack =
         const TextStyle(fontSize: 14, fontWeight: FontWeight.w500);
     var sizer = SizeHelper();
@@ -223,18 +247,7 @@ class OverviewBarGraph extends StatelessWidget {
                         ],
                       ),
                     ))),
-            Container(
-              height: 18,
-              color: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(title, style: textStyleOnWhite),
-                  Text("${data.length} bars", style: textStyleOnWhite)
-                ],
-              ),
-            )
+            ChartLegend(left: Text(title, style: textStyleOnWhite), right: Text("${data.length} bars", style: textStyleOnWhite)),
           ],
         ),
       ),
