@@ -67,6 +67,7 @@ class _TodaysMapState extends State<TodaysMap>
   latlng.LatLng markerPosition = latlng.LatLng(0, 0);
   List<LocationDataPoint>? minutes;
   int? initialHourIndex;
+  List<CircleMarker> homepointCircles = [];
 
   @override
   void initState() {
@@ -75,24 +76,22 @@ class _TodaysMapState extends State<TodaysMap>
     locationService = LocationService();
     locationService
         .init()
-        .whenComplete(() =>
-        locationService.loadToday().then((wasLoaded) {
-          if (wasLoaded && locationService.hasPositions) {
-            setState(() =>
-                mapController.move(
+        .whenComplete(() => locationService.loadToday().then((wasLoaded) {
+              if (wasLoaded && locationService.hasPositions) {
+                setState(() => mapController.move(
                     latlng.LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
                     12.8));
-            minutes = locationService.dataPointPerMinute;
+                minutes = locationService.dataPointPerMinute;
 
-            final firstP = locationService.dataPoints.first;
-            markerPosition =
-                latlng.LatLng(firstP.latitude, firstP.longitude);
+                final firstP = locationService.dataPoints.first;
+                markerPosition =
+                    latlng.LatLng(firstP.latitude, firstP.longitude);
 
-            initialHourIndex = locationService.hourlyStepsTotal.indexOf(
-                locationService.hourlyStepsTotal.reduce(math.max));
-          }
-        }));
+                initialHourIndex = locationService.hourlyStepsTotal
+                    .indexOf(locationService.hourlyStepsTotal.reduce(math.max));
+              }
+            }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
       if (isTrackingLocation != true) {
@@ -122,20 +121,37 @@ class _TodaysMapState extends State<TodaysMap>
     detailsController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
     detailsAnimation = Tween<double>(
-        begin: mapHeightDetails + 58,
-        end: SizeHelper().heightWithoutNav - 200)
+            begin: mapHeightDetails + 58,
+            end: SizeHelper().heightWithoutNav - 200)
         .animate(detailsController)
       ..addListener(() {
         setState(() {});
       });
 
     homepointManager = HomepointManager();
-    homepointManager!.init().then((value) =>
-        homepointManager!.load().then((value) =>
-            setState(() {
+    homepointManager!
+        .init()
+        .then((value) => homepointManager!.load().then((value) => setState(() {
               homepointManager!.getVisits(locationService.dataPoints);
-            }))
-    );
+
+              homepointManager!.homepoints.forEach((key, point) {
+                homepointCircles.addAll([CircleMarker(
+                  point: point.position,
+                  radius: point.radius,
+                  useRadiusInMeter: true,
+                  color: Colors.white.withOpacity(0.3),
+                  borderColor: Colors.black,
+                  borderStrokeWidth: 2,
+                ),
+                  CircleMarker(
+                    point: point.position,
+                    radius: point.radius/3,
+                    useRadiusInMeter: true,
+                    color: Colors.white.withOpacity(0.4),
+                  )
+                ]);
+              });
+            })));
   }
 
   @override
@@ -158,9 +174,7 @@ class _TodaysMapState extends State<TodaysMap>
 
   @override
   Widget build(BuildContext context) {
-    defaultTargetPlatform = Theme
-        .of(context)
-        .platform;
+    defaultTargetPlatform = Theme.of(context).platform;
     SizeHelper sizer = SizeHelper();
     return SizedBox(
       height: sizer.heightWithoutNav,
@@ -180,7 +194,7 @@ class _TodaysMapState extends State<TodaysMap>
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
-                      InteractiveFlag.all & ~InteractiveFlag.rotate),
+                          InteractiveFlag.all & ~InteractiveFlag.rotate),
                   nonRotatedChildren: [
                     CustomAttributionWidget.defaultWidget(
                       source: '© OpenStreetMap contributors',
@@ -192,13 +206,16 @@ class _TodaysMapState extends State<TodaysMap>
                   children: [
                     TileLayer(
                       urlTemplate:
-                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                       userAgentPackageName: 'dev.janeuster.geo_steps',
                     ),
                     // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
                     // TileLayer(urlTemplate: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/4/5/5?blankTile=false",
                     //   userAgentPackageName: 'dev.janeuster.geo_steps'),
                     // ),
+                    CircleLayer(
+                      circles: homepointCircles,
+                    ),
                     PolylineLayer(
                       polylineCulling: false,
                       polylines: [
@@ -221,8 +238,7 @@ class _TodaysMapState extends State<TodaysMap>
                               width: 46,
                               height: 46,
                               point: markerPosition,
-                              builder: (context) =>
-                                  Transform.translate(
+                              builder: (context) => Transform.translate(
                                     offset: const Offset(0, -23),
                                     child: Container(
                                         decoration: const BoxDecoration(
@@ -231,73 +247,8 @@ class _TodaysMapState extends State<TodaysMap>
                                                     "assets/map_pin.png")))),
                                   )),
                           if (selectedMinute != null)
-                            Marker(
-                                point: markerPosition,
-                                builder: (context) =>
-                                    Transform.translate(
-                                      offset: const Offset(28, -30),
-                                      child: SizedBox(
-                                        height: 40,
-                                        child: Stack(
-                                          clipBehavior: Clip.none,
-                                          children: [
-                                            SizedBox(
-                                                child: CustomPaint(
-                                                    painter:
-                                                    MapMarkerTriangle())),
-                                            Positioned(
-                                                left: 18,
-                                                child: Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(horizontal: 4,
-                                                      vertical: 2),
-                                                  width: 60,
-                                                  height: 38,
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.white,),
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment
-                                                        .start,
-                                                    children: [
-                                                      if (selectedMinute!
-                                                          .timestamp !=
-                                                          null)
-                                                        Text(
-                                                          DateFormat("HH:mm")
-                                                              .format(
-                                                              selectedMinute!
-                                                                  .timestamp!),
-                                                          style: const TextStyle(
-                                                              fontSize: 9,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .w500),
-                                                        ),
-                                                      Text(
-                                                        selectedMinute!
-                                                            .pedStatus,
-                                                        style: const TextStyle(
-                                                            fontSize: 9,
-                                                            fontWeight:
-                                                            FontWeight
-                                                                .w500),
-                                                      ),
-                                                      Text(
-                                                        "${selectedMinute!
-                                                            .steps ?? 0} steps",
-                                                        style: const TextStyle(
-                                                            fontSize: 9,
-                                                            fontWeight:
-                                                            FontWeight
-                                                                .w500),
-                                                      )
-                                                    ],
-                                                  ),
-                                                ))
-                                          ],
-                                        ),
-                                      ),
-                                    ))
+                            LocationDetailsMarker(
+                                markerPosition, selectedMinute!),
                           // Container(
                           //   width: 40,
                           //   height: 40,
@@ -325,10 +276,7 @@ class _TodaysMapState extends State<TodaysMap>
                           child: Column(
                             children: [
                               Text(
-                                  "show ${showDetails
-                                      ? "less"
-                                      : "more"} info for ${DateFormat
-                                      .yMMMMEEEEd().format(widget.date)}",
+                                  "show ${showDetails ? "less" : "more"} info for ${DateFormat.yMMMMEEEEd().format(widget.date)}",
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold)),
@@ -355,13 +303,13 @@ class _TodaysMapState extends State<TodaysMap>
                           child: Row(
                             children: showDetails
                                 ? [
-                              OverviewTotals(
-                                totalSteps: locationService.stepsTotal,
-                                totalDistance:
-                                locationService.distanceTotal,
-                              ),
-                              Expanded(child: Container()),
-                            ]
+                                    OverviewTotals(
+                                      totalSteps: locationService.stepsTotal,
+                                      totalDistance:
+                                          locationService.distanceTotal,
+                                    ),
+                                    Expanded(child: Container()),
+                                  ]
                                 : [],
                           ),
                         ),
@@ -369,43 +317,44 @@ class _TodaysMapState extends State<TodaysMap>
                             padding: !showDetails
                                 ? EdgeInsets.zero
                                 : const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 10),
+                                    vertical: 16, horizontal: 10),
                             child: showDetails
                                 ? const DottedLine(
-                              height: 2,
-                            )
+                                    height: 2,
+                                  )
                                 : null),
-                        if (initialHourIndex != null) HourlyActivity(
-                          data: locationService.hourlyStepsTotal,
-                          initialHour: initialHourIndex!,
-                          onScroll: (percentage) {
-                            var thisDate = DateTime.now();
-                            final millisecondsToday =
-                            (percentage * 24 * 60 * 60 * 1000).round();
-                            final minutesToday =
-                            (percentage * ((24 * 60) - 1)).round();
-                            thisDate = DateTime(
-                                thisDate.year, thisDate.month, thisDate.day);
-                            thisDate = DateTime.fromMillisecondsSinceEpoch(
-                                thisDate.millisecondsSinceEpoch +
-                                    millisecondsToday);
+                        if (initialHourIndex != null)
+                          HourlyActivity(
+                            data: locationService.hourlyStepsTotal,
+                            initialHour: initialHourIndex!,
+                            onScroll: (percentage) {
+                              var thisDate = DateTime.now();
+                              final millisecondsToday =
+                                  (percentage * 24 * 60 * 60 * 1000).round();
+                              final minutesToday =
+                                  (percentage * ((24 * 60) - 1)).round();
+                              thisDate = DateTime(
+                                  thisDate.year, thisDate.month, thisDate.day);
+                              thisDate = DateTime.fromMillisecondsSinceEpoch(
+                                  thisDate.millisecondsSinceEpoch +
+                                      millisecondsToday);
 
-                            if (locationService.hasPositions) {
-                              // log("$minutes");
-                              // var newPos = locationService.dataPointClosestTo(thisDate.toLocal());
-                              // log("$newPos");
-                              if (minutes != null) {
-                                setState(() {
-                                  selectedMinute = minutes![minutesToday];
-                                  markerPosition = latlng.LatLng(
-                                      selectedMinute!.latitude,
-                                      selectedMinute!.longitude);
-                                  mapController.move(markerPosition, 13.5);
-                                });
+                              if (locationService.hasPositions) {
+                                // log("$minutes");
+                                // var newPos = locationService.dataPointClosestTo(thisDate.toLocal());
+                                // log("$newPos");
+                                if (minutes != null) {
+                                  setState(() {
+                                    selectedMinute = minutes![minutesToday];
+                                    markerPosition = latlng.LatLng(
+                                        selectedMinute!.latitude,
+                                        selectedMinute!.longitude);
+                                    mapController.move(markerPosition, 13.5);
+                                  });
+                                }
                               }
-                            }
-                          },
-                        ),
+                            },
+                          ),
                         if (showDetails) ...[
                           const Padding(
                               padding: EdgeInsets.symmetric(
@@ -418,16 +367,18 @@ class _TodaysMapState extends State<TodaysMap>
                                   vertical: 8, horizontal: 12),
                               child: OverviewBarChart(
                                   data: locationService.hourlyDistanceTotal
-                                      .map((e) => e / 1000).toList(),
+                                      .map((e) => e / 1000)
+                                      .toList(),
                                   title: "hourly average speed in km/h")),
-                          if (homepointManager != null && homepointManager!
-                              .visits != null) Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 12),
-                            child: NamedBarChart(
-                                data: homepointManager!.visits!,
-                                title: "visited homepoints today"),
-                          ),
+                          if (homepointManager != null &&
+                              homepointManager!.visits != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              child: NamedBarChart(
+                                  data: homepointManager!.visits!,
+                                  title: "visited homepoints today"),
+                            ),
                         ],
                       ],
                     ),
@@ -440,4 +391,55 @@ class _TodaysMapState extends State<TodaysMap>
       ),
     );
   }
+}
+
+Marker LocationDetailsMarker(
+    latlng.LatLng markerPosition, LocationDataPoint selectedMinute) {
+  return Marker(
+      point: markerPosition,
+      builder: (context) => Transform.translate(
+            offset: const Offset(28, -30),
+            child: SizedBox(
+              height: 40,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox(child: CustomPaint(painter: MapMarkerTriangle())),
+                  Positioned(
+                      left: 18,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        width: 60,
+                        height: 38,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (selectedMinute.timestamp != null)
+                              Text(
+                                DateFormat("HH:mm")
+                                    .format(selectedMinute.timestamp!),
+                                style: const TextStyle(
+                                    fontSize: 9, fontWeight: FontWeight.w500),
+                              ),
+                            Text(
+                              selectedMinute.pedStatus,
+                              style: const TextStyle(
+                                  fontSize: 9, fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              "${selectedMinute.steps ?? 0} steps",
+                              style: const TextStyle(
+                                  fontSize: 9, fontWeight: FontWeight.w500),
+                            )
+                          ],
+                        ),
+                      ))
+                ],
+              ),
+            ),
+          ));
 }

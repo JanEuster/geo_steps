@@ -218,11 +218,13 @@ class _ActivityMapState extends State<ActivityMap> {
   void initState() {
     super.initState();
     widget.locationService.loadToday().then((wasLoaded) {
-      if (wasLoaded) {
-        setState(() {
-          dataToday = widget.locationService.dataPoints;
-        });
-      }
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (wasLoaded) {
+          setState(() {
+            dataToday = widget.locationService.dataPoints;
+          });
+        }
+      });
     });
   }
 
