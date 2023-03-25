@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geo_steps/src/application/homepoints.dart';
 import 'package:geo_steps/src/presentation/components/helper.dart';
 import 'package:latlong2/latlong.dart' as latlng;
 import 'package:intl/intl.dart';
@@ -56,6 +57,7 @@ class _TodaysMapState extends State<TodaysMap>
 
   late LocationService locationService;
   late TargetPlatform defaultTargetPlatform = TargetPlatform.iOS;
+  HomepointManager? homepointManager;
   final mapController = MapController();
   static const double mapHeightDetails = 150;
 
@@ -72,19 +74,21 @@ class _TodaysMapState extends State<TodaysMap>
     locationService = LocationService();
     locationService
         .init()
-        .whenComplete(() => locationService.loadToday().then((wasLoaded) {
-              if (wasLoaded && locationService.hasPositions) {
-                setState(() => mapController.move(
+        .whenComplete(() =>
+        locationService.loadToday().then((wasLoaded) {
+          if (wasLoaded && locationService.hasPositions) {
+            setState(() =>
+                mapController.move(
                     latlng.LatLng(locationService.lastPos!.latitude,
                         locationService.lastPos!.longitude),
                     12.8));
-                minutes = locationService.dataPointPerMinute;
+            minutes = locationService.dataPointPerMinute;
 
-                final firstP = locationService.dataPoints.first;
-                markerPosition =
-                    latlng.LatLng(firstP.latitude, firstP.longitude);
-              }
-            }));
+            final firstP = locationService.dataPoints.first;
+            markerPosition =
+                latlng.LatLng(firstP.latitude, firstP.longitude);
+          }
+        }));
 
     AppSettings().trackingLocation.get().then((isTrackingLocation) {
       if (isTrackingLocation != true) {
@@ -114,12 +118,20 @@ class _TodaysMapState extends State<TodaysMap>
     detailsController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
     detailsAnimation = Tween<double>(
-            begin: mapHeightDetails + 58,
-            end: SizeHelper().heightWithoutNav - 200)
+        begin: mapHeightDetails + 58,
+        end: SizeHelper().heightWithoutNav - 200)
         .animate(detailsController)
       ..addListener(() {
         setState(() {});
       });
+
+    homepointManager = HomepointManager();
+    homepointManager!.init().then((value) =>
+        homepointManager!.load().then((value) =>
+            setState(() {
+              homepointManager!.getVisits(locationService.dataPoints);
+            }))
+    );
   }
 
   @override
@@ -142,7 +154,9 @@ class _TodaysMapState extends State<TodaysMap>
 
   @override
   Widget build(BuildContext context) {
-    defaultTargetPlatform = Theme.of(context).platform;
+    defaultTargetPlatform = Theme
+        .of(context)
+        .platform;
     SizeHelper sizer = SizeHelper();
     return SizedBox(
       height: sizer.heightWithoutNav,
@@ -162,7 +176,7 @@ class _TodaysMapState extends State<TodaysMap>
                       maxZoom: 19.0,
                       keepAlive: true,
                       interactiveFlags: // all interactions except rotation
-                          InteractiveFlag.all & ~InteractiveFlag.rotate),
+                      InteractiveFlag.all & ~InteractiveFlag.rotate),
                   nonRotatedChildren: [
                     CustomAttributionWidget.defaultWidget(
                       source: '© OpenStreetMap contributors',
@@ -174,7 +188,7 @@ class _TodaysMapState extends State<TodaysMap>
                   children: [
                     TileLayer(
                       urlTemplate:
-                          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                       userAgentPackageName: 'dev.janeuster.geo_steps',
                     ),
                     // kinda cool, shit res outside us, unknown projection - /{z}/{y}/{x} does not work
@@ -203,7 +217,8 @@ class _TodaysMapState extends State<TodaysMap>
                               width: 46,
                               height: 46,
                               point: markerPosition,
-                              builder: (context) => Transform.translate(
+                              builder: (context) =>
+                                  Transform.translate(
                                     offset: const Offset(0, -23),
                                     child: Container(
                                         decoration: const BoxDecoration(
@@ -214,7 +229,8 @@ class _TodaysMapState extends State<TodaysMap>
                           if (selectedMinute != null)
                             Marker(
                                 point: markerPosition,
-                                builder: (context) => Transform.translate(
+                                builder: (context) =>
+                                    Transform.translate(
                                       offset: const Offset(28, -30),
                                       child: SizedBox(
                                         height: 40,
@@ -224,31 +240,38 @@ class _TodaysMapState extends State<TodaysMap>
                                             SizedBox(
                                                 child: CustomPaint(
                                                     painter:
-                                                        MapMarkerTriangle())),
+                                                    MapMarkerTriangle())),
                                             Positioned(
                                                 left: 18,
                                                 child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(horizontal: 4,
+                                                      vertical: 2),
                                                   width: 60,
                                                   height: 38,
                                                   decoration: const BoxDecoration(
-                                                      color: Colors.white,),
+                                                    color: Colors.white,),
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    crossAxisAlignment: CrossAxisAlignment
+                                                        .start,
                                                     children: [
                                                       if (selectedMinute!
-                                                              .timestamp !=
+                                                          .timestamp !=
                                                           null)
                                                         Text(
-                                                          DateFormat("HH:mm").format(selectedMinute!.timestamp!),
+                                                          DateFormat("HH:mm")
+                                                              .format(
+                                                              selectedMinute!
+                                                                  .timestamp!),
                                                           style: const TextStyle(
                                                               fontSize: 9,
                                                               fontWeight:
-                                                                  FontWeight
-                                                                      .w500),
+                                                              FontWeight
+                                                                  .w500),
                                                         ),
                                                       Text(
-                                                        selectedMinute!.pedStatus,
+                                                        selectedMinute!
+                                                            .pedStatus,
                                                         style: const TextStyle(
                                                             fontSize: 9,
                                                             fontWeight:
@@ -256,12 +279,13 @@ class _TodaysMapState extends State<TodaysMap>
                                                                 .w500),
                                                       ),
                                                       Text(
-                                                        "${selectedMinute!.steps ?? 0} steps",
+                                                        "${selectedMinute!
+                                                            .steps ?? 0} steps",
                                                         style: const TextStyle(
                                                             fontSize: 9,
                                                             fontWeight:
-                                                                FontWeight
-                                                                    .w500),
+                                                            FontWeight
+                                                                .w500),
                                                       )
                                                     ],
                                                   ),
@@ -297,7 +321,10 @@ class _TodaysMapState extends State<TodaysMap>
                           child: Column(
                             children: [
                               Text(
-                                  "show ${showDetails ? "less" : "more"} info for ${DateFormat.yMMMMEEEEd().format(widget.date)}",
+                                  "show ${showDetails
+                                      ? "less"
+                                      : "more"} info for ${DateFormat
+                                      .yMMMMEEEEd().format(widget.date)}",
                                   style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold)),
@@ -324,13 +351,13 @@ class _TodaysMapState extends State<TodaysMap>
                           child: Row(
                             children: showDetails
                                 ? [
-                                    OverviewTotals(
-                                      totalSteps: locationService.stepsTotal,
-                                      totalDistance:
-                                          locationService.distanceTotal,
-                                    ),
-                                    Expanded(child: Container()),
-                                  ]
+                              OverviewTotals(
+                                totalSteps: locationService.stepsTotal,
+                                totalDistance:
+                                locationService.distanceTotal,
+                              ),
+                              Expanded(child: Container()),
+                            ]
                                 : [],
                           ),
                         ),
@@ -338,20 +365,20 @@ class _TodaysMapState extends State<TodaysMap>
                             padding: !showDetails
                                 ? EdgeInsets.zero
                                 : const EdgeInsets.symmetric(
-                                    vertical: 16, horizontal: 10),
+                                vertical: 16, horizontal: 10),
                             child: showDetails
                                 ? const DottedLine(
-                                    height: 2,
-                                  )
+                              height: 2,
+                            )
                                 : null),
                         HourlyActivity(
                           data: locationService.hourlyStepsTotal,
                           onScroll: (percentage) {
                             var thisDate = DateTime.now();
                             final millisecondsToday =
-                                (percentage * 24 * 60 * 60 * 1000).round();
+                            (percentage * 24 * 60 * 60 * 1000).round();
                             final minutesToday =
-                                (percentage * ((24 * 60) - 1)).round();
+                            (percentage * ((24 * 60) - 1)).round();
                             thisDate = DateTime(
                                 thisDate.year, thisDate.month, thisDate.day);
                             thisDate = DateTime.fromMillisecondsSinceEpoch(
@@ -383,14 +410,15 @@ class _TodaysMapState extends State<TodaysMap>
                               )),
                           Padding(
                               padding: const EdgeInsets.all(10),
-                              child: OverviewBarGraph(data: locationService.hourlyDistanceTotal.map((e) => e/1000).toList(), title: "km/h")),
-                          Padding(
+                              child: OverviewBarGraph(
+                                  data: locationService.hourlyDistanceTotal
+                                      .map((e) => e / 1000).toList(),
+                                  title: "hourly average speed in km/h")),
+                          if (homepointManager != null && homepointManager!.visits != null) Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: NamedBarGraph(
-                                data: {"home": 4, "a": 1, "b": 2}
-                                    .entries
-                                    .toList(),
-                                title: "stat 2"),
+                                data: homepointManager!.visits!,
+                                title: "visited homepoints today"),
                           ),
                         ],
                       ],
